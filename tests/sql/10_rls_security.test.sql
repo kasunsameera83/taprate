@@ -3,8 +3,8 @@
 \set ON_ERROR_STOP on
 set client_min_messages = warning;
 
--- Supabase grants service_role full table access by default; mirror that here.
-grant all on all tables in schema public to service_role;
+-- service_role table access is granted by the migration itself.
+-- (service_role grants now come from the migration)
 
 -- Runs p_sql and requires it to fail with an error matching p_reason, so a test can't
 -- "pass" because of an unrelated mistake (typo, wrong type) in the test itself.

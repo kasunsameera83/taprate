@@ -108,6 +108,9 @@ create table private.rate_limits (
   window_start timestamptz not null,
   hits         integer not null
 );
+-- Not reachable through the API (private schema, no grants), and RLS on as an extra lock.
+-- Only the SECURITY DEFINER rate-limit functions (run as the table owner) touch it.
+alter table private.rate_limits enable row level security;
 
 -------------------------------------------------------------------------------
 -- Helper functions used by policies (SECURITY DEFINER, fixed search_path)
@@ -330,6 +333,12 @@ alter table public.audit_log   enable row level security;
 -- Anonymous visitors get nothing, anywhere.
 revoke all on all tables in schema public from anon;
 revoke all on all tables in schema public from authenticated;
+
+-- The server's service role (used only by server code, never the browser) needs table access.
+-- Granted explicitly so this works with Supabase's "automatically expose new tables" turned OFF.
+grant usage on schema public to authenticated, service_role;
+grant select, insert, update, delete on all tables in schema public to service_role;
+grant usage, select on all sequences in schema public to service_role;
 
 -- accounts: members read; owners may rename. Plan and credits are not user-writable.
 grant select on public.accounts to authenticated;
