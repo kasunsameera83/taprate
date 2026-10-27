@@ -17,6 +17,16 @@ test("permission matrix", () => {
   assert.equal(canPerform("superadmin", "survey:read"), false);
   assert.equal(canPerform(undefined, "survey:read"), false);
   assert.equal(canPerform("__proto__", "survey:read"), false);
+  // Agents: read-only, and never team, export, privacy or audit actions.
+  assert.equal(canPerform("agent", "response:read"), true);
+  for (const action of ["survey:write", "response:export", "team:read", "team:write", "privacy:erase", "audit:read", "account:delete", "account:export"] as const) {
+    assert.equal(canPerform("agent", action), false, `agent ${action}`);
+    assert.equal(canPerform("viewer", action), false, `viewer ${action}`);
+  }
+  // Admins manage the team but can't delete or export the whole account.
+  assert.equal(canPerform("admin", "team:write"), true);
+  assert.equal(canPerform("admin", "account:delete"), false);
+  assert.equal(canPerform("admin", "account:export"), false);
 });
 
 test("CSV neutralises spreadsheet formulas", () => {

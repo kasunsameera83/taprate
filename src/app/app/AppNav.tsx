@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { api } from "@/lib/client/api";
+import { ROLE_LABEL, type Role } from "@/lib/security/authz";
 import { IconDashboard, IconLogout, IconResponses, IconSettings, IconSurveys, Logo } from "@/components/icons";
 
 const NAV = [
@@ -14,11 +15,64 @@ const NAV = [
 
 const TRIAL_CREDITS = 50;
 
-export function AppNav({ email, accountName, plan, credits }: { email: string; accountName: string; plan: string; credits: number }) {
+type Props = {
+  email: string;
+  accountId: string;
+  accountName: string;
+  role: Role;
+  plan: string;
+  credits: number;
+  accounts: Array<{ id: string; name: string; role: Role }>;
+};
+
+function AccountSwitcher({ accountId, accountName, role, accounts, compact = false }: Pick<Props, "accountId" | "accountName" | "role" | "accounts"> & { compact?: boolean }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  if (accounts.length < 2) {
+    return compact ? null : (
+      <div>
+        <p className="truncate text-sm font-semibold">{accountName}</p>
+        <p className="text-[13px] text-muted">{ROLE_LABEL[role]}</p>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <label htmlFor={compact ? "acct-m" : "acct-d"} className={compact ? "sr-only" : "mb-1 block text-[13px] text-muted"}>
+        Business
+      </label>
+      <select
+        id={compact ? "acct-m" : "acct-d"}
+        className={`input ${compact ? "min-h-9 py-1 text-sm" : ""}`}
+        value={accountId}
+        disabled={busy}
+        onChange={async (e) => {
+          setBusy(true);
+          const r = await api("/api/account/switch", { method: "POST", body: { accountId: e.target.value } });
+          if (r.ok) window.location.assign("/app");
+          else {
+            setBusy(false);
+            setError(r.message);
+          }
+        }}
+      >
+        {accounts.map((a) => (
+          <option key={a.id} value={a.id}>
+            {a.name} ({ROLE_LABEL[a.role]})
+          </option>
+        ))}
+      </select>
+      {error && <p className="mt-1 text-[12px] text-neg-text">{error}</p>}
+    </div>
+  );
+}
+
+export function AppNav({ email, accountId, accountName, role, plan, credits, accounts }: Props) {
   const path = usePathname();
   const [signingOut, setSigningOut] = useState(false);
   const isActive = (href: string, exact?: boolean) => (exact ? path === href : path === href || path.startsWith(`${href}/`));
   const low = credits <= 10;
+  const showCredits = role === "owner" || role === "admin";
 
   async function signOut() {
     setSigningOut(true);
@@ -57,19 +111,19 @@ export function AppNav({ email, accountName, plan, credits }: { email: string; a
         </nav>
 
         <div className="mt-auto space-y-4">
-          <div className="rounded-[12px] border border-line p-3">
-            <p className="text-sm font-semibold">{accountName}</p>
-            <p className="mt-0.5 text-[13px] capitalize text-muted">{plan} plan</p>
-            <div className="mt-3 flex items-baseline justify-between text-[13px]">
-              <span className="text-muted">Responses left</span>
-              <span className={`tabular font-semibold ${low ? "text-neg-text" : "text-ink"}`}>{credits}</span>
-            </div>
-            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#eceef2]" aria-hidden>
-              <div
-                className={`h-full rounded-full ${low ? "bg-neg-fill" : "bg-brand"}`}
-                style={{ width: `${Math.min(100, (credits / TRIAL_CREDITS) * 100)}%` }}
-              />
-            </div>
+          <div className="space-y-3 rounded-[12px] border border-line p-3">
+            <AccountSwitcher accountId={accountId} accountName={accountName} role={role} accounts={accounts} />
+            {showCredits && (
+              <div>
+                <div className="flex items-baseline justify-between text-[13px]">
+                  <span className="capitalize text-muted">{plan} plan</span>
+                  <span className={`tabular font-semibold ${low ? "text-neg-text" : "text-ink"}`}>{credits} left</span>
+                </div>
+                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#eceef2]" aria-hidden>
+                  <div className={`h-full rounded-full ${low ? "bg-neg-fill" : "bg-brand"}`} style={{ width: `${Math.min(100, (credits / TRIAL_CREDITS) * 100)}%` }} />
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex items-center justify-between gap-2 px-1">
             <span className="truncate text-[13px] text-muted" title={email}>
@@ -84,13 +138,16 @@ export function AppNav({ email, accountName, plan, credits }: { email: string; a
 
       {/* Mobile / tablet top bar */}
       <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur lg:hidden">
-        <div className="flex items-center justify-between px-4 py-2.5">
-          <Link href="/app" aria-label="TapRate dashboard">
+        <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+          <Link href="/app" aria-label="TapRate dashboard" className="shrink-0">
             <Logo />
           </Link>
-          <div className="flex items-center gap-2">
-            <span className={`tabular text-[13px] font-semibold ${low ? "text-neg-text" : "text-muted"}`}>{credits} left</span>
-            <button type="button" onClick={signOut} disabled={signingOut} className="btn btn-ghost btn-sm" aria-label="Sign out">
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="min-w-0 max-w-[45vw]">
+              <AccountSwitcher accountId={accountId} accountName={accountName} role={role} accounts={accounts} compact />
+            </div>
+            {showCredits && <span className={`tabular shrink-0 text-[13px] font-semibold ${low ? "text-neg-text" : "text-muted"}`}>{credits} left</span>}
+            <button type="button" onClick={signOut} disabled={signingOut} className="btn btn-ghost btn-sm shrink-0" aria-label="Sign out">
               <IconLogout className="h-4 w-4" />
             </button>
           </div>
@@ -103,9 +160,7 @@ export function AppNav({ email, accountName, plan, credits }: { email: string; a
                 key={href}
                 href={href}
                 aria-current={active ? "page" : undefined}
-                className={`flex min-h-10 shrink-0 items-center gap-2 rounded-[10px] px-3 text-sm font-semibold ${
-                  active ? "bg-brand-soft text-brand" : "text-muted"
-                }`}
+                className={`flex min-h-10 shrink-0 items-center gap-2 rounded-[10px] px-3 text-sm font-semibold ${active ? "bg-brand-soft text-brand" : "text-muted"}`}
               >
                 <Icon className="h-4 w-4" />
                 {label}

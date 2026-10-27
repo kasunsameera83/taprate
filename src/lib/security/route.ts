@@ -4,7 +4,8 @@ import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { ZodType } from "zod";
 import { env } from "@/lib/env";
 import { userClient } from "@/lib/supabase/server";
-import { canPerform, isRole, type Action, type Role } from "@/lib/security/authz";
+import { canPerform, type Action } from "@/lib/security/authz";
+import { resolveMembership, mfaState, ACCOUNT_COOKIE, type Membership } from "@/lib/account";
 import { hitRateLimit, type RateLimitRule } from "@/lib/security/rateLimit";
 import { getClientIp, hashIp, isJsonRequest, isSameOriginRequest } from "@/lib/security/request";
 import { fieldErrors } from "@/lib/validation/schemas";
@@ -23,6 +24,7 @@ export type ErrorCode =
   | "unsupported_media_type"
   | "validation_failed"
   | "rate_limited"
+  | "mfa_required"
   | "unavailable"
   | "internal_error";
 
@@ -36,6 +38,7 @@ const STATUS: Record<ErrorCode, number> = {
   unsupported_media_type: 415,
   validation_failed: 422,
   rate_limited: 429,
+  mfa_required: 401,
   unavailable: 503,
   internal_error: 500,
 };
@@ -50,6 +53,7 @@ const DEFAULT_MESSAGE: Record<ErrorCode, string> = {
   unsupported_media_type: "Send the request as JSON.",
   validation_failed: "Some fields need attention.",
   rate_limited: "Too many requests. Please wait a moment and try again.",
+  mfa_required: "Enter the code from your authenticator app to continue.",
   unavailable: "The service is busy. Please try again shortly.",
   internal_error: "Something went wrong. Please try again.",
 };
@@ -83,7 +87,8 @@ export function fail(code: ErrorCode, message?: string, fields?: Record<string, 
 //   2. IP rate limit
 //   3. content-type + body size checks, safe JSON parse
 //   4. authentication (token verified with Supabase, not just decoded)
-//   5. membership + authorization (role may perform this action?)
+//   4b. two-factor: users with an authenticator must have completed the second step
+//   5. membership (active account, re-checked every request) + authorization
 //   6. per-user rate limit
 //   7. validation of route params, query string and body (strict schemas)
 //   8. the handler
@@ -92,9 +97,16 @@ export function fail(code: ErrorCode, message?: string, fields?: Record<string, 
 
 type Schema<T> = ZodType<T>;
 
-export type Membership = { accountId: string; role: Role };
+export type { Membership };
 
-export type Ctx<P, Q, B, A extends "user" | "public"> = {
+/**
+ * "user"      signed in AND a member of a business account (most routes)
+ * "user-any"  signed in, may have no account yet (invites, creating an account, own security settings)
+ * "public"    no sign-in (login, sign-up, customer survey endpoints)
+ */
+type AuthMode = "user" | "user-any" | "public";
+
+export type Ctx<P, Q, B, A extends AuthMode> = {
   req: NextRequest;
   params: P;
   query: Q;
@@ -104,14 +116,18 @@ export type Ctx<P, Q, B, A extends "user" | "public"> = {
   requestId: string;
 } & (A extends "user"
   ? { user: User; membership: Membership; supabase: SupabaseClient }
-  : { user: null; membership: null; supabase: null });
+  : A extends "user-any"
+    ? { user: User; membership: Membership | null; supabase: SupabaseClient }
+    : { user: null; membership: null; supabase: null });
 
-type Config<P, Q, B, A extends "user" | "public"> = {
+type Config<P, Q, B, A extends AuthMode> = {
   auth: A;
-  /** Required for user routes: the permission this route needs. */
+  /** Required for "user" routes: the permission this route needs. */
   action: A extends "user" ? Action : null;
   ipLimit: RateLimitRule;
-  userLimit?: A extends "user" ? RateLimitRule : never;
+  userLimit?: A extends "public" ? never : RateLimitRule;
+  /** Only for the second-step endpoints themselves (verifying the 2FA code, signing out). */
+  allowWithoutSecondFactor?: boolean;
   params?: Schema<P>;
   query?: Schema<Q>;
   body?: Schema<B>;
@@ -121,7 +137,7 @@ type Config<P, Q, B, A extends "user" | "public"> = {
 
 type RouteContext = { params: Promise<Record<string, string | string[]>> };
 
-export function secureRoute<P = undefined, Q = undefined, B = undefined, A extends "user" | "public" = "user">(
+export function secureRoute<P = undefined, Q = undefined, B = undefined, A extends AuthMode = "user">(
   config: Config<P, Q, B, A>,
   handler: (ctx: Ctx<P, Q, B, A>) => Promise<Response>,
 ) {
@@ -164,26 +180,26 @@ export function secureRoute<P = undefined, Q = undefined, B = undefined, A exten
       let membership: Membership | null = null;
       let supabase: SupabaseClient | null = null;
 
-      if (config.auth === "user") {
+      if (config.auth !== "public") {
         supabase = await userClient();
         const { data, error } = await supabase.auth.getUser(); // verifies the session with Supabase
         if (error || !data.user) return fail("unauthorized", undefined, undefined, requestId);
         const authedUser: User = data.user;
         user = authedUser;
 
-        const { data: m, error: mErr } = await supabase
-          .from("memberships")
-          .select("account_id, role")
-          .eq("user_id", authedUser.id)
-          .order("created_at", { ascending: true })
-          .limit(1)
-          .maybeSingle();
-        if (mErr) throw mErr;
-        if (!m || !isRole(m.role)) return fail("forbidden", undefined, undefined, requestId);
-        membership = { accountId: m.account_id as string, role: m.role };
+        // Two-factor: the database also refuses data to such sessions; this gives a clear answer.
+        if (!config.allowWithoutSecondFactor) {
+          const mfa = await mfaState(supabase);
+          if (mfa.needsCode) return fail("mfa_required", undefined, undefined, requestId);
+        }
 
-        if (!config.action || !canPerform(membership.role, config.action)) {
-          return fail("forbidden", undefined, undefined, requestId);
+        // Active account comes from a cookie but is never trusted: it must match a real membership.
+        membership = await resolveMembership(supabase, authedUser.id, req.cookies.get(ACCOUNT_COOKIE)?.value);
+        if (config.auth === "user") {
+          if (!membership) return fail("forbidden", "You're not part of a business account yet.", undefined, requestId);
+          if (!config.action || !canPerform(membership.role, config.action)) {
+            return fail("forbidden", undefined, undefined, requestId);
+          }
         }
         if (config.userLimit && !(await hitRateLimit(config.userLimit, authedUser.id))) {
           return fail("rate_limited", undefined, undefined, requestId);
@@ -220,7 +236,8 @@ export function secureRoute<P = undefined, Q = undefined, B = undefined, A exten
       }
 
       // 8. Handler
-      return await handler({ req, params, query, body, ip, ipHash, requestId, user, membership, supabase } as Ctx<P, Q, B, A>);
+      // The checks above guarantee the shape promised by the auth mode, so this cast is safe.
+      return await handler({ req, params, query, body, ip, ipHash, requestId, user, membership, supabase } as unknown as Ctx<P, Q, B, A>);
     } catch (err) {
       if (err instanceof ApiError) return fail(err.code, err.message, err.fields, requestId);
       console.error("[api] unhandled error", { requestId, path: req.nextUrl.pathname, err });
@@ -230,7 +247,23 @@ export function secureRoute<P = undefined, Q = undefined, B = undefined, A exten
 }
 
 /** Turn a Supabase/Postgres error into a safe ApiError (never leaks SQL details). */
+// Messages raised by our own database functions that are safe and useful to show.
+const DB_MESSAGES: Array<[RegExp, ErrorCode, string]> = [
+  [/already a member/, "conflict", "That person is already on your team."],
+  [/an account needs at least one owner/, "conflict", "Every account needs at least one owner. Make someone else an owner first."],
+  [/only owners can invite admins/, "forbidden", "Only owners can invite admins."],
+  [/you already own an account/, "conflict", "You already own a business account."],
+  [/invite is no longer valid/, "conflict", "This invite has expired or was cancelled. Ask for a new one."],
+  [/invite not found/, "not_found", "Invite not found."],
+  [/too many pending invites/, "conflict", "You have too many pending invites. Cancel some first."],
+  [/agent name required/, "validation_failed", "Enter the agent's name exactly as your helpdesk shows it."],
+  [/invalid email/, "validation_failed", "Enter a valid email address."],
+];
+
 export function dbError(error: { code?: string; message?: string } | null): ApiError {
+  for (const [pattern, code, message] of DB_MESSAGES) {
+    if (error?.message && pattern.test(error.message)) return new ApiError(code, message);
+  }
   if (error?.code === "23505") return new ApiError("conflict");
   if (error?.code === "PGRST116") return new ApiError("not_found");
   if (error?.code === "42501") return new ApiError("forbidden");

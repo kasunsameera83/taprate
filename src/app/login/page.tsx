@@ -30,9 +30,9 @@ function LoginForm() {
     setErrors({});
     setMessage("");
     setBusy(true);
-    const res = await api<{ signedIn: true }>("/api/auth/login", { method: "POST", body: parsed.data });
+    const res = await api<{ signedIn: true; mfaRequired: boolean }>("/api/auth/login", { method: "POST", body: parsed.data });
     if (res.ok) {
-      window.location.assign("/app");
+      window.location.assign(res.data.mfaRequired ? "/login/verify" : "/app");
       return;
     }
     setBusy(false);
@@ -49,6 +49,11 @@ function LoginForm() {
       <Field label="Password" name="password" error={errors.password}>
         <PasswordInput name="password" autoComplete="current-password" maxLength={128} required error={errors.password} />
       </Field>
+      <div className="-mt-2 text-right">
+        <Link href="/forgot-password" className="link text-sm">
+          Forgot password?
+        </Link>
+      </div>
       <button className="btn btn-primary w-full" disabled={busy}>
         {busy ? "Signing in…" : "Sign in"}
       </button>

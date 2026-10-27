@@ -51,9 +51,11 @@ function ResponsesView() {
   const [data, setData] = useState<ResponsesPage | null>(null);
   const [error, setError] = useState("");
   const [reload, setReload] = useState(0);
+  const [canExport, setCanExport] = useState(false);
 
   useEffect(() => {
     api<Survey[]>("/api/surveys").then((r) => r.ok && setSurveys(r.data));
+    api<{ role: string | null }>("/api/account").then((r) => r.ok && setCanExport(r.data.role === "owner" || r.data.role === "admin"));
   }, []);
 
   const query = {
@@ -122,10 +124,12 @@ function ResponsesView() {
           <h1 className="text-[28px] font-bold leading-tight">Responses</h1>
           <p className="text-sm text-muted">Every rating and comment, newest first.</p>
         </div>
-        <a className="btn btn-secondary" href={exportHref}>
-          <IconDownload className="h-4 w-4" />
-          Export CSV
-        </a>
+        {canExport && (
+          <a className="btn btn-secondary" href={exportHref}>
+            <IconDownload className="h-4 w-4" />
+            Export CSV
+          </a>
+        )}
       </header>
 
       <div role="tablist" aria-label="Response status" className="flex gap-1 border-b border-line">

@@ -24,13 +24,17 @@ Stack: Next.js 15 (App Router) + Supabase (Postgres, Auth) + Tailwind CSS 4. Wor
    ```
 2. **Create a Supabase project** at supabase.com.
 3. **Create the database**: open *SQL Editor* and run each file in `supabase/migrations/` **in order**
-   (`0001_init.sql`, then `0002_sentiment.sql`, ...). Each new file only needs running once.
+   (`0001_init.sql`, `0002_sentiment.sql`, `0003_team_security.sql`, ...). Each file only needs running once.
    (Or with the Supabase CLI: `supabase db push`.)
 4. **Auth settings** (Authentication → Sign In / Providers, and URL Configuration):
    - Email provider on, **Confirm email** on
    - Minimum password length 10; turn on leaked-password protection if your plan has it
    - Site URL: your app URL (e.g. `http://localhost:3000` locally)
-   - Redirect URLs: add `<your app URL>/auth/callback`
+   - Redirect URLs: add `<your app URL>/auth/callback` and `<your app URL>/auth/recovery`
+   - Authentication → Sign In / Providers → Email: turn on **Secure email change**
+   - Authentication → Multi-Factor: make sure **TOTP (authenticator app)** is enabled
+   - Optional, so reset links work on any device: Authentication → Emails → "Reset password" template,
+     set the link to `{{ .SiteURL }}/auth/recovery?token_hash={{ .TokenHash }}&type=recovery`
 5. **Environment**: copy `.env.example` to `.env.local` and fill it in. Generate each secret with
    ```bash
    node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
@@ -101,7 +105,17 @@ formula-injection protection, honeypot on comments, no account enumeration on si
 salted IP hashes (raw IPs never stored), append-only audit log, open-redirect-free auth callback,
 rate limiter fails closed.
 
-## Not in the MVP yet
+## Account & team features
 
-Password reset screen, two-factor login, inviting team members, billing/plan upgrades, Slack/Teams
-alerts, response drivers, QR/WhatsApp channels, a public API.
+- Password reset (email link, 15-minute window), change password, change email (password required)
+- Two-step verification with an authenticator app; enforced by the database for every table
+- Team invites with roles: Owner, Admin, Viewer, Agent (agents see only ratings with their name)
+- Switch between businesses; leave a business; the last owner can't be removed
+- Full data export, delete one customer's data on request, delete the whole business
+- Activity log of important changes
+
+## Still to come
+
+Response drivers and closed-loop follow-up, CES surveys, custom branding, QR/kiosk/website widget,
+WhatsApp share links, Slack/Teams/webhooks, public API, helpdesk integrations, CSV import,
+billing (PayHere + Stripe), AI summaries, scheduled reports.

@@ -130,3 +130,35 @@ export function verifyResponseToken(
   if (exp > nowSeconds + RESPONSE_TOKEN_TTL_SECONDS + 60) return false; // reject absurd expiries
   return safeEqual(hmac(secret, `resp:v1|${responseId}|${exp}`), m[2]);
 }
+
+// ---------------------------------------------------------------------------
+// Purpose-bound short-lived tokens (e.g. "this browser just used a password-reset link")
+// ---------------------------------------------------------------------------
+
+export function createPurposeToken(
+  secret: string,
+  purpose: string,
+  subject: string,
+  ttlSeconds: number,
+  nowSeconds: number = Math.floor(Date.now() / 1000),
+): string {
+  if (!/^[a-z-]{3,30}$/.test(purpose) || !isUuid(subject)) throw new Error("invalid purpose token input");
+  const exp = nowSeconds + ttlSeconds;
+  return `${exp}.${hmac(secret, `purpose:v1|${purpose}|${subject}|${exp}`)}`;
+}
+
+export function verifyPurposeToken(
+  secret: string,
+  purpose: string,
+  subject: string,
+  token: string | undefined | null,
+  maxTtlSeconds: number,
+  nowSeconds: number = Math.floor(Date.now() / 1000),
+): boolean {
+  if (typeof token !== "string" || token.length > 60 || !isUuid(subject)) return false;
+  const m = /^(\d{10})\.([A-Za-z0-9_-]{22})$/.exec(token);
+  if (!m || !m[1] || !m[2]) return false;
+  const exp = Number(m[1]);
+  if (exp < nowSeconds || exp > nowSeconds + maxTtlSeconds + 60) return false;
+  return safeEqual(hmac(secret, `purpose:v1|${purpose}|${subject}|${exp}`), m[2]);
+}

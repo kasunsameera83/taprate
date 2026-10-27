@@ -29,7 +29,7 @@ function buildCsp(nonce: string): string {
     .join("; ");
 }
 
-const NEEDS_SESSION = /^\/(app|login|signup)(\/|$)/;
+const NEEDS_SESSION = /^\/(app|login|signup|welcome|forgot-password|reset-password)(\/|$)/;
 
 export async function middleware(request: NextRequest) {
   const nonce = btoa(crypto.randomUUID()); // Edge runtime: no Buffer

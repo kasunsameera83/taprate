@@ -125,3 +125,28 @@ test("cleanText strips control and bidi characters", () => {
   assert.equal(cleanText("  a \n\t b  "), "a b");
   assert.equal(cleanText("line1\r\nline2", { multiline: true }), "line1\nline2");
 });
+
+test("phase 1 schemas: passwords, 2FA codes, invites, deletion", async () => {
+  const s = await import("../../src/lib/validation/schemas.ts");
+  assert.ok(s.newPasswordSchema.safeParse({ newPassword: "correct-horse-1" }).success);
+  assert.equal(s.newPasswordSchema.safeParse({ newPassword: "short" }).success, false);
+  assert.equal(s.newPasswordSchema.safeParse({ newPassword: "correct-horse-1", isAdmin: true }).success, false, "strict");
+
+  const code = s.mfaCodeSchema.safeParse({ code: "123 456" });
+  assert.ok(code.success);
+  assert.equal(code.data.code, "123456");
+  for (const bad of ["12345", "1234567", "abcdef", "", "12 34 5"]) {
+    assert.equal(s.mfaCodeSchema.safeParse({ code: bad }).success, false, bad);
+  }
+  assert.equal(s.mfaConfirmSchema.safeParse({ factorId: "nope", code: "123456" }).success, false);
+
+  assert.ok(s.inviteCreateSchema.safeParse({ email: "A@B.com", role: "viewer" }).success);
+  assert.equal(s.inviteCreateSchema.safeParse({ email: "a@b.com", role: "owner" }).success, false, "can't invite owners");
+  assert.equal(s.inviteCreateSchema.safeParse({ email: "a@b.com", role: "agent" }).success, false, "agent needs a name");
+  assert.ok(s.inviteCreateSchema.safeParse({ email: "a@b.com", role: "agent", agentName: " Kasun " }).success);
+  assert.equal(s.memberUpdateSchema.safeParse({ role: "superuser" }).success, false);
+
+  assert.equal(s.deleteAccountSchema.safeParse({ confirmName: "", password: "x" }).success, false);
+  assert.equal(s.accountSwitchSchema.safeParse({ accountId: "1 or 1=1" }).success, false);
+  assert.equal(s.eraseCustomerSchema.safeParse({ email: "not-email" }).success, false);
+});

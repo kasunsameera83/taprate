@@ -26,7 +26,7 @@ function SurveyDetail({ id }: { id: string }) {
     setError("");
     api<Survey>(`/api/surveys/${encodeURIComponent(id)}`).then((r) => (r.ok ? setSurvey(r.data) : setError(r.message)));
     api<ResponsesPage>(`/api/responses${qs({ surveyId: id, limit: 1 })}`).then((r) => r.ok && setHasResponses(r.data.total > 0));
-    api<{ role: string }>("/api/account").then((r) => r.ok && setCanEdit(r.data.role !== "viewer"));
+    api<{ role: string | null }>("/api/account").then((r) => r.ok && setCanEdit(r.data.role === "owner" || r.data.role === "admin"));
   }, [id]);
   useEffect(load, [load]);
 

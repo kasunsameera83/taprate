@@ -15,6 +15,12 @@ export const LIMITS = {
   userRead: { name: "user:read", limit: 120, windowSec: 60 },
   userWrite: { name: "user:write", limit: 30, windowSec: 60 },
   userExport: { name: "user:export", limit: 5, windowSec: 60 },
+  forgotPerIp: { name: "forgot:ip", limit: 5, windowSec: 900 },
+  forgotPerEmail: { name: "forgot:email", limit: 3, windowSec: 3600 },
+  reauth: { name: "reauth:user", limit: 5, windowSec: 900 },
+  mfaVerify: { name: "mfa:user", limit: 6, windowSec: 300 },
+  invitesPerUser: { name: "invite:user", limit: 30, windowSec: 3600 },
+  dangerous: { name: "danger:user", limit: 5, windowSec: 3600 },
 } as const satisfies Record<string, RateLimitRule>;
 
 /**

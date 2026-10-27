@@ -241,3 +241,86 @@ export function fieldErrors(error: z.ZodError): Record<string, string> {
   }
   return out;
 }
+
+// ---------------------------------------------------------------------------
+// Account security (Phase 1)
+// ---------------------------------------------------------------------------
+
+export const forgotPasswordSchema = z.object({ email: emailSchema }).strict();
+
+export const newPasswordSchema = z
+  .object({
+    newPassword: passwordSchema,
+    // Only for "change password" while signed in; a reset link proves identity instead.
+    currentPassword: z.string().min(1, "Enter your current password").max(128).optional(),
+  })
+  .strict();
+
+export const changeEmailSchema = z
+  .object({
+    email: emailSchema,
+    currentPassword: z.string().min(1, "Enter your current password").max(128),
+  })
+  .strict();
+
+const totpCode = z
+  .string({ error: "Enter the 6-digit code" })
+  .transform((v) => v.replace(/\s+/g, ""))
+  .pipe(z.string().regex(/^\d{6}$/, "Enter the 6-digit code from your app"));
+
+export const mfaCodeSchema = z.object({ code: totpCode }).strict();
+export const mfaConfirmSchema = z.object({ factorId: uuidSchema, code: totpCode }).strict();
+
+// ---------------------------------------------------------------------------
+// Team (Phase 1)
+// ---------------------------------------------------------------------------
+
+const agentName = z
+  .string()
+  .max(400)
+  .transform((v) => cleanText(v))
+  .pipe(z.string().max(100, "Agent name must be at most 100 characters"));
+
+export const inviteCreateSchema = z
+  .object({
+    email: emailSchema,
+    role: z.enum(["admin", "viewer", "agent"], { error: "Choose a role" }),
+    agentName: z.union([agentName, z.null()]).optional(),
+  })
+  .strict()
+  .refine((v) => v.role !== "agent" || (v.agentName ?? "").length > 0, {
+    message: "Enter the agent's name exactly as your helpdesk shows it",
+    path: ["agentName"],
+  });
+export type InviteCreateInput = z.infer<typeof inviteCreateSchema>;
+
+export const memberUpdateSchema = z
+  .object({
+    role: z.enum(["owner", "admin", "viewer", "agent"], { error: "Choose a role" }),
+    agentName: z.union([agentName, z.null()]).optional(),
+  })
+  .strict()
+  .refine((v) => v.role !== "agent" || (v.agentName ?? "").length > 0, {
+    message: "Enter the agent's name exactly as your helpdesk shows it",
+    path: ["agentName"],
+  });
+
+export const accountSwitchSchema = z.object({ accountId: uuidSchema }).strict();
+export const accountCreateSchema = z.object({ name: text(1, 80, "Business name") }).strict();
+
+// ---------------------------------------------------------------------------
+// Privacy (Phase 1)
+// ---------------------------------------------------------------------------
+
+export const eraseCustomerSchema = z.object({ email: emailSchema }).strict();
+
+export const deleteAccountSchema = z
+  .object({
+    confirmName: z.string().min(1, "Type the business name to confirm").max(200),
+    password: z.string().min(1, "Enter your password").max(128),
+  })
+  .strict();
+
+export const auditQuerySchema = z
+  .object({ page: z.coerce.number().int().min(1).max(200).default(1) })
+  .strict();

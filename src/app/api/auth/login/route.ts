@@ -4,6 +4,7 @@ import { signInSchema, type SignInInput } from "@/lib/validation/schemas";
 import { sha256Hex } from "@/lib/security/request";
 import { userClient } from "@/lib/supabase/server";
 import { audit } from "@/lib/audit";
+import { mfaState } from "@/lib/account";
 
 export const POST = secureRoute<undefined, undefined, SignInInput, "public">(
   { auth: "public", action: null, ipLimit: LIMITS.loginPerIp, body: signInSchema },
@@ -26,6 +27,8 @@ export const POST = secureRoute<undefined, undefined, SignInInput, "public">(
     }
 
     await audit({ accountId: null, userId: data.user.id, action: "auth.login", ipHash });
-    return ok({ signedIn: true });
+    // Password was right; users with an authenticator still need the 6-digit code before seeing any data.
+    const mfa = await mfaState(supabase);
+    return ok({ signedIn: true, mfaRequired: mfa.needsCode });
   },
 );

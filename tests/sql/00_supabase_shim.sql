@@ -22,3 +22,17 @@ create or replace function auth.uid() returns uuid language sql stable as $$
   select nullif(nullif(current_setting('request.jwt.claims', true), '')::json->>'sub', '')::uuid;
 $$;
 grant execute on function auth.uid() to anon, authenticated, service_role;
+
+alter table auth.users add column if not exists email_confirmed_at timestamptz default now();
+
+create or replace function auth.jwt() returns jsonb language sql stable as $$
+  select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb;
+$$;
+grant execute on function auth.jwt() to anon, authenticated, service_role;
+
+create table if not exists auth.mfa_factors (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  factor_type text not null default 'totp',
+  status text not null default 'unverified'
+);

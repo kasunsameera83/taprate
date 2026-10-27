@@ -19,8 +19,13 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
       | { ok: true; data: T }
       | { ok: false; error: { message: string; fields?: Record<string, string> } }
       | null;
-    if (res.status === 401 && typeof window !== "undefined" && window.location.pathname.startsWith("/app")) {
-      window.location.assign("/login");
+    if (res.status === 401 && typeof window !== "undefined") {
+      const code = json && !json.ok ? (json.error as { code?: string }).code : undefined;
+      const here = window.location.pathname;
+      if (code === "mfa_required" && !here.startsWith("/login/verify")) {
+        window.location.assign(here.startsWith("/reset-password") ? "/login/verify?next=reset" : "/login/verify");
+      }
+      else if (code !== "mfa_required" && (here.startsWith("/app") || here.startsWith("/welcome"))) window.location.assign("/login");
     }
     if (json && json.ok) return { ok: true, data: json.data };
     return {

@@ -100,3 +100,20 @@ test("response tokens expire and are bound to one response", () => {
   assert.equal(verifyResponseToken(SECRET, RESP, `${Number(exp) + 999}.${sig}`, now), false, "extended expiry");
   assert.equal(verifyResponseToken(SECRET, RESP, "garbage", now), false);
 });
+
+test("purpose tokens: bound to purpose, user and time", async () => {
+  const { createPurposeToken, verifyPurposeToken } = await import("../../src/lib/security/signing.ts");
+  const USER = "9a000000-0000-4000-8000-000000000009";
+  const OTHER_USER = "9b000000-0000-4000-8000-000000000009";
+  const now = 1_800_000_000;
+  const t = createPurposeToken(SECRET, "password-reset", USER, 900, now);
+  assert.equal(verifyPurposeToken(SECRET, "password-reset", USER, t, 900, now + 60), true);
+  assert.equal(verifyPurposeToken(SECRET, "password-reset", USER, t, 900, now + 901), false, "expired");
+  assert.equal(verifyPurposeToken(SECRET, "password-reset", OTHER_USER, t, 900, now), false, "other user");
+  assert.equal(verifyPurposeToken(SECRET, "email-change", USER, t, 900, now), false, "other purpose");
+  assert.equal(verifyPurposeToken(OTHER, "password-reset", USER, t, 900, now), false, "other secret");
+  const [exp, sig] = t.split(".");
+  assert.equal(verifyPurposeToken(SECRET, "password-reset", USER, `${Number(exp) + 100}.${sig}`, 900, now), false, "tampered expiry");
+  assert.equal(verifyPurposeToken(SECRET, "password-reset", USER, undefined, 900, now), false, "missing");
+  assert.throws(() => createPurposeToken(SECRET, "Bad Purpose!", USER, 900));
+});

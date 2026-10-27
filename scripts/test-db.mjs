@@ -16,8 +16,14 @@ if (/supabase\.co/i.test(url)) {
   process.exit(1);
 }
 
-const psql = (file) =>
-  execFileSync("psql", [url, "-v", "ON_ERROR_STOP=1", "-q", "-f", file], { stdio: "inherit" });
+// Query output is discarded; any failed check raises an error, stops the run and is printed.
+const psql = (file) => {
+  execFileSync("psql", [url, "-v", "ON_ERROR_STOP=1", "-q", "-o", process.platform === "win32" ? "NUL" : "/dev/null", "-f", file], {
+    stdio: ["ignore", "inherit", "inherit"],
+    env: { ...process.env, PGOPTIONS: "-c client_min_messages=warning" },
+  });
+  console.log(`ok  ${file}`);
+};
 
 psql("tests/sql/00_supabase_shim.sql");
 for (const f of readdirSync("supabase/migrations").filter((f) => f.endsWith(".sql")).sort()) {
