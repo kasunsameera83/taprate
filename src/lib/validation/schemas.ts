@@ -79,6 +79,17 @@ const httpsUrl = z
     }
   }, "URL must start with https://");
 
+// Reason chips customers can tap after rating ("Fast", "Friendly", "Slow reply"…).
+export const driverLabel = z
+  .string()
+  .max(160)
+  .transform((v) => cleanText(v))
+  .pipe(z.string().min(1, "Reasons can't be empty").max(40, "Keep each reason under 40 characters"));
+const driverList = z
+  .array(driverLabel)
+  .max(8, "Up to 8 reasons")
+  .refine((a) => new Set(a.map((x) => x.toLowerCase())).size === a.length, "Each reason must be different");
+
 const surveyFields = {
   name: text(1, 80, "Survey name"),
   question: text(1, 200, "Question"),
@@ -93,6 +104,12 @@ const surveyFields = {
     .max(10, "Up to 10 alert emails")
     .refine((a) => new Set(a).size === a.length, "Alert emails must be unique"),
   status: z.enum(["active", "paused", "archived"]),
+  driversPositive: driverList,
+  driversNegative: driverList,
+  reviewCtaLabel: z.union([text(1, 40, "Button text"), z.literal("").transform(() => null), z.null()]),
+  reviewCtaUrl: z.union([httpsUrl, z.literal("").transform(() => null), z.null()]),
+  followupsEnabled: z.boolean(),
+  followupDueHours: z.number({ error: "Choose how soon to follow up" }).int().min(1).max(720),
 };
 
 function thresholdFits(iconSet: IconSetId, threshold: number | null): boolean {
@@ -101,20 +118,34 @@ function thresholdFits(iconSet: IconSetId, threshold: number | null): boolean {
   return threshold >= s.min && threshold <= s.max;
 }
 
+const reviewPair = (v: { reviewCtaLabel?: string | null; reviewCtaUrl?: string | null }) =>
+  v.reviewCtaLabel === undefined && v.reviewCtaUrl === undefined ? true : Boolean(v.reviewCtaLabel) === Boolean(v.reviewCtaUrl);
+
 export const surveyCreateSchema = z
-  .object({ ...surveyFields, status: surveyFields.status.default("active") })
+  .object({
+    ...surveyFields,
+    status: surveyFields.status.default("active"),
+    driversPositive: driverList.default([]),
+    driversNegative: driverList.default([]),
+    reviewCtaLabel: surveyFields.reviewCtaLabel.default(null),
+    reviewCtaUrl: surveyFields.reviewCtaUrl.default(null),
+    followupsEnabled: z.boolean().default(true),
+    followupDueHours: surveyFields.followupDueHours.default(48),
+  })
   .strict()
   .refine((v) => thresholdFits(v.iconSet, v.alertThreshold), {
     message: "Alert level must be within the rating scale",
     path: ["alertThreshold"],
-  });
+  })
+  .refine(reviewPair, { message: "Add both the button text and the link, or neither", path: ["reviewCtaUrl"] });
 export type SurveyCreateInput = z.infer<typeof surveyCreateSchema>;
 
 export const surveyUpdateSchema = z
   .object(surveyFields)
   .partial()
   .strict()
-  .refine((v) => Object.keys(v).length > 0, "Nothing to update");
+  .refine((v) => Object.keys(v).length > 0, "Nothing to update")
+  .refine(reviewPair, { message: "Add both the button text and the link, or neither", path: ["reviewCtaUrl"] });
 export type SurveyUpdateInput = z.infer<typeof surveyUpdateSchema>;
 
 export { thresholdFits };
@@ -189,11 +220,15 @@ export const publicCommentSchema = z
       .string()
       .max(8000)
       .transform((v) => cleanText(v, { multiline: true }))
-      .pipe(z.string().min(1, "Write a comment first").max(2000, "Comment must be at most 2000 characters")),
+      .pipe(z.string().min(1, "Write a comment first").max(2000, "Comment must be at most 2000 characters"))
+      .optional(),
+    // Reasons tapped by the customer. The server also checks they're offered by this survey.
+    drivers: z.array(driverLabel).max(8).optional(),
     // Honeypot: hidden field real people never fill in. Bots that fill every field are rejected.
     website: z.string().max(0, "Invalid submission").optional(),
   })
-  .strict();
+  .strict()
+  .refine((v) => v.comment !== undefined || v.drivers !== undefined, { message: "Nothing to save", path: ["comment"] });
 
 /**
  * Click links come from emails where merge tags may be unreplaced or mangled. A bad optional
@@ -323,4 +358,46 @@ export const deleteAccountSchema = z
 
 export const auditQuerySchema = z
   .object({ page: z.coerce.number().int().min(1).max(200).default(1) })
+  .strict();
+
+// ---------------------------------------------------------------------------
+// Follow-ups & leaderboard (Phase 2)
+// ---------------------------------------------------------------------------
+
+export const followupsQuerySchema = z
+  .object({
+    status: z.enum(["open", "in_progress", "resolved", "overdue", "active"]).default("active"),
+    mine: z.enum(["yes"]).optional(),
+    surveyId: uuidSchema.optional(),
+    page: z.coerce.number().int().min(1).max(500).default(1),
+  })
+  .strict();
+
+export const followupUpdateSchema = z
+  .object({
+    status: z.enum(["open", "in_progress", "resolved"]).optional(),
+    assigneeId: z.union([uuidSchema, z.null()]).optional(),
+    dueAt: z
+      .union([z.string().datetime({ offset: true, error: "Choose a valid date" }), z.null()])
+      .optional(),
+  })
+  .strict()
+  .refine((v) => Object.keys(v).length > 0, "Nothing to update");
+
+export const followupNoteSchema = z
+  .object({
+    body: z
+      .string()
+      .max(8000)
+      .transform((v) => cleanText(v, { multiline: true }))
+      .pipe(z.string().min(1, "Write a note first").max(2000, "Notes must be at most 2000 characters")),
+  })
+  .strict();
+
+export const leaderboardQuerySchema = z
+  .object({
+    surveyId: uuidSchema.optional(),
+    days: z.coerce.number().pipe(z.union([z.literal(7), z.literal(30), z.literal(90)])).default(30),
+    minRatings: z.coerce.number().int().min(1).max(100).default(5),
+  })
   .strict();

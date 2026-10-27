@@ -6,8 +6,9 @@ import { verifyResponseToken } from "@/lib/security/signing";
 import { adminClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
 
-// Adds or replaces the comment on the customer's own response. The signed, time-limited token
-// proves they are the person who clicked; the survey must allow comments.
+// Adds the customer's comment and/or reasons to their own response. The signed, time-limited token
+// proves they are the person who clicked. Reasons must be ones the survey offers for that rating
+// (checked here and again by the database).
 export const POST = secureRoute<undefined, undefined, z.infer<typeof publicCommentSchema>, "public">(
   { auth: "public", action: null, ipLimit: LIMITS.publicPerIp, body: publicCommentSchema, maxBodyBytes: 12 * 1024 },
   async ({ body, requestId }) => {
@@ -21,19 +22,34 @@ export const POST = secureRoute<undefined, undefined, z.infer<typeof publicComme
     const db = adminClient();
     const { data: response, error: readErr } = await db
       .from("responses")
-      .select("id, status, surveys(allow_comment, status)")
+      .select("id, status, sentiment, surveys(allow_comment, status, drivers_positive, drivers_negative)")
       .eq("id", body.responseId)
       .maybeSingle();
     if (readErr) return fail("unavailable", undefined, undefined, requestId);
-    const survey = (response?.surveys ?? null) as unknown as { allow_comment: boolean; status: string } | null;
+    const survey = (response?.surveys ?? null) as unknown as {
+      allow_comment: boolean;
+      status: string;
+      drivers_positive: string[];
+      drivers_negative: string[];
+    } | null;
     if (!response || !survey) return fail("not_found", undefined, undefined, requestId);
-    if (!survey.allow_comment || survey.status !== "active") {
-      return fail("forbidden", "Comments are turned off for this survey.", undefined, requestId);
-    }
-    // Only count comments on ratings a real browser confirmed.
+    if (survey.status !== "active") return fail("forbidden", "This survey isn't collecting feedback right now.", undefined, requestId);
+    // Only ratings a real browser confirmed can get extra detail.
     if (response.status !== "confirmed") return fail("conflict", "Please wait a moment and try again.", undefined, requestId);
 
-    const { error } = await db.from("responses").update({ comment: body.comment }).eq("id", body.responseId);
+    const update: { comment?: string; drivers?: string[] } = {};
+    if (body.comment !== undefined) {
+      if (!survey.allow_comment) return fail("forbidden", "Comments are turned off for this survey.", undefined, requestId);
+      update.comment = body.comment;
+    }
+    if (body.drivers !== undefined) {
+      const allowed = response.sentiment === "positive" ? survey.drivers_positive : survey.drivers_negative;
+      const unique = [...new Set(body.drivers)];
+      if (unique.some((d) => !allowed.includes(d))) return fail("validation_failed", "Pick reasons from the list.", undefined, requestId);
+      update.drivers = unique;
+    }
+
+    const { error } = await db.from("responses").update(update).eq("id", body.responseId);
     if (error) return fail("unavailable", undefined, undefined, requestId);
     return ok({ saved: true });
   },

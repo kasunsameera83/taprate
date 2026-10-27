@@ -23,6 +23,8 @@ export type ResponseItem = {
   ticket: string | null;
   verified: boolean;
   sentiment: "positive" | "neutral" | "negative" | null;
+  drivers: string[];
+  followup: { status: "open" | "in_progress" | "resolved"; assigneeId: string | null; dueAt: string | null; resolvedAt: string | null } | null;
   createdAt: string;
   confirmedAt: string | null;
 };

@@ -16,12 +16,18 @@ export type SurveyRow = {
   alert_threshold: number | null;
   alert_emails: string[];
   status: "active" | "paused" | "archived";
+  drivers_positive: string[];
+  drivers_negative: string[];
+  review_cta_label: string | null;
+  review_cta_url: string | null;
+  followups_enabled: boolean;
+  followup_due_hours: number;
   created_at: string;
   updated_at: string;
 };
 
 export const SURVEY_COLUMNS =
-  "id, account_id, name, question, icon_set, brand_color, thank_you_message, allow_comment, website_url, alert_threshold, alert_emails, status, created_at, updated_at";
+  "id, account_id, name, question, icon_set, brand_color, thank_you_message, allow_comment, website_url, alert_threshold, alert_emails, status, drivers_positive, drivers_negative, review_cta_label, review_cta_url, followups_enabled, followup_due_hours, created_at, updated_at";
 
 export type SurveyDto = {
   id: string;
@@ -35,6 +41,12 @@ export type SurveyDto = {
   alertThreshold: number | null;
   alertEmails: string[];
   status: SurveyRow["status"];
+  driversPositive: string[];
+  driversNegative: string[];
+  reviewCtaLabel: string | null;
+  reviewCtaUrl: string | null;
+  followupsEnabled: boolean;
+  followupDueHours: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -52,6 +64,12 @@ export function toSurveyDto(r: SurveyRow): SurveyDto {
     alertThreshold: r.alert_threshold,
     alertEmails: r.alert_emails,
     status: r.status,
+    driversPositive: r.drivers_positive ?? [],
+    driversNegative: r.drivers_negative ?? [],
+    reviewCtaLabel: r.review_cta_label,
+    reviewCtaUrl: r.review_cta_url,
+    followupsEnabled: r.followups_enabled,
+    followupDueHours: r.followup_due_hours,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -68,6 +86,12 @@ const FIELD_MAP = {
   alertThreshold: "alert_threshold",
   alertEmails: "alert_emails",
   status: "status",
+  driversPositive: "drivers_positive",
+  driversNegative: "drivers_negative",
+  reviewCtaLabel: "review_cta_label",
+  reviewCtaUrl: "review_cta_url",
+  followupsEnabled: "followups_enabled",
+  followupDueHours: "followup_due_hours",
 } as const;
 
 export function toSurveyColumns(input: SurveyCreateInput | SurveyUpdateInput): Record<string, unknown> {

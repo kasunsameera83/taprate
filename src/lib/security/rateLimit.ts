@@ -21,6 +21,8 @@ export const LIMITS = {
   mfaVerify: { name: "mfa:user", limit: 6, windowSec: 300 },
   invitesPerUser: { name: "invite:user", limit: 30, windowSec: 3600 },
   dangerous: { name: "danger:user", limit: 5, windowSec: 3600 },
+  upload: { name: "upload:user", limit: 10, windowSec: 3600 },
+  cron: { name: "cron:ip", limit: 10, windowSec: 60 },
 } as const satisfies Record<string, RateLimitRule>;
 
 /**

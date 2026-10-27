@@ -7,7 +7,7 @@ import { Badge, Field, LoadError, Notice, PasswordInput, Skeleton, TextInput } f
 import { SettingsSection } from "@/components/SettingsSection";
 import { IconDownload } from "@/components/icons";
 
-type Me = { account: { id: string; name: string; plan: string; credits: number; role: string } | null };
+type Me = { account: { id: string; name: string; plan: string; credits: number; role: string; logoUrl: string | null } | null };
 
 export default function BusinessSettingsPage() {
   const [me, setMe] = useState<Me | null>(null);
@@ -33,6 +33,8 @@ export default function BusinessSettingsPage() {
         {canPerform(role, "account:write") ? <Rename current={a.name} onSaved={load} /> : <p className="text-sm font-semibold">{a.name}</p>}
       </SettingsSection>
 
+      {canPerform(role, "account:write") && <Logo current={a.logoUrl} onChanged={load} />}
+
       {canPerform(role, "account:export") && (
         <SettingsSection title="Export all data" description="Download everything for this business (surveys, ratings, comments, team) as a JSON file.">
           <a className="btn btn-secondary" href="/api/account/export">
@@ -48,6 +50,73 @@ export default function BusinessSettingsPage() {
 
       {canPerform(role, "account:delete") && <DeleteAccount name={a.name} />}
     </div>
+  );
+}
+
+function Logo({ current, onChanged }: { current: string | null; onChanged: () => void }) {
+  const [notice, setNotice] = useState<{ kind: "error" | "success"; text: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function upload(file: File) {
+    setNotice(null);
+    // Quick checks here for instant feedback; the server checks the real file type and size again.
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) return setNotice({ kind: "error", text: "Choose a PNG, JPG or WebP image." });
+    if (file.size > 512 * 1024) return setNotice({ kind: "error", text: "Logos must be 512 KB or smaller." });
+    setBusy(true);
+    try {
+      const res = await fetch("/api/account/logo", { method: "POST", credentials: "same-origin", headers: { "Content-Type": file.type }, body: file });
+      const json = (await res.json().catch(() => null)) as { ok: boolean; error?: { message: string } } | null;
+      if (res.ok && json?.ok) {
+        setNotice({ kind: "success", text: "Logo updated. It now shows on your thank-you pages." });
+        onChanged();
+      } else setNotice({ kind: "error", text: json?.error?.message ?? "Upload failed. Please try again." });
+    } catch {
+      setNotice({ kind: "error", text: "Network problem. Check your connection and try again." });
+    }
+    setBusy(false);
+  }
+
+  async function remove() {
+    setBusy(true);
+    const r = await api("/api/account/logo", { method: "DELETE" });
+    setBusy(false);
+    if (r.ok) onChanged();
+    else setNotice({ kind: "error", text: r.message });
+  }
+
+  return (
+    <SettingsSection title="Logo" description="Shown at the top of the thank-you page customers see after rating.">
+      <div className="space-y-4">
+        {notice && <Notice kind={notice.kind}>{notice.text}</Notice>}
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex h-20 w-44 items-center justify-center rounded-[10px] border border-dashed border-line-strong bg-canvas p-2">
+            {current ? <img src={current} alt="Current logo" className="max-h-16 max-w-40 object-contain" /> : <span className="text-[13px] text-muted">No logo</span>}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <label className={`btn btn-secondary ${busy ? "pointer-events-none opacity-55" : ""}`}>
+              {busy ? "Uploading…" : current ? "Replace logo" : "Upload logo"}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="sr-only"
+                disabled={busy}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (file) upload(file);
+                }}
+              />
+            </label>
+            {current && (
+              <button type="button" className="btn btn-ghost" onClick={remove} disabled={busy}>
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
+        <p className="text-[13px] text-muted">PNG, JPG or WebP, up to 512 KB. A wide logo on a transparent background works best.</p>
+      </div>
+    </SettingsSection>
   );
 }
 

@@ -258,6 +258,11 @@ const DB_MESSAGES: Array<[RegExp, ErrorCode, string]> = [
   [/too many pending invites/, "conflict", "You have too many pending invites. Cancel some first."],
   [/agent name required/, "validation_failed", "Enter the agent's name exactly as your helpdesk shows it."],
   [/invalid email/, "validation_failed", "Enter a valid email address."],
+  [/assignee must be a team member/, "validation_failed", "Choose someone on your team."],
+  [/no follow-up for this response/, "conflict", "This rating doesn't have a follow-up."],
+  [/invalid due date/, "validation_failed", "Choose a due date within the next year."],
+  [/too many notes/, "conflict", "This follow-up has reached the note limit."],
+  [/invalid driver/, "validation_failed", "Pick reasons from the list."],
 ];
 
 export function dbError(error: { code?: string; message?: string } | null): ApiError {
@@ -265,6 +270,7 @@ export function dbError(error: { code?: string; message?: string } | null): ApiE
     if (error?.message && pattern.test(error.message)) return new ApiError(code, message);
   }
   if (error?.code === "23505") return new ApiError("conflict");
+  if (error?.code === "23514") return new ApiError("validation_failed", "Some of those values aren't allowed. Check the form and try again.");
   if (error?.code === "PGRST116") return new ApiError("not_found");
   if (error?.code === "42501") return new ApiError("forbidden");
   if (error?.message?.includes("icon_set cannot change")) {

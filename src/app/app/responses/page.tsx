@@ -297,10 +297,24 @@ function Rating({ r }: { r: ResponseItem }) {
     <span className="inline-flex items-center gap-2 whitespace-nowrap">
       {r.sentiment && <SentimentDot sentiment={r.sentiment} />}
       <span aria-hidden className="text-lg leading-none">
-        {r.iconSet === "nps" || r.iconSet === "stars5" ? "" : opt?.symbol}
+        {r.iconSet === "nps" || r.iconSet === "ces" || r.iconSet === "stars5" ? "" : opt?.symbol}
       </span>
       <span className="font-semibold">{r.iconSet === "stars5" ? `${r.rating}★ ${opt?.label ?? ""}` : (opt?.label ?? r.rating)}</span>
     </span>
+  );
+}
+
+function Reasons({ r }: { r: ResponseItem }) {
+  if (r.drivers.length === 0) return null;
+  const tone = r.sentiment === "positive" ? "bg-pos-soft text-pos-text" : "bg-neg-soft text-neg-text";
+  return (
+    <ul className="mt-1.5 flex flex-wrap gap-1" aria-label="Reasons given">
+      {r.drivers.map((d) => (
+        <li key={d} className={`rounded-full px-2 py-0.5 text-[12px] font-semibold ${tone}`}>
+          {d}
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -339,7 +353,10 @@ function ResponseTable({ items }: { items: ResponseItem[] }) {
                 <Rating r={r} />
               </td>
               {/* React renders customer text as text, never as HTML. */}
-              <td className="max-w-xs whitespace-pre-wrap break-words px-4 py-3">{r.comment ?? <span className="text-faint">No comment</span>}</td>
+              <td className="max-w-xs whitespace-pre-wrap break-words px-4 py-3">
+                {r.comment ?? (r.drivers.length ? null : <span className="text-faint">No comment</span>)}
+                <Reasons r={r} />
+              </td>
               <td className="max-w-[220px] px-4 py-3">
                 <Customer r={r} />
               </td>
@@ -364,6 +381,7 @@ function ResponseCards({ items }: { items: ResponseItem[] }) {
             <span className="shrink-0 text-[12px] text-muted">{when(r.createdAt)}</span>
           </div>
           {r.comment && <p className="whitespace-pre-wrap break-words">&ldquo;{r.comment}&rdquo;</p>}
+          <Reasons r={r} />
           <div className="text-[13px] text-muted">
             <Customer r={r} />
             {r.agent && <span className="block">Agent: {r.agent}</span>}

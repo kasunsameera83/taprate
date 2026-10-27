@@ -4,23 +4,25 @@ import { LIMITS } from "@/lib/security/rateLimit";
 import { accountUpdateSchema } from "@/lib/validation/schemas";
 import { listMemberships, mfaState } from "@/lib/account";
 import { audit } from "@/lib/audit";
+import { logoUrl } from "@/lib/branding";
 
 // Current user + active account. Works even with no account yet (shows invites / create account).
 export const GET = secureRoute<undefined, undefined, undefined, "user-any">(
   { auth: "user-any", action: null, ipLimit: LIMITS.userRead, userLimit: LIMITS.userRead },
   async ({ supabase, membership, user }) => {
     const [all, mfa] = await Promise.all([listMemberships(supabase, user.id), mfaState(supabase)]);
-    let account: { name: string; plan: string; credits: number; createdAt: string } | null = null;
+    let account: { name: string; plan: string; credits: number; createdAt: string; logoUrl: string | null } | null = null;
     if (membership) {
       const { data, error } = await supabase
         .from("accounts")
-        .select("name, plan, credit_balance, created_at")
+        .select("name, plan, credit_balance, created_at, logo_path")
         .eq("id", membership.accountId)
         .maybeSingle();
       if (error) throw dbError(error);
-      if (data) account = { name: data.name, plan: data.plan, credits: data.credit_balance, createdAt: data.created_at };
+      if (data) account = { name: data.name, plan: data.plan, credits: data.credit_balance, createdAt: data.created_at, logoUrl: logoUrl(data.logo_path) };
     }
     return ok({
+      userId: user.id,
       email: user.email ?? null,
       mfaEnabled: mfa.enabled,
       account: account && membership ? { id: membership.accountId, ...account, role: membership.role, agentName: membership.agentName } : null,

@@ -24,7 +24,7 @@ Stack: Next.js 15 (App Router) + Supabase (Postgres, Auth) + Tailwind CSS 4. Wor
    ```
 2. **Create a Supabase project** at supabase.com.
 3. **Create the database**: open *SQL Editor* and run each file in `supabase/migrations/` **in order**
-   (`0001_init.sql`, `0002_sentiment.sql`, `0003_team_security.sql`, ...). Each file only needs running once.
+   (`0001_init.sql`, `0002_sentiment.sql`, `0003_team_security.sql`, `0004_act_on_feedback.sql`, ...). Each file only needs running once.
    (Or with the Supabase CLI: `supabase db push`.)
 4. **Auth settings** (Authentication → Sign In / Providers, and URL Configuration):
    - Email provider on, **Confirm email** on
@@ -114,8 +114,19 @@ rate limiter fails closed.
 - Full data export, delete one customer's data on request, delete the whole business
 - Activity log of important changes
 
+## Acting on feedback
+
+- Reasons: customers tap why they rated you; the dashboard shows the top reasons
+- Follow-ups: every negative rating becomes a task with an owner, due date, status and notes
+- Daily email reminder for overdue follow-ups (`/api/cron/followups`, scheduled in `vercel.json`;
+  set `CRON_SECRET` in Vercel)
+- Agent leaderboard (agents need a minimum number of ratings to be ranked)
+- CES (customer effort, 1–7) rating scale
+- "Review us" button for happy customers, and your logo on the thank-you page
+  (the `logos` storage bucket is created by migration 0004)
+
 ## Still to come
 
-Response drivers and closed-loop follow-up, CES surveys, custom branding, QR/kiosk/website widget,
+QR/kiosk/website widget,
 WhatsApp share links, Slack/Teams/webhooks, public API, helpdesk integrations, CSV import,
 billing (PayHere + Stripe), AI summaries, scheduled reports.

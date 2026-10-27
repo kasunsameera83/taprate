@@ -1,6 +1,6 @@
 // Rating scales. Shared by validation, snippet builder, thank-you page and reports.
 
-export const ICON_SET_IDS = ["thumbs", "faces3", "faces5", "stars5", "nps"] as const;
+export const ICON_SET_IDS = ["thumbs", "faces3", "faces5", "stars5", "nps", "ces"] as const;
 export type IconSetId = (typeof ICON_SET_IDS)[number];
 
 export type RatingOption = { value: number; label: string; symbol: string; color: string };
@@ -93,7 +93,29 @@ export const ICON_SETS: Record<IconSetId, IconSet> = {
       color: n <= 6 ? RED : n <= 8 ? AMBER : GREEN,
     })),
   },
+  ces: {
+    id: "ces",
+    name: "Effort (1–7)",
+    min: 1,
+    max: 7,
+    positiveFrom: 5,
+    negativeTo: 3,
+    options: [
+      { value: 1, label: "Very difficult", symbol: "1", color: RED },
+      { value: 2, label: "Difficult", symbol: "2", color: RED },
+      { value: 3, label: "Somewhat difficult", symbol: "3", color: ORANGE },
+      { value: 4, label: "Neither", symbol: "4", color: AMBER },
+      { value: 5, label: "Somewhat easy", symbol: "5", color: LIME },
+      { value: 6, label: "Easy", symbol: "6", color: GREEN },
+      { value: 7, label: "Very easy", symbol: "7", color: GREEN },
+    ],
+  },
 };
+
+/** Scales shown as numbered buttons (no emoji). */
+export function isNumericScale(id: IconSetId): boolean {
+  return id === "nps" || id === "ces";
+}
 
 export function isIconSetId(value: unknown): value is IconSetId {
   return typeof value === "string" && (ICON_SET_IDS as readonly string[]).includes(value);

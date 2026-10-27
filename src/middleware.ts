@@ -16,7 +16,8 @@ function buildCsp(nonce: string): string {
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob:",
+    // Business logos are served from Supabase Storage.
+    `img-src 'self' data: blob: ${supabase}`.trim(),
     "font-src 'self'",
     `connect-src 'self' ${supabase}`.trim(),
     "frame-ancestors 'none'",

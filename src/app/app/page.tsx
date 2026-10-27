@@ -90,6 +90,7 @@ export default function Dashboard() {
           <Hero stats={stats} days={days} />
           <KpiRow stats={stats} days={days} />
           <DailyChart stats={stats} />
+          <Reasons stats={stats} />
           <div className="grid gap-6 lg:grid-cols-5">
             <FollowUps items={followUps} surveyId={surveyId} />
             <Agents stats={stats} />
@@ -213,9 +214,17 @@ function KpiRow({ stats, days }: { stats: StatsResponse | null; days: number }) 
       </div>
       <div className="panel p-5">
         <h2 className="font-sans text-sm font-semibold tracking-normal text-muted">
-          Net Promoter Score
+          {stats.nps ? "Net Promoter Score" : stats.ces ? "Customer effort" : "Net Promoter Score"}
         </h2>
-        {stats.nps ? (
+        {!stats.nps && stats.ces ? (
+          <>
+            <p className="font-display tabular mt-1 text-[32px] font-bold leading-tight">
+              {stats.ces.average}
+              <span className="text-lg text-muted"> / 7</span>
+            </p>
+            <p className="text-[13px] text-muted">Average of {stats.ces.total} effort ratings. Higher is easier.</p>
+          </>
+        ) : stats.nps ? (
           <>
             <p className="font-display tabular mt-1 text-[32px] font-bold leading-tight">{stats.nps.score}</p>
             <p className="text-[13px] text-muted">
@@ -225,7 +234,7 @@ function KpiRow({ stats, days }: { stats: StatsResponse | null; days: number }) 
         ) : (
           <>
             <p className="font-display mt-1 text-[32px] font-bold leading-tight text-faint">None yet</p>
-            <p className="text-[13px] text-muted">Shown when a survey uses the 0–10 scale.</p>
+            <p className="text-[13px] text-muted">Shown when a survey uses the 0–10 or effort scale.</p>
           </>
         )}
       </div>
@@ -315,6 +324,46 @@ function DailyChart({ stats }: { stats: StatsResponse | null }) {
   );
 }
 
+function Reasons({ stats }: { stats: StatsResponse | null }) {
+  if (!stats || (stats.drivers.positive.length === 0 && stats.drivers.negative.length === 0)) return null;
+  const col = (title: string, items: Array<{ label: string; count: number }>, tone: "pos" | "neg") => {
+    const max = Math.max(1, ...items.map((i) => i.count));
+    return (
+      <div>
+        <h3 className="font-sans text-sm font-semibold tracking-normal text-muted">{title}</h3>
+        {items.length === 0 ? (
+          <p className="mt-2 text-sm text-muted">None yet.</p>
+        ) : (
+          <ul className="mt-2 space-y-2">
+            {items.map((i) => (
+              <li key={i.label}>
+                <div className="flex items-baseline justify-between gap-2 text-sm">
+                  <span className="truncate">{i.label}</span>
+                  <span className="tabular shrink-0 font-semibold">{i.count}</span>
+                </div>
+                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[#eceef2]" aria-hidden>
+                  <div className={`h-full rounded-full ${tone === "pos" ? "bg-pos-fill" : "bg-neg-fill"}`} style={{ width: `${(i.count / max) * 100}%` }} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    );
+  };
+  return (
+    <section className="panel p-5 sm:p-6" aria-labelledby="reasons-title">
+      <h2 id="reasons-title" className="mb-4 text-lg font-semibold">
+        Why customers rated you this way
+      </h2>
+      <div className="grid gap-6 md:grid-cols-2">
+        {col("What went well", stats.drivers.positive, "pos")}
+        {col("What could be better", stats.drivers.negative, "neg")}
+      </div>
+    </section>
+  );
+}
+
 function timeAgo(iso: string): string {
   const mins = Math.round((Date.now() - Date.parse(iso)) / 60000);
   if (mins < 1) return "just now";
@@ -331,8 +380,8 @@ function FollowUps({ items, surveyId }: { items: ResponseItem[] | null; surveyId
         <h2 id="follow-title" className="text-lg font-semibold">
           Needs follow-up
         </h2>
-        <Link href={`/app/responses${qs({ sentiment: "negative", surveyId: surveyId || undefined })}`} className="link text-sm">
-          See all
+        <Link href="/app/follow-ups" className="link text-sm">
+          Open follow-ups
         </Link>
       </div>
       {items === null ? (

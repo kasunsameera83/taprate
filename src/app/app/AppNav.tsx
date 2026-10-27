@@ -4,12 +4,14 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { api } from "@/lib/client/api";
 import { ROLE_LABEL, type Role } from "@/lib/security/authz";
-import { IconDashboard, IconLogout, IconResponses, IconSettings, IconSurveys, Logo } from "@/components/icons";
+import { IconDashboard, IconFollowUp, IconLogout, IconResponses, IconSettings, IconSurveys, IconTrophy, Logo } from "@/components/icons";
 
 const NAV = [
   { href: "/app", label: "Dashboard", icon: IconDashboard, exact: true },
   { href: "/app/surveys", label: "Surveys", icon: IconSurveys },
   { href: "/app/responses", label: "Responses", icon: IconResponses },
+  { href: "/app/follow-ups", label: "Follow-ups", icon: IconFollowUp },
+  { href: "/app/leaderboard", label: "Leaderboard", icon: IconTrophy },
   { href: "/app/settings", label: "Settings", icon: IconSettings },
 ];
 

@@ -65,7 +65,7 @@ export default function SurveysPage() {
                 <li key={s.id}>
                   <Link href={`/app/surveys/${s.id}`} className="flex items-center gap-4 p-4 hover:bg-canvas sm:p-5">
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-line bg-surface text-xl" aria-hidden>
-                      {s.iconSet === "nps" ? <span className="font-display text-sm font-bold">0–10</span> : s.iconSet === "stars5" ? "★" : set.options.at(-1)?.symbol}
+                      {s.iconSet === "nps" || s.iconSet === "ces" ? <span className="font-display text-sm font-bold">{s.iconSet === "nps" ? "0–10" : "1–7"}</span> : s.iconSet === "stars5" ? "★" : set.options.at(-1)?.symbol}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-2">

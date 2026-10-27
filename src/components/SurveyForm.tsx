@@ -5,6 +5,10 @@ import { ICON_SETS, ICON_SET_IDS, type IconSetId } from "@/lib/surveys/iconSets"
 import type { Survey } from "@/lib/client/types";
 import { Field, Notice, Segmented, TextInput } from "@/components/ui";
 import { EmailButtonsPreview, EmailFrame, ThanksPreview } from "@/components/SurveyPreview";
+import { ChipListInput } from "@/components/ChipListInput";
+
+const DEFAULT_POSITIVE = ["Fast reply", "Friendly", "Solved my problem", "Easy to understand"];
+const DEFAULT_NEGATIVE = ["Slow reply", "Not solved", "Hard to understand", "Unfriendly"];
 
 type Props = {
   initial?: Survey;
@@ -20,6 +24,7 @@ const SCALE_HELP: Record<IconSetId, string> = {
   thumbs: "Yes / no. Highest response rate.",
   stars5: "Familiar from reviews.",
   nps: "Measures loyalty: how likely to recommend.",
+  ces: "Measures effort: how easy it was to get help.",
 };
 
 function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
@@ -45,6 +50,10 @@ export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, su
     initial ? (initial.alertThreshold === null ? "" : String(initial.alertThreshold)) : String(ICON_SETS.faces5.negativeTo),
   );
   const [preview, setPreview] = useState<"email" | "thanks">("email");
+  const [driversPositive, setDriversPositive] = useState<string[]>(initial ? initial.driversPositive : DEFAULT_POSITIVE);
+  const [driversNegative, setDriversNegative] = useState<string[]>(initial ? initial.driversNegative : DEFAULT_NEGATIVE);
+  const [reviewOn, setReviewOn] = useState(Boolean(initial?.reviewCtaUrl));
+  const [followupsEnabled, setFollowupsEnabled] = useState(initial?.followupsEnabled ?? true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState<{ kind: "error" | "success"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -69,6 +78,12 @@ export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, su
       alertThreshold: threshold === "" ? null : Number(threshold),
       alertEmails: emails,
       status: String(f.get("status") ?? "active"),
+      driversPositive,
+      driversNegative,
+      reviewCtaLabel: reviewOn ? String(f.get("reviewCtaLabel") ?? "") : null,
+      reviewCtaUrl: reviewOn ? String(f.get("reviewCtaUrl") ?? "").trim() : null,
+      followupsEnabled,
+      followupDueHours: Number(f.get("followupDueHours") ?? 48),
     };
 
     // Same schemas as the server: instant feedback here, the real check happens in the API.
@@ -127,7 +142,7 @@ export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, su
                     <span className="min-w-0">
                       <span className="block text-sm font-semibold">{ICON_SETS[id].name}</span>
                       <span className="block truncate text-base" aria-hidden>
-                        {id === "stars5" ? "★★★★★" : id === "nps" ? "0 1 2 … 10" : ICON_SETS[id].options.map((o) => o.symbol).join(" ")}
+                        {id === "stars5" ? "★★★★★" : id === "nps" ? "0 1 2 … 10" : id === "ces" ? "1 2 3 … 7" : ICON_SETS[id].options.map((o) => o.symbol).join(" ")}
                       </span>
                       <span className="block text-[13px] text-muted">{SCALE_HELP[id]}</span>
                     </span>
@@ -164,6 +179,58 @@ export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, su
               <input type="checkbox" checked={allowComment} onChange={(e) => setAllowComment(e.target.checked)} className="h-4 w-4 accent-[var(--color-brand)]" />
               Ask for an optional comment after rating
             </label>
+          </Section>
+
+          <Section title="Reasons" description="After rating, customers can tap why. Shown as one-tap buttons; leave a list empty to skip it.">
+            <ChipListInput
+              label="When they're happy: what went well?"
+              name="driversPositive"
+              values={driversPositive}
+              onChange={setDriversPositive}
+              error={errors.driversPositive}
+            />
+            <ChipListInput
+              label="When they're not: what could be better?"
+              name="driversNegative"
+              values={driversNegative}
+              onChange={setDriversNegative}
+              error={errors.driversNegative}
+            />
+          </Section>
+
+          <Section title="Ask happy customers for a review" description="Show a button on the thank-you page, only after a positive rating.">
+            <label className="flex min-h-11 items-center gap-3 text-sm">
+              <input type="checkbox" checked={reviewOn} onChange={(e) => setReviewOn(e.target.checked)} className="h-4 w-4 accent-[var(--color-brand)]" />
+              Show a review button
+            </label>
+            {reviewOn && (
+              <div className="grid gap-4 sm:grid-cols-[220px_minmax(0,1fr)]">
+                <Field label="Button text" name="reviewCtaLabel" error={errors.reviewCtaLabel}>
+                  <TextInput name="reviewCtaLabel" defaultValue={initial?.reviewCtaLabel ?? "Review us on Google"} maxLength={40} error={errors.reviewCtaLabel} />
+                </Field>
+                <Field label="Link" name="reviewCtaUrl" error={errors.reviewCtaUrl} hint="Your Google, Facebook or Tripadvisor review page. Must start with https://">
+                  <TextInput name="reviewCtaUrl" type="url" inputMode="url" placeholder="https://g.page/r/…/review" defaultValue={initial?.reviewCtaUrl ?? ""} maxLength={300} error={errors.reviewCtaUrl} hasHint />
+                </Field>
+              </div>
+            )}
+          </Section>
+
+          <Section title="Follow-ups" description="Turn every negative rating into a task, so no unhappy customer is forgotten.">
+            <label className="flex min-h-11 items-center gap-3 text-sm">
+              <input type="checkbox" checked={followupsEnabled} onChange={(e) => setFollowupsEnabled(e.target.checked)} className="h-4 w-4 accent-[var(--color-brand)]" />
+              Create a follow-up for every negative rating
+            </label>
+            {followupsEnabled && (
+              <Field label="Follow up within" name="followupDueHours" error={errors.followupDueHours}>
+                <select id="followupDueHours" name="followupDueHours" className="input sm:max-w-xs" defaultValue={String(initial?.followupDueHours ?? 48)}>
+                  <option value="4">4 hours</option>
+                  <option value="24">1 day</option>
+                  <option value="48">2 days</option>
+                  <option value="72">3 days</option>
+                  <option value="168">1 week</option>
+                </select>
+              </Field>
+            )}
           </Section>
 
           <Section title="Alerts" description="Get an email when a customer is unhappy, so you can follow up quickly.">
@@ -220,7 +287,14 @@ export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, su
             <EmailButtonsPreview iconSet={iconSet} question={question} />
           </EmailFrame>
         ) : (
-          <ThanksPreview question={question} message={message} brandColor={brandColor} allowComment={allowComment} />
+          <ThanksPreview
+            question={question}
+            message={message}
+            brandColor={brandColor}
+            allowComment={allowComment}
+            drivers={driversPositive}
+            reviewLabel={reviewOn ? "Review us" : null}
+          />
         )}
         <p className="mt-3 text-[13px] text-muted">Buttons are plain text and colour, so they show even when images are blocked.</p>
       </aside>

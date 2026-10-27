@@ -16,6 +16,7 @@ const schema = z.object({
   RESPONSE_TOKEN_SECRET: secret("RESPONSE_TOKEN_SECRET"),
   IP_HASH_SALT: z.string().min(16, "IP_HASH_SALT must be at least 16 characters"),
   RESEND_API_KEY: z.string().optional(),
+  CRON_SECRET: z.union([secret("CRON_SECRET"), z.literal("")]).optional(),
   ALERT_FROM_EMAIL: z.string().email().optional().or(z.literal("")),
 });
 

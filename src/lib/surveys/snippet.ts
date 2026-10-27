@@ -53,13 +53,13 @@ export function buildSnippetHtml(input: SnippetInput): string {
   }
   if (!/^#[0-9a-fA-F]{6}$/.test(input.brandColor)) throw new Error("invalid colour");
   const set = ICON_SETS[input.iconSet];
-  const compact = set.id === "nps";
+  const compact = set.id === "nps" || set.id === "ces";
   const showLabels = set.id === "thumbs" || set.id === "faces3" || set.id === "faces5";
 
   const buttons = set.options.map((o) => {
     const url = buildClickUrl(input.appUrl, input.signToken(input.surveyId, o.value), input.mergeTags);
     const symbol = set.id === "stars5" ? `${o.value}&#9733;` : escapeHtml(o.symbol);
-    const symbolColor = set.id === "nps" ? INK : o.color;
+    const symbolColor = compact ? INK : o.color;
     const label = showLabels
       ? `<br><span style="font-family:${FONT};font-size:11px;line-height:14px;font-weight:bold;color:${LABEL};">${escapeHtml(o.label)}</span>`
       : "";
@@ -77,8 +77,8 @@ export function buildSnippetHtml(input: SnippetInput): string {
   const npsLegend = compact
     ? `<tr><td style="padding:4px 0 0 0;font-family:${FONT};font-size:11px;line-height:14px;color:${LABEL};">` +
       `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>` +
-      `<td align="left" style="font-family:${FONT};font-size:11px;color:${LABEL};">0 = Not likely</td>` +
-      `<td align="right" style="font-family:${FONT};font-size:11px;color:${LABEL};">10 = Very likely</td>` +
+      `<td align="left" style="font-family:${FONT};font-size:11px;color:${LABEL};">${set.id === "ces" ? "1 = Very difficult" : "0 = Not likely"}</td>` +
+      `<td align="right" style="font-family:${FONT};font-size:11px;color:${LABEL};">${set.id === "ces" ? "7 = Very easy" : "10 = Very likely"}</td>` +
       `</tr></table></td></tr>`
     : "";
 

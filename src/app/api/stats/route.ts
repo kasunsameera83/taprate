@@ -18,7 +18,7 @@ export const GET = secureRoute<undefined, z.infer<typeof statsQuerySchema>>(
     // Current + previous period in one query (both explicitly scoped to this account; RLS also applies).
     let q = supabase
       .from("responses")
-      .select("rating, created_at, agent, surveys(icon_set)")
+      .select("rating, created_at, agent, drivers, surveys(icon_set)")
       .eq("account_id", membership.accountId)
       .eq("status", "confirmed")
       .gte("created_at", previousSince);
@@ -29,10 +29,10 @@ export const GET = secureRoute<undefined, z.infer<typeof statsQuerySchema>>(
 
     const current: StatRow[] = [];
     const previous: StatRow[] = [];
-    for (const r of data as unknown as Array<{ rating: number | null; created_at: string; agent: string | null; surveys: { icon_set: string } | null }>) {
+    for (const r of data as unknown as Array<{ rating: number | null; created_at: string; agent: string | null; drivers: string[] | null; surveys: { icon_set: string } | null }>) {
       const set = r.surveys?.icon_set;
       if (r.rating === null || !isIconSetId(set)) continue;
-      const row = { rating: r.rating, iconSet: set, createdAt: r.created_at, agent: r.agent };
+      const row = { rating: r.rating, iconSet: set, createdAt: r.created_at, agent: r.agent, drivers: r.drivers ?? [] };
       (Date.parse(r.created_at) >= now - periodMs ? current : previous).push(row);
     }
 

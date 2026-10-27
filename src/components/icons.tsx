@@ -110,3 +110,15 @@ export function Logo({ className }: { className?: string }) {
     </span>
   );
 }
+
+export const IconFollowUp = (p: P) => (
+  <Svg {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 2" />
+  </Svg>
+);
+export const IconTrophy = (p: P) => (
+  <Svg {...p}>
+    <path d="M8 4h8v5a4 4 0 0 1-8 0V4ZM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8M9.5 17h5" />
+  </Svg>
+);

@@ -27,6 +27,10 @@ const ACTIONS: Record<string, string> = {
   "auth.mfa_disabled": "Turned off two-step verification",
   "auth.email_change_requested": "Requested an email change",
   "auth.signed_out_everywhere": "Signed out on all devices",
+  "followup.resolved": "Resolved a follow-up",
+  "followup.updated": "Updated a follow-up",
+  "account.logo_updated": "Changed the logo",
+  "account.logo_removed": "Removed the logo",
 };
 
 function describe(e: Entry): string {

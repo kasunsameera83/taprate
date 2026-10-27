@@ -5,6 +5,7 @@ import { env } from "@/lib/env";
 import { isUuid, verifyResponseToken } from "@/lib/security/signing";
 import { isIconSetId, ratingOption, sentimentOf } from "@/lib/surveys/iconSets";
 import { ThanksClient } from "./ThanksClient";
+import { logoUrl } from "@/lib/branding";
 
 export const metadata: Metadata = { title: "Thank you", robots: { index: false, follow: false } };
 
@@ -25,7 +26,7 @@ export default async function ThanksPage({
   // Service role, scoped to this one response id (proven by the signed token above).
   const { data } = await adminClient()
     .from("responses")
-    .select("id, rating, pending_rating, comment, surveys(question, icon_set, brand_color, thank_you_message, allow_comment, website_url, status, accounts(name))")
+    .select("id, rating, pending_rating, comment, drivers, surveys(question, icon_set, brand_color, thank_you_message, allow_comment, website_url, status, drivers_positive, drivers_negative, review_cta_label, review_cta_url, accounts(name, logo_path))")
     .eq("id", id)
     .maybeSingle();
   const survey = (data?.surveys ?? null) as unknown as {
@@ -36,7 +37,11 @@ export default async function ThanksPage({
     allow_comment: boolean;
     website_url: string | null;
     status: string;
-    accounts: { name: string } | null;
+    drivers_positive: string[];
+    drivers_negative: string[];
+    review_cta_label: string | null;
+    review_cta_url: string | null;
+    accounts: { name: string; logo_path: string | null } | null;
   } | null;
   if (!data || !survey || !isIconSetId(survey.icon_set)) notFound();
 
@@ -44,19 +49,31 @@ export default async function ThanksPage({
   const option = rating !== null ? ratingOption(survey.icon_set, rating) : undefined;
   const sentiment = rating !== null ? sentimentOf(survey.icon_set, rating) : null;
   const business = survey.accounts?.name;
-  const symbol = survey.icon_set === "stars5" && rating !== null ? "★".repeat(rating) : survey.icon_set === "nps" && rating !== null ? String(rating) : option?.symbol;
+  const logo = logoUrl(survey.accounts?.logo_path);
+  const active = survey.status === "active";
+  const driverOptions = active && sentiment ? (sentiment === "positive" ? survey.drivers_positive : survey.drivers_negative) : [];
+  // Review button only for happy customers, and only https links (also enforced by the database).
+  const review =
+    sentiment === "positive" && survey.review_cta_label && survey.review_cta_url?.startsWith("https://")
+      ? { label: survey.review_cta_label, url: survey.review_cta_url }
+      : null;
+  const symbol = survey.icon_set === "stars5" && rating !== null ? "★".repeat(rating) : (survey.icon_set === "nps" || survey.icon_set === "ces") && rating !== null ? String(rating) : option?.symbol;
 
   return (
     <div className="min-h-screen" style={{ background: `linear-gradient(180deg, ${survey.brand_color}14 0, transparent 260px)` }}>
       <div className="h-1.5" style={{ background: survey.brand_color }} />
       <main className="mx-auto flex max-w-md flex-col px-5 pb-10 pt-10 sm:pt-16">
-        {business && <p className="text-center text-sm font-semibold text-muted">{business}</p>}
+        {logo ? (
+          <img src={logo} alt={business ?? "Business logo"} className="mx-auto max-h-14 max-w-[200px] object-contain" />
+        ) : (
+          business && <p className="text-center text-sm font-semibold text-muted">{business}</p>
+        )}
         <div className="mt-4 rounded-[var(--radius-hero)] border border-line bg-surface px-6 py-8 text-center shadow-[0_1px_2px_rgba(21,26,45,0.04)] sm:px-8">
           <p className="text-sm text-muted">{survey.question}</p>
           {option && (
             <div className="mt-4">
               <span
-                className={`font-display block leading-none ${survey.icon_set === "nps" ? "text-[56px] font-bold" : survey.icon_set === "stars5" ? "text-[36px] text-neu-fill" : "text-[64px]"}`}
+                className={`font-display block leading-none ${survey.icon_set === "nps" || survey.icon_set === "ces" ? "text-[56px] font-bold" : survey.icon_set === "stars5" ? "text-[36px] text-neu-fill" : "text-[64px]"}`}
                 aria-hidden
               >
                 {symbol}
@@ -71,9 +88,13 @@ export default async function ThanksPage({
           <ThanksClient
             responseId={data.id as string}
             token={k}
-            allowComment={survey.allow_comment && survey.status === "active"}
+            allowComment={survey.allow_comment && active}
             existingComment={(data.comment as string | null) ?? ""}
             brandColor={survey.brand_color}
+            driverOptions={driverOptions}
+            driverPrompt={sentiment === "positive" ? "What did we do well?" : "What could we do better?"}
+            existingDrivers={(data.drivers as string[] | null) ?? []}
+            review={review}
           />
         </div>
         {survey.website_url && (
