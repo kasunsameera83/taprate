@@ -3,26 +3,56 @@ import { useState, type FormEvent } from "react";
 import { surveyCreateSchema, surveyUpdateSchema, fieldErrors } from "@/lib/validation/schemas";
 import { ICON_SETS, ICON_SET_IDS, type IconSetId } from "@/lib/surveys/iconSets";
 import type { Survey } from "@/lib/client/types";
-import { Field, FormMessage, TextInput } from "@/components/ui";
+import { Field, Notice, Segmented, TextInput } from "@/components/ui";
+import { EmailButtonsPreview, EmailFrame, ThanksPreview } from "@/components/SurveyPreview";
 
 type Props = {
   initial?: Survey;
   hasResponses?: boolean;
+  canEdit?: boolean;
   onSubmit: (values: Record<string, unknown>) => Promise<{ ok: boolean; message?: string; fields?: Record<string, string> }>;
   submitLabel: string;
 };
 
-export function SurveyForm({ initial, hasResponses, onSubmit, submitLabel }: Props) {
+const SCALE_HELP: Record<IconSetId, string> = {
+  faces5: "Most detail. Good default for support.",
+  faces3: "Quick and simple.",
+  thumbs: "Yes / no. Highest response rate.",
+  stars5: "Familiar from reviews.",
+  nps: "Measures loyalty: how likely to recommend.",
+};
+
+function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
+  return (
+    <fieldset className="space-y-4 border-t border-line pt-6 first:border-t-0 first:pt-0">
+      <div>
+        <legend className="font-display text-lg font-semibold">{title}</legend>
+        {description && <p className="text-sm text-muted">{description}</p>}
+      </div>
+      {children}
+    </fieldset>
+  );
+}
+
+export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, submitLabel }: Props) {
   const [iconSet, setIconSet] = useState<IconSetId>(initial?.iconSet ?? "faces5");
+  const [question, setQuestion] = useState(initial?.question ?? "How did we do?");
+  const [message, setMessage] = useState(initial?.thankYouMessage ?? "Thanks for your feedback!");
+  const [brandColor, setBrandColor] = useState(initial?.brandColor ?? "#2f3bf5");
+  const [allowComment, setAllowComment] = useState(initial?.allowComment ?? true);
+  // New surveys default to alerting on negative ratings; existing surveys keep their setting.
+  const [threshold, setThreshold] = useState<string>(
+    initial ? (initial.alertThreshold === null ? "" : String(initial.alertThreshold)) : String(ICON_SETS.faces5.negativeTo),
+  );
+  const [preview, setPreview] = useState<"email" | "thanks">("email");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [message, setMessage] = useState<{ kind: "error" | "success"; text: string } | null>(null);
+  const [notice, setNotice] = useState<{ kind: "error" | "success"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const set = ICON_SETS[iconSet];
 
   async function handle(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
-    const threshold = String(f.get("alertThreshold") ?? "");
     const emails = String(f.get("alertEmails") ?? "")
       .split(/[\s,;]+/)
       .map((s) => s.trim())
@@ -30,121 +60,170 @@ export function SurveyForm({ initial, hasResponses, onSubmit, submitLabel }: Pro
 
     const values = {
       name: String(f.get("name") ?? ""),
-      question: String(f.get("question") ?? ""),
+      question,
       iconSet,
-      brandColor: String(f.get("brandColor") ?? ""),
-      thankYouMessage: String(f.get("thankYouMessage") ?? ""),
-      allowComment: f.get("allowComment") === "on",
+      brandColor,
+      thankYouMessage: message,
+      allowComment,
       websiteUrl: String(f.get("websiteUrl") ?? "").trim() || null,
       alertThreshold: threshold === "" ? null : Number(threshold),
       alertEmails: emails,
       status: String(f.get("status") ?? "active"),
     };
 
+    // Same schemas as the server: instant feedback here, the real check happens in the API.
     const schema = initial ? surveyUpdateSchema : surveyCreateSchema;
     const parsed = schema.safeParse(values);
     if (!parsed.success) {
       setErrors(fieldErrors(parsed.error));
-      setMessage({ kind: "error", text: "Please fix the highlighted fields." });
+      setNotice({ kind: "error", text: "Some fields need attention. They're marked below." });
       return;
     }
     setErrors({});
-    setMessage(null);
+    setNotice(null);
     setBusy(true);
     const res = await onSubmit(parsed.data as Record<string, unknown>);
     setBusy(false);
-    if (res.ok) {
-      setMessage({ kind: "success", text: "Saved." });
-    } else {
+    if (res.ok) setNotice({ kind: "success", text: "Changes saved." });
+    else {
       setErrors(res.fields ?? {});
-      setMessage({ kind: "error", text: res.message ?? "Could not save." });
+      setNotice({ kind: "error", text: res.message ?? "Couldn't save. Please try again." });
     }
   }
 
   return (
-    <form onSubmit={handle} noValidate className="panel space-y-5 p-6">
-      {message && <FormMessage kind={message.kind}>{message.text}</FormMessage>}
+    <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <form onSubmit={handle} noValidate className="panel space-y-6 p-5 sm:p-7">
+        {notice && <Notice kind={notice.kind}>{notice.text}</Notice>}
+        {!canEdit && <Notice kind="info">You have view-only access. Ask the account owner to make changes.</Notice>}
 
-      <div className="grid gap-5 md:grid-cols-2">
-        <Field label="Survey name (only you see this)" name="name" error={errors.name}>
-          <TextInput name="name" defaultValue={initial?.name} maxLength={80} required error={errors.name} />
-        </Field>
-        <Field label="Status" name="status" error={errors.status}>
-          <select id="status" name="status" className="input" defaultValue={initial?.status ?? "active"}>
-            <option value="active">Active — collecting responses</option>
-            <option value="paused">Paused — links show “survey closed”</option>
-          </select>
-        </Field>
-      </div>
+        <fieldset disabled={!canEdit || busy} className="space-y-6">
+          <Section title="Question">
+            <Field label="Survey name" name="name" error={errors.name} hint="Only your team sees this, e.g. “Support tickets”.">
+              <TextInput name="name" defaultValue={initial?.name} maxLength={80} required error={errors.name} hasHint />
+            </Field>
+            <Field label="Question customers see" name="question" error={errors.question}>
+              <TextInput name="question" value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={200} required error={errors.question} />
+            </Field>
+          </Section>
 
-      <Field label="Question" name="question" error={errors.question}>
-        <TextInput name="question" defaultValue={initial?.question ?? "How did we do?"} maxLength={200} required error={errors.question} />
-      </Field>
+          <Section title="Rating scale" description={hasResponses ? "Locked because this survey already has ratings." : undefined}>
+            <div role="radiogroup" aria-label="Rating scale" className="grid gap-2 sm:grid-cols-2">
+              {ICON_SET_IDS.map((id) => {
+                const locked = Boolean(hasResponses && id !== initial?.iconSet);
+                const active = iconSet === id;
+                return (
+                  <label
+                    key={id}
+                    className={`flex cursor-pointer gap-3 rounded-[12px] border p-3 transition-colors ${
+                      active ? "border-brand bg-brand-soft" : "border-line hover:border-line-strong"
+                    } ${locked ? "cursor-not-allowed opacity-45" : ""}`}
+                  >
+                    <input type="radio" name="iconSetRadio" value={id} checked={active} disabled={locked} onChange={() => {
+                        setIconSet(id);
+                        // Keep the alert level valid for the new scale.
+                        setThreshold((t) => (t === "" ? "" : String(ICON_SETS[id].negativeTo)));
+                      }} className="mt-1 h-4 w-4 accent-[var(--color-brand)]" />
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold">{ICON_SETS[id].name}</span>
+                      <span className="block truncate text-base" aria-hidden>
+                        {id === "stars5" ? "★★★★★" : id === "nps" ? "0 1 2 … 10" : ICON_SETS[id].options.map((o) => o.symbol).join(" ")}
+                      </span>
+                      <span className="block text-[13px] text-muted">{SCALE_HELP[id]}</span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+            {errors.iconSet && <p className="text-[13px] text-neg-text">{errors.iconSet}</p>}
+          </Section>
 
-      <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">Rating scale</legend>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {ICON_SET_IDS.map((id) => (
-            <label
-              key={id}
-              className={`panel flex cursor-pointer flex-col gap-1 p-3 ${iconSet === id ? "outline outline-2 outline-[var(--ink)]" : ""} ${hasResponses && id !== initial?.iconSet ? "opacity-40" : ""}`}
-            >
-              <span className="flex items-center gap-2 text-sm font-medium">
-                <input
-                  type="radio"
-                  name="iconSetRadio"
-                  value={id}
-                  checked={iconSet === id}
-                  disabled={hasResponses && id !== initial?.iconSet}
-                  onChange={() => setIconSet(id)}
-                />
-                {ICON_SETS[id].name}
-              </span>
-              <span className="text-lg">{ICON_SETS[id].options.map((o) => o.symbol).join(" ")}</span>
+          <Section title="After they click" description="Customers land on a thank-you page with your message.">
+            <Field label="Thank-you message" name="thankYouMessage" error={errors.thankYouMessage}>
+              <TextInput name="thankYouMessage" value={message} onChange={(e) => setMessage(e.target.value)} maxLength={300} error={errors.thankYouMessage} />
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-[160px_minmax(0,1fr)]">
+              <Field label="Brand colour" name="brandColor" error={errors.brandColor}>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="brandColor"
+                    type="color"
+                    value={brandColor}
+                    onChange={(e) => setBrandColor(e.target.value)}
+                    className="h-11 w-14 cursor-pointer rounded-[10px] border border-control bg-white p-1"
+                    aria-describedby={errors.brandColor ? "brandColor-error" : undefined}
+                  />
+                  <span className="tabular text-sm text-muted">{brandColor}</span>
+                </div>
+              </Field>
+              <Field label="Link back to your website" name="websiteUrl" optional error={errors.websiteUrl} hint="Must start with https://">
+                <TextInput name="websiteUrl" type="url" inputMode="url" placeholder="https://yourbusiness.lk" defaultValue={initial?.websiteUrl ?? ""} maxLength={300} error={errors.websiteUrl} hasHint />
+              </Field>
+            </div>
+            <label className="flex min-h-11 items-center gap-3 text-sm">
+              <input type="checkbox" checked={allowComment} onChange={(e) => setAllowComment(e.target.checked)} className="h-4 w-4 accent-[var(--color-brand)]" />
+              Ask for an optional comment after rating
             </label>
-          ))}
+          </Section>
+
+          <Section title="Alerts" description="Get an email when a customer is unhappy, so you can follow up quickly.">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Alert when the rating is" name="alertThreshold" error={errors.alertThreshold}>
+                <select id="alertThreshold" name="alertThreshold" className="input" value={threshold} onChange={(e) => setThreshold(e.target.value)}>
+                  <option value="">Never</option>
+                  {set.options.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label} or lower
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Send alerts to" name="alertEmails" error={errors.alertEmails ?? errors["alertEmails.0"]} hint="Up to 10 emails, separated by commas.">
+                <TextInput name="alertEmails" inputMode="email" placeholder="you@business.lk" defaultValue={initial?.alertEmails.join(", ") ?? ""} maxLength={2600} error={errors.alertEmails} hasHint />
+              </Field>
+            </div>
+          </Section>
+
+          <Section title="Status">
+            <select id="status" name="status" aria-label="Status" className="input sm:max-w-sm" defaultValue={initial?.status ?? "active"}>
+              <option value="active">Active: collecting ratings</option>
+              <option value="paused">Paused: buttons show “survey closed”</option>
+            </select>
+          </Section>
+        </fieldset>
+
+        {canEdit && (
+          <div className="flex items-center gap-3 border-t border-line pt-6">
+            <button className="btn btn-primary" disabled={busy}>
+              {busy ? "Saving…" : submitLabel}
+            </button>
+          </div>
+        )}
+      </form>
+
+      <aside className="lg:sticky lg:top-8 lg:self-start" aria-label="Preview">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="font-sans text-sm font-semibold tracking-normal text-muted">Preview</h2>
+          <Segmented
+            label="Preview"
+            size="sm"
+            value={preview}
+            onChange={setPreview}
+            options={[
+              { value: "email", label: "Email" },
+              { value: "thanks", label: "Thank-you page" },
+            ]}
+          />
         </div>
-        {hasResponses && <p className="text-xs text-[var(--muted)]">The scale is locked because this survey already has responses.</p>}
-        {errors.iconSet && <p className="text-xs text-[var(--danger)]">{errors.iconSet}</p>}
-      </fieldset>
-
-      <div className="grid gap-5 md:grid-cols-2">
-        <Field label="Brand colour" name="brandColor" error={errors.brandColor}>
-          <TextInput name="brandColor" type="color" defaultValue={initial?.brandColor ?? "#2563eb"} className="input h-10 p-1" error={errors.brandColor} />
-        </Field>
-        <Field label="Your website (optional)" name="websiteUrl" error={errors.websiteUrl} hint="Shown as a link on the thank-you page. Must start with https://">
-          <TextInput name="websiteUrl" type="url" defaultValue={initial?.websiteUrl ?? ""} maxLength={300} error={errors.websiteUrl} />
-        </Field>
-      </div>
-
-      <Field label="Thank-you message" name="thankYouMessage" error={errors.thankYouMessage}>
-        <TextInput name="thankYouMessage" defaultValue={initial?.thankYouMessage ?? "Thanks for your feedback!"} maxLength={300} error={errors.thankYouMessage} />
-      </Field>
-
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" name="allowComment" defaultChecked={initial?.allowComment ?? true} />
-        Let customers add a comment after rating
-      </label>
-
-      <div className="grid gap-5 md:grid-cols-2">
-        <Field label="Alert me when the rating is at or below" name="alertThreshold" error={errors.alertThreshold}>
-          <select id="alertThreshold" name="alertThreshold" className="input" defaultValue={initial?.alertThreshold ?? ""}>
-            <option value="">No alerts</option>
-            {set.options.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.symbol} {o.label}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Alert emails" name="alertEmails" error={errors.alertEmails ?? errors["alertEmails.0"]} hint="Up to 10, separated by commas.">
-          <TextInput name="alertEmails" defaultValue={initial?.alertEmails.join(", ") ?? ""} maxLength={2600} error={errors.alertEmails} />
-        </Field>
-      </div>
-
-      <button className="btn btn-primary" disabled={busy}>
-        {busy ? "Saving…" : submitLabel}
-      </button>
-    </form>
+        {preview === "email" ? (
+          <EmailFrame>
+            <EmailButtonsPreview iconSet={iconSet} question={question} />
+          </EmailFrame>
+        ) : (
+          <ThanksPreview question={question} message={message} brandColor={brandColor} allowComment={allowComment} />
+        )}
+        <p className="mt-3 text-[13px] text-muted">Buttons are plain text and colour, so they show even when images are blocked.</p>
+      </aside>
+    </div>
   );
 }

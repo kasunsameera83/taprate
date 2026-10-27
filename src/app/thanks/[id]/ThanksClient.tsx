@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api } from "@/lib/client/api";
 import { publicCommentSchema, fieldErrors } from "@/lib/validation/schemas";
+import { readableTextOn } from "@/lib/surveys/color";
+import { IconAlert, IconCheck } from "@/components/icons";
 
 type Props = { responseId: string; token: string; allowComment: boolean; existingComment: string; brandColor: string };
 
@@ -13,8 +15,9 @@ export function ThanksClient({ responseId, token, allowComment, existingComment,
   const [savedComment, setSavedComment] = useState(existingComment);
   const [editing, setEditing] = useState(existingComment === "");
   const sent = useRef(false);
+  const buttonText = readableTextOn(brandColor);
 
-  // Loading this page in a real browser is what confirms the rating.
+  // Loading this page in a real browser is what confirms the rating (scanners never get this far).
   useEffect(() => {
     if (sent.current) return;
     sent.current = true;
@@ -44,24 +47,39 @@ export function ThanksClient({ responseId, token, allowComment, existingComment,
     }
   }
 
-  if (state === "closed") return <p className="mt-4 text-sm text-[var(--muted)]">This survey is no longer collecting responses.</p>;
-  if (state === "error") return <p className="mt-4 text-sm text-[var(--danger)]">We couldn't save your rating. Please click the button in your email again.</p>;
+  if (state === "closed") {
+    return <p className="mt-6 rounded-[10px] bg-[#eceef2] px-4 py-3 text-sm text-muted">This survey isn&rsquo;t collecting ratings right now.</p>;
+  }
+  if (state === "error") {
+    return (
+      <p role="alert" className="mt-6 flex items-start gap-2 rounded-[10px] bg-neg-soft px-4 py-3 text-left text-sm text-neg-text">
+        <IconAlert className="mt-0.5 h-4 w-4 shrink-0" />
+        We couldn&rsquo;t save your rating. Please tap the button in your email again.
+      </p>
+    );
+  }
 
   return (
-    <div className="mt-4 text-left">
-      <p className="text-center text-sm text-[var(--muted)]" role="status">
-        {state === "confirming" ? "Saving your rating…" : "Your rating has been recorded."}
+    <div className="mt-6 text-left">
+      <p className="flex items-center justify-center gap-1.5 text-sm text-muted" role="status">
+        {state === "confirming" ? (
+          "Saving your rating…"
+        ) : (
+          <>
+            <IconCheck className="h-4 w-4 text-pos-text" />
+            Rating saved
+          </>
+        )}
       </p>
+
       {allowComment && state === "recorded" && !editing && savedComment && (
-        <div className="mt-6 rounded-lg bg-green-50 p-4" role="status">
-          <p className="text-sm font-medium text-[var(--ok)]">
-            {commentState.kind === "saved" ? "Thanks, we've got your comment." : "Your comment"}
-          </p>
+        <div className="mt-6 rounded-[12px] border border-[#c6e7d3] bg-pos-soft p-4" role="status">
+          <p className="text-sm font-semibold text-pos-text">{commentState.kind === "saved" ? "Thanks, we've got your comment." : "Your comment"}</p>
           {/* Rendered as text by React: never interpreted as HTML. */}
-          <p className="mt-2 whitespace-pre-wrap break-words text-sm text-[var(--ink)]">{savedComment}</p>
+          <p className="mt-2 whitespace-pre-wrap break-words text-[15px] text-ink">{savedComment}</p>
           <button
             type="button"
-            className="mt-3 text-sm font-medium text-[var(--accent)] underline-offset-2 hover:underline"
+            className="link mt-3 min-h-9 text-sm"
             onClick={() => {
               setComment(savedComment);
               setCommentState({ kind: "idle" });
@@ -72,28 +90,38 @@ export function ThanksClient({ responseId, token, allowComment, existingComment,
           </button>
         </div>
       )}
+
       {allowComment && state === "recorded" && editing && (
         <form onSubmit={submit} noValidate className="mt-6 space-y-3">
-          <label htmlFor="comment" className="block text-sm font-medium">
-            Anything you'd like to add? (optional)
+          <label htmlFor="comment" className="block text-[15px] font-semibold">
+            Want to tell us more? <span className="font-normal text-muted">(optional)</span>
           </label>
           <textarea
             id="comment"
-            className="input h-28"
+            className="input"
+            rows={4}
             maxLength={2000}
             value={comment}
             onChange={(e) => setComment(e.target.value)}
+            aria-describedby="comment-count"
+            placeholder="What went well, or what could be better?"
           />
           {/* Honeypot for bots: hidden from people and screen readers. */}
           <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute left-[-9999px] h-0 w-0 opacity-0" />
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xs text-[var(--muted)]">{comment.length}/2000</span>
-            <button className="btn text-white" style={{ background: brandColor }} disabled={commentState.kind === "saving"}>
+            <span id="comment-count" className="tabular text-xs text-muted">
+              {comment.length}/2000
+            </span>
+            <button
+              className="btn min-w-36"
+              style={{ background: brandColor, color: buttonText }}
+              disabled={commentState.kind === "saving" || comment.trim().length === 0}
+            >
               {commentState.kind === "saving" ? "Sending…" : "Send comment"}
             </button>
           </div>
           {commentState.kind === "error" && commentState.text && (
-            <p role="alert" className="text-sm text-[var(--danger)]">
+            <p role="alert" className="text-sm text-neg-text">
               {commentState.text}
             </p>
           )}

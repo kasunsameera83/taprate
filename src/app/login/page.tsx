@@ -1,22 +1,21 @@
 "use client";
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
 import { api } from "@/lib/client/api";
 import { signInSchema, fieldErrors } from "@/lib/validation/schemas";
-import { Field, FormMessage, TextInput } from "@/components/ui";
+import { Field, Notice, PasswordInput, TextInput } from "@/components/ui";
+import { AuthShell } from "@/components/AuthShell";
 
 const LINK_ERRORS: Record<string, string> = {
   link: "That confirmation link is invalid or has expired. Try signing in, or sign up again.",
-  busy: "Too many attempts. Please wait a minute and try again.",
+  busy: "Too many attempts. Wait a minute and try again.",
 };
 
 function LoginForm() {
   const params = useSearchParams();
-  const linkError = LINK_ERRORS[params.get("error") ?? ""] ?? "";
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [message, setMessage] = useState(linkError);
+  const [message, setMessage] = useState(LINK_ERRORS[params.get("error") ?? ""] ?? "");
   const [busy, setBusy] = useState(false);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
@@ -24,7 +23,7 @@ function LoginForm() {
     const form = new FormData(e.currentTarget);
     const input = { email: String(form.get("email") ?? ""), password: String(form.get("password") ?? "") };
 
-    // Same schema as the server: instant feedback here, real check there.
+    // Same schema as the server: instant feedback here, the real check happens there.
     const parsed = signInSchema.safeParse(input);
     if (!parsed.success) return setErrors(fieldErrors(parsed.error));
 
@@ -32,23 +31,23 @@ function LoginForm() {
     setMessage("");
     setBusy(true);
     const res = await api<{ signedIn: true }>("/api/auth/login", { method: "POST", body: parsed.data });
-    setBusy(false);
     if (res.ok) {
       window.location.assign("/app");
       return;
     }
+    setBusy(false);
     setErrors(res.fields ?? {});
     setMessage(res.message);
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="panel space-y-4 p-6">
-      <FormMessage kind="error">{message}</FormMessage>
+    <form onSubmit={onSubmit} noValidate className="space-y-5">
+      {message && <Notice kind="error">{message}</Notice>}
       <Field label="Email" name="email" error={errors.email}>
-        <TextInput name="email" type="email" autoComplete="email" maxLength={254} required error={errors.email} />
+        <TextInput name="email" type="email" inputMode="email" autoComplete="email" maxLength={254} required error={errors.email} />
       </Field>
       <Field label="Password" name="password" error={errors.password}>
-        <TextInput name="password" type="password" autoComplete="current-password" maxLength={128} required error={errors.password} />
+        <PasswordInput name="password" autoComplete="current-password" maxLength={128} required error={errors.password} />
       </Field>
       <button className="btn btn-primary w-full" disabled={busy}>
         {busy ? "Signing in…" : "Sign in"}
@@ -59,17 +58,21 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="mx-auto max-w-sm px-4 py-16">
-      <h1 className="mb-6 text-2xl font-bold">Sign in to TapRate</h1>
+    <AuthShell
+      title="Welcome back"
+      subtitle="Sign in to see how your customers rated you."
+      footer={
+        <>
+          New to TapRate?{" "}
+          <Link href="/signup" className="link">
+            Create an account
+          </Link>
+        </>
+      }
+    >
       <Suspense>
         <LoginForm />
       </Suspense>
-      <p className="mt-4 text-sm text-[var(--muted)]">
-        New here?{" "}
-        <Link href="/signup" className="font-medium text-[var(--accent)]">
-          Create an account
-        </Link>
-      </p>
-    </main>
+    </AuthShell>
   );
 }

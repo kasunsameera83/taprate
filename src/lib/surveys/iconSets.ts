@@ -10,8 +10,11 @@ export type IconSet = {
   name: string;
   min: number;
   max: number;
-  /** A rating at or above this counts as "satisfied" in reports. */
+  /** A rating at or above this counts as "satisfied" (positive) in reports. */
   positiveFrom: number;
+  /** A rating at or below this counts as negative (needs follow-up). Between the two is neutral.
+   *  Must match public.rating_sentiment() in supabase/migrations/0002_sentiment.sql. */
+  negativeTo: number;
   options: RatingOption[];
 };
 
@@ -28,6 +31,7 @@ export const ICON_SETS: Record<IconSetId, IconSet> = {
     min: 1,
     max: 2,
     positiveFrom: 2,
+    negativeTo: 1,
     options: [
       { value: 1, label: "Not helpful", symbol: "👎", color: RED },
       { value: 2, label: "Helpful", symbol: "👍", color: GREEN },
@@ -39,6 +43,7 @@ export const ICON_SETS: Record<IconSetId, IconSet> = {
     min: 1,
     max: 3,
     positiveFrom: 3,
+    negativeTo: 1,
     options: [
       { value: 1, label: "Unhappy", symbol: "😞", color: RED },
       { value: 2, label: "Okay", symbol: "😐", color: AMBER },
@@ -51,6 +56,7 @@ export const ICON_SETS: Record<IconSetId, IconSet> = {
     min: 1,
     max: 5,
     positiveFrom: 4,
+    negativeTo: 2,
     options: [
       { value: 1, label: "Very poor", symbol: "😡", color: RED },
       { value: 2, label: "Poor", symbol: "🙁", color: ORANGE },
@@ -65,6 +71,7 @@ export const ICON_SETS: Record<IconSetId, IconSet> = {
     min: 1,
     max: 5,
     positiveFrom: 4,
+    negativeTo: 2,
     options: [1, 2, 3, 4, 5].map((n) => ({
       value: n,
       label: `${n} star${n > 1 ? "s" : ""}`,
@@ -78,6 +85,7 @@ export const ICON_SETS: Record<IconSetId, IconSet> = {
     min: 0,
     max: 10,
     positiveFrom: 9,
+    negativeTo: 6,
     options: Array.from({ length: 11 }, (_, n) => ({
       value: n,
       label: String(n),
@@ -99,3 +107,20 @@ export function isValidRating(iconSet: IconSetId, rating: number): boolean {
 export function ratingOption(iconSet: IconSetId, rating: number): RatingOption | undefined {
   return ICON_SETS[iconSet].options.find((o) => o.value === rating);
 }
+
+export type Sentiment = "positive" | "neutral" | "negative";
+export const SENTIMENTS: readonly Sentiment[] = ["positive", "neutral", "negative"];
+
+export function sentimentOf(iconSet: IconSetId, rating: number): Sentiment {
+  const set = ICON_SETS[iconSet];
+  if (rating >= set.positiveFrom) return "positive";
+  if (rating <= set.negativeTo) return "negative";
+  return "neutral";
+}
+
+/** Shared sentiment colours (also used in emails, so plain hex). */
+export const SENTIMENT_COLORS: Record<Sentiment, string> = {
+  positive: "#16a34a",
+  neutral: "#d97706",
+  negative: "#dc2626",
+};

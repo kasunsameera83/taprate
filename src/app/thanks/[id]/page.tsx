@@ -3,10 +3,12 @@ import { notFound } from "next/navigation";
 import { adminClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
 import { isUuid, verifyResponseToken } from "@/lib/security/signing";
-import { isIconSetId, ratingOption } from "@/lib/surveys/iconSets";
+import { isIconSetId, ratingOption, sentimentOf } from "@/lib/surveys/iconSets";
 import { ThanksClient } from "./ThanksClient";
 
 export const metadata: Metadata = { title: "Thank you", robots: { index: false, follow: false } };
+
+const SENTIMENT_TEXT = { positive: "text-pos-text", neutral: "text-neu-text", negative: "text-neg-text" } as const;
 
 export default async function ThanksPage({
   params,
@@ -20,9 +22,10 @@ export default async function ThanksPage({
   // Without a valid, unexpired token for THIS response, the page doesn't exist.
   if (!isUuid(id) || typeof k !== "string" || !verifyResponseToken(env().RESPONSE_TOKEN_SECRET, id, k)) notFound();
 
+  // Service role, scoped to this one response id (proven by the signed token above).
   const { data } = await adminClient()
     .from("responses")
-    .select("id, rating, pending_rating, comment, surveys(question, icon_set, brand_color, thank_you_message, allow_comment, website_url, status)")
+    .select("id, rating, pending_rating, comment, surveys(question, icon_set, brand_color, thank_you_message, allow_comment, website_url, status, accounts(name))")
     .eq("id", id)
     .maybeSingle();
   const survey = (data?.surveys ?? null) as unknown as {
@@ -33,36 +36,55 @@ export default async function ThanksPage({
     allow_comment: boolean;
     website_url: string | null;
     status: string;
+    accounts: { name: string } | null;
   } | null;
   if (!data || !survey || !isIconSetId(survey.icon_set)) notFound();
 
   const rating = (data.pending_rating ?? data.rating) as number | null;
   const option = rating !== null ? ratingOption(survey.icon_set, rating) : undefined;
+  const sentiment = rating !== null ? sentimentOf(survey.icon_set, rating) : null;
+  const business = survey.accounts?.name;
+  const symbol = survey.icon_set === "stars5" && rating !== null ? "★".repeat(rating) : survey.icon_set === "nps" && rating !== null ? String(rating) : option?.symbol;
 
   return (
-    <main className="mx-auto max-w-lg px-4 py-16">
-      <div className="panel p-8 text-center" style={{ borderTop: `4px solid ${survey.brand_color}` }}>
-        <p className="text-sm text-[var(--muted)]">{survey.question}</p>
-        {option && (
-          <p className="mt-3 text-4xl" style={{ color: option.color }}>
-            {option.symbol}
-            <span className="mt-1 block text-base font-medium">{option.label}</span>
-          </p>
-        )}
-        <h1 className="mt-4 text-xl font-semibold">{survey.thank_you_message}</h1>
-        <ThanksClient
-          responseId={data.id as string}
-          token={k}
-          allowComment={survey.allow_comment && survey.status === "active"}
-          existingComment={(data.comment as string | null) ?? ""}
-          brandColor={survey.brand_color}
-        />
+    <div className="min-h-screen" style={{ background: `linear-gradient(180deg, ${survey.brand_color}14 0, transparent 260px)` }}>
+      <div className="h-1.5" style={{ background: survey.brand_color }} />
+      <main className="mx-auto flex max-w-md flex-col px-5 pb-10 pt-10 sm:pt-16">
+        {business && <p className="text-center text-sm font-semibold text-muted">{business}</p>}
+        <div className="mt-4 rounded-[var(--radius-hero)] border border-line bg-surface px-6 py-8 text-center shadow-[0_1px_2px_rgba(21,26,45,0.04)] sm:px-8">
+          <p className="text-sm text-muted">{survey.question}</p>
+          {option && (
+            <div className="mt-4">
+              <span
+                className={`font-display block leading-none ${survey.icon_set === "nps" ? "text-[56px] font-bold" : survey.icon_set === "stars5" ? "text-[36px] text-neu-fill" : "text-[64px]"}`}
+                aria-hidden
+              >
+                {symbol}
+              </span>
+              <span className={`mt-2 block text-[15px] font-semibold ${sentiment ? SENTIMENT_TEXT[sentiment] : ""}`}>
+                <span className="sr-only">You rated: </span>
+                {option.label}
+              </span>
+            </div>
+          )}
+          <h1 className="mt-5 text-[22px] font-bold leading-snug">{survey.thank_you_message}</h1>
+          <ThanksClient
+            responseId={data.id as string}
+            token={k}
+            allowComment={survey.allow_comment && survey.status === "active"}
+            existingComment={(data.comment as string | null) ?? ""}
+            brandColor={survey.brand_color}
+          />
+        </div>
         {survey.website_url && (
-          <a href={survey.website_url} rel="noopener noreferrer nofollow" className="mt-6 inline-block text-sm text-[var(--accent)]">
-            Back to {new URL(survey.website_url).hostname}
+          <a href={survey.website_url} rel="noopener noreferrer nofollow" className="link mx-auto mt-6 inline-flex min-h-11 items-center text-sm">
+            Go to {new URL(survey.website_url).hostname}
           </a>
         )}
-      </div>
-    </main>
+        <p className="mt-10 text-center text-[12px] text-muted">
+          Feedback by <span className="font-semibold">TapRate</span>
+        </p>
+      </main>
+    </div>
   );
 }

@@ -1,40 +1,34 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { userClient } from "@/lib/supabase/server";
-import { LogoutButton } from "./LogoutButton";
+import { AppNav } from "./AppNav";
 
-// Server-side guard for the whole signed-in area (middleware also redirects; API routes check again).
+// Server-side guard for the whole signed-in area (middleware also redirects; every API route checks again).
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await userClient();
   const { data } = await supabase.auth.getUser();
   if (!data.user) redirect("/login");
 
-  const nav = [
-    { href: "/app", label: "Dashboard" },
-    { href: "/app/surveys", label: "Surveys" },
-    { href: "/app/responses", label: "Responses" },
-    { href: "/app/settings", label: "Settings" },
-  ];
+  // Read through RLS as the user: only their own membership/account can come back.
+  const { data: m } = await supabase
+    .from("memberships")
+    .select("role, accounts(name, plan, credit_balance)")
+    .eq("user_id", data.user.id)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  const account = (m?.accounts ?? null) as unknown as { name: string; plan: string; credit_balance: number } | null;
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-[var(--line)] bg-white">
-        <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-3">
-          <Link href="/app" className="font-bold">
-            TapRate
-          </Link>
-          <nav className="flex flex-1 gap-4 overflow-x-auto text-sm">
-            {nav.map((n) => (
-              <Link key={n.href} href={n.href} className="whitespace-nowrap text-[var(--muted)] hover:text-[var(--ink)]">
-                {n.label}
-              </Link>
-            ))}
-          </nav>
-          <span className="hidden text-sm text-[var(--muted)] sm:inline">{data.user.email}</span>
-          <LogoutButton />
-        </div>
-      </header>
-      <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+    <div className="min-h-screen lg:flex">
+      <AppNav
+        email={data.user.email ?? ""}
+        accountName={account?.name ?? "Your business"}
+        plan={account?.plan ?? "trial"}
+        credits={account?.credit_balance ?? 0}
+      />
+      <main id="main" className="min-w-0 flex-1 px-4 pb-16 pt-6 sm:px-6 lg:px-10 lg:pt-10">
+        <div className="mx-auto max-w-6xl">{children}</div>
+      </main>
     </div>
   );
 }

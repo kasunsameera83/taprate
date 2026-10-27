@@ -15,6 +15,8 @@ export const GET = secureRoute<undefined, ResponsesQuery>(
       .eq("status", query.status);
     if (query.surveyId) q = q.eq("survey_id", query.surveyId);
     if (query.rating !== undefined) q = q.eq(query.status === "confirmed" ? "rating" : "pending_rating", query.rating);
+    if (query.sentiment) q = q.eq("sentiment", query.sentiment);
+    if (query.hasComment) q = q.not("comment", "is", null);
     if (query.agent) q = q.eq("agent", query.agent);
     if (query.from) q = q.gte("created_at", `${query.from}T00:00:00Z`);
     if (query.to) q = q.lte("created_at", `${query.to}T23:59:59.999Z`);

@@ -1,131 +1,443 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api, qs } from "@/lib/client/api";
-import type { StatsResponse, Survey } from "@/lib/client/types";
-import { FormMessage, Stat } from "@/components/ui";
+import type { ResponseItem, ResponsesPage, StatsResponse, Survey } from "@/lib/client/types";
+import { isIconSetId, ratingOption } from "@/lib/surveys/iconSets";
+import { FeedbackStripe } from "@/components/FeedbackStripe";
+import { LoadError, Segmented, SentimentDot, Skeleton, Notice } from "@/components/ui";
+import { IconPlus } from "@/components/icons";
+
+type Days = 7 | 30 | 90;
+const PERIODS: ReadonlyArray<{ value: Days; label: string }> = [
+  { value: 7, label: "7 days" },
+  { value: 30, label: "30 days" },
+  { value: 90, label: "90 days" },
+];
 
 export default function Dashboard() {
-  const [days, setDays] = useState<7 | 30 | 90>(30);
+  const [days, setDays] = useState<Days>(30);
   const [surveyId, setSurveyId] = useState("");
-  const [surveys, setSurveys] = useState<Survey[]>([]);
+  const [surveys, setSurveys] = useState<Survey[] | null>(null);
   const [stats, setStats] = useState<StatsResponse | null>(null);
+  const [followUps, setFollowUps] = useState<ResponseItem[] | null>(null);
   const [error, setError] = useState("");
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
-    api<Survey[]>("/api/surveys").then((r) => r.ok && setSurveys(r.data));
+    api<Survey[]>("/api/surveys").then((r) => setSurveys(r.ok ? r.data : []));
   }, []);
+
+  const load = useCallback(() => setReload((n) => n + 1), []);
 
   useEffect(() => {
     let live = true;
-    api<StatsResponse>(`/api/stats${qs({ days, surveyId: surveyId || undefined })}`).then((r) => {
+    setStats(null);
+    setError("");
+    const filter = { surveyId: surveyId || undefined };
+    Promise.all([
+      api<StatsResponse>(`/api/stats${qs({ days, ...filter })}`),
+      api<ResponsesPage>(`/api/responses${qs({ ...filter, sentiment: "negative", limit: 5 })}`),
+    ]).then(([s, f]) => {
       if (!live) return;
-      if (r.ok) {
-        setStats(r.data);
-        setError("");
-      } else setError(r.message);
+      if (s.ok) setStats(s.data);
+      else setError(s.message);
+      setFollowUps(f.ok ? f.data.items : []);
     });
     return () => {
       live = false;
     };
-  }, [days, surveyId]);
+  }, [days, surveyId, reload]);
 
-  const maxDay = Math.max(1, ...(stats?.byDay.map((d) => d.total) ?? [1]));
+  const noSurveys = surveys !== null && surveys.length === 0;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          {stats?.account && (
-            <p className="text-sm text-[var(--muted)]">
-              {stats.account.name} · {stats.account.credits} responses left on your {stats.account.plan} plan
-            </p>
-          )}
+          <h1 className="text-[28px] font-bold leading-tight">Dashboard</h1>
+          <p className="text-sm text-muted">How customers rated you in the last {days} days.</p>
         </div>
-        <div className="flex gap-2">
-          <select className="input w-auto" value={surveyId} onChange={(e) => setSurveyId(e.target.value)} aria-label="Survey">
-            <option value="">All surveys</option>
-            {surveys.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-          <select className="input w-auto" value={days} onChange={(e) => setDays(Number(e.target.value) as 7 | 30 | 90)} aria-label="Period">
-            <option value={7}>Last 7 days</option>
-            <option value={30}>Last 30 days</option>
-            <option value={90}>Last 90 days</option>
-          </select>
-        </div>
-      </div>
-
-      <FormMessage kind="error">{error}</FormMessage>
-
-      {stats && stats.total === 0 && surveys.length === 0 && (
-        <div className="panel p-6">
-          <h2 className="font-semibold">Create your first survey</h2>
-          <p className="mt-1 text-sm text-[var(--muted)]">Pick a rating scale, copy the buttons into your email signature, and ratings will show up here.</p>
-          <Link href="/app/surveys/new" className="btn btn-primary mt-4">
-            New survey
-          </Link>
-        </div>
-      )}
-
-      {stats && (
-        <>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <Stat label="Satisfaction" value={stats.satisfactionPct === null ? "—" : `${stats.satisfactionPct}%`} sub={`${stats.positive} of ${stats.total} positive`} />
-            <Stat label="Responses" value={stats.total} sub={stats.pending ? `${stats.pending} awaiting confirmation` : "confirmed clicks"} />
-            <Stat label="NPS" value={stats.nps ? stats.nps.score : "—"} sub={stats.nps ? `${stats.nps.total} NPS ratings` : "No NPS surveys yet"} />
-            <Stat label="Credits left" value={stats.account?.credits ?? "—"} />
-          </div>
-
-          <section className="panel p-4">
-            <h2 className="mb-3 text-sm font-semibold">Responses per day</h2>
-            <div className="flex h-36 items-end gap-[2px]" role="img" aria-label="Responses per day chart">
-              {stats.byDay.map((d) => (
-                <div
-                  key={d.date}
-                  title={`${d.date}: ${d.total} responses, ${d.satisfactionPct}% satisfied`}
-                  className="flex-1 rounded-t bg-[var(--accent)]"
-                  style={{ height: `${(d.total / maxDay) * 100}%`, minHeight: d.total ? 2 : 0, opacity: d.total ? 0.35 + (d.satisfactionPct / 100) * 0.65 : 1 }}
-                />
+        {!noSurveys && (
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="sr-only" htmlFor="survey-filter">
+              Survey
+            </label>
+            <select id="survey-filter" className="input w-auto min-w-44" value={surveyId} onChange={(e) => setSurveyId(e.target.value)}>
+              <option value="">All surveys</option>
+              {surveys?.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
               ))}
-            </div>
-            <div className="mt-1 flex justify-between text-xs text-[var(--muted)]">
-              <span>{stats.byDay[0]?.date}</span>
-              <span>{stats.byDay.at(-1)?.date}</span>
-            </div>
-          </section>
+            </select>
+            <Segmented label="Period" value={days} options={PERIODS} onChange={setDays} />
+          </div>
+        )}
+      </header>
 
-          <section className="panel p-4">
-            <h2 className="mb-3 text-sm font-semibold">By agent</h2>
-            {stats.byAgent.length === 0 ? (
-              <p className="text-sm text-[var(--muted)]">No agent names yet. Helpdesk snippets fill these in automatically.</p>
-            ) : (
-              <table className="w-full text-sm">
-                <thead className="text-left text-[var(--muted)]">
-                  <tr>
-                    <th className="py-1 font-medium">Agent</th>
-                    <th className="py-1 font-medium">Responses</th>
-                    <th className="py-1 font-medium">Satisfaction</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats.byAgent.map((a) => (
-                    <tr key={a.agent} className="border-t border-[var(--line)]">
-                      <td className="py-1.5">{a.agent}</td>
-                      <td className="py-1.5">{a.total}</td>
-                      <td className="py-1.5">{a.satisfactionPct}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </section>
+      {error && <LoadError message={error} onRetry={load} />}
+
+      {noSurveys ? (
+        <GettingStarted />
+      ) : (
+        <>
+          {stats?.account && stats.account.credits <= 10 && (
+            <Notice kind="error">
+              Only {stats.account.credits} responses left. When they run out, your buttons show &ldquo;survey closed&rdquo; and new ratings are not saved.
+            </Notice>
+          )}
+          <Hero stats={stats} days={days} />
+          <KpiRow stats={stats} days={days} />
+          <DailyChart stats={stats} />
+          <div className="grid gap-6 lg:grid-cols-5">
+            <FollowUps items={followUps} surveyId={surveyId} />
+            <Agents stats={stats} />
+          </div>
         </>
       )}
     </div>
+  );
+}
+
+/* ---------- Pieces ---------- */
+
+function Delta({ current, previous, unit, days }: { current: number | null; previous: number | null; unit: "pts" | "count"; days: number }) {
+  if (current === null || previous === null) {
+    return <span className="text-[13px] text-muted">No earlier data to compare</span>;
+  }
+  const diff = Math.round((current - previous) * 10) / 10;
+  if (diff === 0) return <span className="text-[13px] text-muted">No change vs previous {days} days</span>;
+  const up = diff > 0;
+  // For satisfaction and volume, up is good.
+  return (
+    <span className={`text-[13px] font-semibold ${up ? "text-pos-text" : "text-neg-text"}`}>
+      <span aria-hidden>{up ? "▲" : "▼"}</span> {Math.abs(diff)}
+      {unit === "pts" ? " pts" : ""} <span className="font-normal text-muted">vs previous {days} days</span>
+    </span>
+  );
+}
+
+function Hero({ stats, days }: { stats: StatsResponse | null; days: number }) {
+  if (!stats) {
+    return (
+      <section className="rounded-[var(--radius-hero)] border border-line bg-surface p-6 sm:p-8">
+        <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-16 w-40" />
+            <Skeleton className="h-4 w-52" />
+          </div>
+          <Skeleton className="h-24 w-full self-end" />
+        </div>
+      </section>
+    );
+  }
+  const hasData = stats.total > 0;
+  return (
+    <section aria-labelledby="sat-title" className="rounded-[var(--radius-hero)] border border-line bg-surface p-6 sm:p-8">
+      <div className="grid items-end gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+        <div>
+          <h2 id="sat-title" className="font-sans text-sm font-semibold tracking-normal text-muted">
+            Customer satisfaction
+          </h2>
+          {hasData ? (
+            <>
+              <p className="font-display tabular mt-1 text-[64px] font-bold leading-none tracking-tight">
+                {stats.satisfactionPct}
+                <span className="text-[36px] text-muted">%</span>
+              </p>
+              <div className="mt-3">
+                <Delta current={stats.satisfactionPct} previous={stats.previous.satisfactionPct} unit="pts" days={days} />
+              </div>
+              <p className="mt-1 text-[13px] text-muted">
+                {stats.positive} of {stats.total} ratings were positive.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="font-display mt-1 text-[40px] font-bold leading-none text-faint">No ratings yet</p>
+              <p className="mt-3 text-sm text-muted">
+                Nothing in the last {days} days. Ratings appear here as soon as a customer clicks a button in your email.
+              </p>
+            </>
+          )}
+        </div>
+
+        <div>
+          <div className="mb-2 flex items-baseline justify-between gap-3">
+            <h3 className="font-sans text-sm font-semibold tracking-normal text-muted">
+              Latest ratings
+            </h3>
+            <ul className="flex gap-3 text-[13px] text-muted" aria-label="Legend">
+              <li className="flex items-center gap-1.5">
+                <SentimentDot sentiment="positive" /> {stats.positive}
+              </li>
+              <li className="flex items-center gap-1.5">
+                <SentimentDot sentiment="neutral" /> {stats.neutral}
+              </li>
+              <li className="flex items-center gap-1.5">
+                <SentimentDot sentiment="negative" /> {stats.negative}
+              </li>
+            </ul>
+          </div>
+          <FeedbackStripe items={stats.recent} slots={60} height={72} />
+          <p className="mt-2 text-[13px] text-muted">Each bar is one rating, newest on the right.</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function KpiRow({ stats, days }: { stats: StatsResponse | null; days: number }) {
+  if (!stats) {
+    return (
+      <div className="grid gap-4 sm:grid-cols-3">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="panel space-y-3 p-5">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-8 w-16" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return (
+    <div className="grid gap-4 sm:grid-cols-3">
+      <div className="panel p-5">
+        <h2 className="font-sans text-sm font-semibold tracking-normal text-muted">
+          Ratings
+        </h2>
+        <p className="font-display tabular mt-1 text-[32px] font-bold leading-tight">{stats.total}</p>
+        <Delta current={stats.total} previous={stats.previous.total} unit="count" days={days} />
+      </div>
+      <div className="panel p-5">
+        <h2 className="font-sans text-sm font-semibold tracking-normal text-muted">
+          Net Promoter Score
+        </h2>
+        {stats.nps ? (
+          <>
+            <p className="font-display tabular mt-1 text-[32px] font-bold leading-tight">{stats.nps.score}</p>
+            <p className="text-[13px] text-muted">
+              {stats.nps.promoters} promoters, {stats.nps.detractors} detractors
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="font-display mt-1 text-[32px] font-bold leading-tight text-faint">None yet</p>
+            <p className="text-[13px] text-muted">Shown when a survey uses the 0–10 scale.</p>
+          </>
+        )}
+      </div>
+      <div className="panel p-5">
+        <h2 className="font-sans text-sm font-semibold tracking-normal text-muted">
+          Awaiting confirmation
+        </h2>
+        <p className="font-display tabular mt-1 text-[32px] font-bold leading-tight">{stats.pending}</p>
+        <p className="text-[13px] text-muted">
+          Clicks not yet confirmed by a real browser. Email scanners end up here and are never counted.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function DailyChart({ stats }: { stats: StatsResponse | null }) {
+  if (!stats) return <Skeleton className="h-64 w-full rounded-[var(--radius-panel)]" />;
+  const max = Math.max(1, ...stats.byDay.map((d) => d.total));
+  const mid = stats.byDay[Math.floor(stats.byDay.length / 2)];
+  const fmt = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" });
+
+  return (
+    <section className="panel p-5 sm:p-6" aria-labelledby="daily-title">
+      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="daily-title" className="text-lg font-semibold">
+          Ratings per day
+        </h2>
+        <ul className="flex gap-4 text-[13px] text-muted" aria-hidden>
+          <li className="flex items-center gap-1.5">
+            <SentimentDot sentiment="positive" /> Positive
+          </li>
+          <li className="flex items-center gap-1.5">
+            <SentimentDot sentiment="neutral" /> Neutral
+          </li>
+          <li className="flex items-center gap-1.5">
+            <SentimentDot sentiment="negative" /> Negative
+          </li>
+        </ul>
+      </div>
+      <div className="flex h-44 items-end gap-[2px] border-b border-line" aria-hidden>
+        {stats.byDay.map((d) => (
+          <div
+            key={d.date}
+            title={`${fmt(d.date)}: ${d.total} ratings (${d.positive} positive, ${d.neutral} neutral, ${d.negative} negative)`}
+            className="flex min-w-0 flex-1 flex-col-reverse overflow-hidden rounded-t-[3px]"
+            style={{ height: `${(d.total / max) * 100}%` }}
+          >
+            <div className="bg-pos-fill" style={{ flexGrow: d.positive }} />
+            <div className="bg-neu-fill" style={{ flexGrow: d.neutral }} />
+            <div className="bg-neg-fill" style={{ flexGrow: d.negative }} />
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 flex justify-between text-[12px] text-muted" aria-hidden>
+        <span>{stats.byDay[0] && fmt(stats.byDay[0].date)}</span>
+        <span>{mid && fmt(mid.date)}</span>
+        <span>Today</span>
+      </div>
+      {/* Screen-reader version of the chart */}
+      <table className="sr-only">
+        <caption>Ratings per day</caption>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Total</th>
+            <th>Positive</th>
+            <th>Neutral</th>
+            <th>Negative</th>
+          </tr>
+        </thead>
+        <tbody>
+          {stats.byDay
+            .filter((d) => d.total > 0)
+            .map((d) => (
+              <tr key={d.date}>
+                <td>{fmt(d.date)}</td>
+                <td>{d.total}</td>
+                <td>{d.positive}</td>
+                <td>{d.neutral}</td>
+                <td>{d.negative}</td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+
+function timeAgo(iso: string): string {
+  const mins = Math.round((Date.now() - Date.parse(iso)) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs} h ago`;
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function FollowUps({ items, surveyId }: { items: ResponseItem[] | null; surveyId: string }) {
+  return (
+    <section className="panel p-5 sm:p-6 lg:col-span-3" aria-labelledby="follow-title">
+      <div className="mb-3 flex items-baseline justify-between gap-2">
+        <h2 id="follow-title" className="text-lg font-semibold">
+          Needs follow-up
+        </h2>
+        <Link href={`/app/responses${qs({ sentiment: "negative", surveyId: surveyId || undefined })}`} className="link text-sm">
+          See all
+        </Link>
+      </div>
+      {items === null ? (
+        <div className="space-y-3">
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} className="h-14 w-full" />
+          ))}
+        </div>
+      ) : items.length === 0 ? (
+        <p className="py-6 text-sm text-muted">No unhappy customers right now. Negative ratings show up here so you can call them back.</p>
+      ) : (
+        <ul className="divide-y divide-line">
+          {items.map((r) => {
+            const opt = r.iconSet && isIconSetId(r.iconSet) && r.rating !== null ? ratingOption(r.iconSet, r.rating) : undefined;
+            return (
+              <li key={r.id} className="flex gap-3 py-3">
+                <span className="mt-0.5 text-xl leading-none" aria-hidden>
+                  {opt?.symbol}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm">
+                    <span className="font-semibold">{r.email ?? "Unknown customer"}</span>
+                    <span className="text-muted"> rated {opt?.label ?? r.rating}</span>
+                    {r.agent && <span className="text-muted"> for {r.agent}</span>}
+                  </p>
+                  {r.comment && <p className="mt-0.5 line-clamp-2 break-words text-sm text-ink">&ldquo;{r.comment}&rdquo;</p>}
+                  <p className="mt-0.5 text-[12px] text-muted">
+                    {r.surveyName}
+                    {r.ticket ? `, ticket ${r.ticket}` : ""}, {timeAgo(r.createdAt)}
+                  </p>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function Agents({ stats }: { stats: StatsResponse | null }) {
+  return (
+    <section className="panel p-5 sm:p-6 lg:col-span-2" aria-labelledby="agents-title">
+      <h2 id="agents-title" className="mb-3 text-lg font-semibold">
+        By agent
+      </h2>
+      {!stats ? (
+        <div className="space-y-3">
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} className="h-8 w-full" />
+          ))}
+        </div>
+      ) : stats.byAgent.length === 0 ? (
+        <p className="py-6 text-sm text-muted">
+          Agent names come from helpdesk buttons (Zendesk, Freshdesk, HubSpot). Signature buttons don&rsquo;t include them.
+        </p>
+      ) : (
+        <ul className="space-y-3">
+          {stats.byAgent.map((a) => (
+            <li key={a.agent}>
+              <div className="flex items-baseline justify-between gap-2 text-sm">
+                <span className="truncate font-semibold">{a.agent}</span>
+                <span className="tabular shrink-0 text-muted">
+                  <span className="font-semibold text-ink">{a.satisfactionPct}%</span> of {a.total}
+                </span>
+              </div>
+              <div className="mt-1 h-2 overflow-hidden rounded-full bg-[#eceef2]" aria-hidden>
+                <div className="h-full rounded-full bg-pos-fill" style={{ width: `${a.satisfactionPct}%` }} />
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function GettingStarted() {
+  const steps = [
+    { title: "Create a survey", body: "Write your question and pick a rating scale: faces, stars, thumbs or 0–10." },
+    { title: "Add the buttons to your emails", body: "Copy them into your Gmail or Outlook signature, or a helpdesk template." },
+    { title: "Watch ratings arrive", body: "Every click shows up here with the customer, the agent and any comment." },
+  ];
+  return (
+    <section className="rounded-[var(--radius-hero)] border border-line bg-surface p-6 sm:p-10">
+      <h2 className="text-2xl font-bold">Get your first rating in three steps</h2>
+      <ol className="mt-6 grid gap-6 md:grid-cols-3">
+        {steps.map((s, i) => (
+          <li key={s.title} className="flex gap-3">
+            <span className="font-display flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-bold text-brand">
+              {i + 1}
+            </span>
+            <div>
+              <h3 className="font-sans font-semibold tracking-normal">
+                {s.title}
+              </h3>
+              <p className="mt-0.5 text-sm text-muted">{s.body}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <Link href="/app/surveys/new" className="btn btn-primary mt-8">
+        <IconPlus className="h-4 w-4" />
+        Create your first survey
+      </Link>
+    </section>
   );
 }

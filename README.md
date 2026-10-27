@@ -23,7 +23,8 @@ Stack: Next.js 15 (App Router) + Supabase (Postgres, Auth) + Tailwind CSS 4. Wor
    npm install
    ```
 2. **Create a Supabase project** at supabase.com.
-3. **Create the database**: open *SQL Editor*, paste `supabase/migrations/0001_init.sql`, run it.
+3. **Create the database**: open *SQL Editor* and run each file in `supabase/migrations/` **in order**
+   (`0001_init.sql`, then `0002_sentiment.sql`, ...). Each new file only needs running once.
    (Or with the Supabase CLI: `supabase db push`.)
 4. **Auth settings** (Authentication → Sign In / Providers, and URL Configuration):
    - Email provider on, **Confirm email** on

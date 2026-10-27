@@ -1,168 +1,144 @@
 "use client";
-import { use, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Suspense, use, useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { api, qs } from "@/lib/client/api";
-import type { ResponsesPage, SnippetResponse, Survey } from "@/lib/client/types";
+import type { ResponsesPage, Survey } from "@/lib/client/types";
 import { SurveyForm } from "@/components/SurveyForm";
-import { FormMessage } from "@/components/ui";
-import { MERGE_PRESETS } from "@/lib/surveys/snippet";
+import { Badge, LoadError, Notice, Skeleton } from "@/components/ui";
+import { IconArrowLeft } from "@/components/icons";
+import { SnippetPanel } from "./SnippetPanel";
 
-const PRESETS = [...Object.entries(MERGE_PRESETS).map(([id, p]) => ({ id, label: p.label })), { id: "custom", label: "Custom merge tags" }];
+type Tab = "buttons" | "settings";
 
-export default function SurveyDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+function SurveyDetail({ id }: { id: string }) {
   const router = useRouter();
+  const search = useSearchParams();
+  const created = search.get("created") === "1";
+  const [tab, setTab] = useState<Tab>(search.get("tab") === "settings" ? "settings" : "buttons");
   const [survey, setSurvey] = useState<Survey | null>(null);
   const [hasResponses, setHasResponses] = useState(false);
+  const [canEdit, setCanEdit] = useState(true);
   const [error, setError] = useState("");
+  const [archiveError, setArchiveError] = useState("");
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setError("");
     api<Survey>(`/api/surveys/${encodeURIComponent(id)}`).then((r) => (r.ok ? setSurvey(r.data) : setError(r.message)));
     api<ResponsesPage>(`/api/responses${qs({ surveyId: id, limit: 1 })}`).then((r) => r.ok && setHasResponses(r.data.total > 0));
+    api<{ role: string }>("/api/account").then((r) => r.ok && setCanEdit(r.data.role !== "viewer"));
   }, [id]);
+  useEffect(load, [load]);
 
-  if (error) return <FormMessage kind="error">{error}</FormMessage>;
-  if (!survey) return <p className="text-[var(--muted)]">Loading…</p>;
-
-  return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">{survey.name}</h1>
-        <button
-          className="btn btn-danger"
-          onClick={async () => {
-            if (!window.confirm("Archive this survey? Buttons already sent in emails will show “survey closed”. Responses are kept.")) return;
-            const r = await api(`/api/surveys/${encodeURIComponent(id)}`, { method: "DELETE" });
-            if (r.ok) router.push("/app/surveys");
-            else setError(r.message);
-          }}
-        >
-          Archive
-        </button>
-      </div>
-
-      <SnippetPanel surveyId={survey.id} key={survey.updatedAt} />
-
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Settings</h2>
-        <SurveyForm
-          initial={survey}
-          hasResponses={hasResponses}
-          submitLabel="Save changes"
-          onSubmit={async (values) => {
-            const res = await api<Survey>(`/api/surveys/${encodeURIComponent(id)}`, { method: "PATCH", body: values });
-            if (res.ok) {
-              setSurvey(res.data);
-              return { ok: true };
-            }
-            return { ok: false, message: res.message, fields: res.fields };
-          }}
-        />
-      </section>
-    </div>
-  );
-}
-
-function SnippetPanel({ surveyId }: { surveyId: string }) {
-  const [preset, setPreset] = useState("signature");
-  const [custom, setCustom] = useState({ email: "", agent: "", ticket: "" });
-  const [snippet, setSnippet] = useState<SnippetResponse | null>(null);
-  const [error, setError] = useState("");
-  const [copied, setCopied] = useState("");
-
-  useEffect(() => {
-    const t = setTimeout(() => {
-      const extra = preset === "custom" ? custom : {};
-      api<SnippetResponse>(`/api/surveys/${encodeURIComponent(surveyId)}/snippet${qs({ preset, ...extra })}`).then((r) => {
-        if (r.ok) {
-          setSnippet(r.data);
-          setError("");
-        } else setError(Object.values(r.fields ?? {})[0] ?? r.message);
-      });
-    }, 250);
-    return () => clearTimeout(t);
-  }, [surveyId, preset, custom]);
-
-  async function copy(kind: "html" | "rich") {
-    if (!snippet) return;
-    try {
-      if (kind === "rich" && "ClipboardItem" in window) {
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            "text/html": new Blob([snippet.html], { type: "text/html" }),
-            "text/plain": new Blob([snippet.html], { type: "text/plain" }),
-          }),
-        ]);
-      } else {
-        await navigator.clipboard.writeText(snippet.html);
-      }
-      setCopied(kind);
-      setTimeout(() => setCopied(""), 2000);
-    } catch {
-      setError("Copy failed. Select the HTML below and copy it manually.");
-    }
+  function switchTab(next: Tab) {
+    setTab(next);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("created");
+    if (next === "settings") url.searchParams.set("tab", "settings");
+    else url.searchParams.delete("tab");
+    window.history.replaceState(null, "", url.toString());
   }
 
-  return (
-    <section className="panel space-y-4 p-6">
-      <div>
-        <h2 className="text-lg font-semibold">Add the buttons to your emails</h2>
-        <p className="text-sm text-[var(--muted)]">Pick where you send from. Helpdesk presets fill in the customer, agent and ticket automatically.</p>
-      </div>
+  async function archive() {
+    if (!window.confirm("Archive this survey? Buttons already sent in emails will show “survey closed”. Ratings you've collected are kept.")) return;
+    const r = await api(`/api/surveys/${encodeURIComponent(id)}`, { method: "DELETE" });
+    if (r.ok) router.push("/app/surveys");
+    else setArchiveError(r.message);
+  }
 
-      <div className="flex flex-wrap gap-2">
-        {PRESETS.map((p) => (
+  if (error) return <LoadError message={error} onRetry={load} />;
+  if (!survey) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-96 w-full rounded-[var(--radius-panel)]" />
+      </div>
+    );
+  }
+
+  const tabs: Array<{ value: Tab; label: string }> = [
+    { value: "buttons", label: "Add to emails" },
+    { value: "settings", label: "Settings" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <header className="space-y-3">
+        <Link href="/app/surveys" className="inline-flex min-h-9 items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink">
+          <IconArrowLeft className="h-4 w-4" />
+          Surveys
+        </Link>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="truncate text-[28px] font-bold leading-tight">{survey.name}</h1>
+              {survey.status === "active" ? <Badge tone="pos">Active</Badge> : <Badge tone="plain">Paused</Badge>}
+            </div>
+            <p className="text-sm text-muted">{survey.question}</p>
+          </div>
+          <div className="flex gap-2">
+            <Link href={`/app/responses${qs({ surveyId: survey.id })}`} className="btn btn-secondary">
+              View ratings
+            </Link>
+            {canEdit && (
+              <button type="button" className="btn btn-danger" onClick={archive}>
+                Archive
+              </button>
+            )}
+          </div>
+        </div>
+        {archiveError && <Notice kind="error">{archiveError}</Notice>}
+        {created && <Notice kind="success">Survey created. Now add the buttons to your emails.</Notice>}
+      </header>
+
+      <div role="tablist" aria-label="Survey sections" className="flex gap-1 border-b border-line">
+        {tabs.map((t) => (
           <button
-            key={p.id}
+            key={t.value}
+            role="tab"
             type="button"
-            className={`btn ${preset === p.id ? "btn-primary" : "btn-secondary"}`}
-            onClick={() => setPreset(p.id)}
+            id={`tab-${t.value}`}
+            aria-selected={tab === t.value}
+            aria-controls={`panel-${t.value}`}
+            onClick={() => switchTab(t.value)}
+            className={`-mb-px min-h-11 border-b-2 px-3 text-sm font-semibold ${
+              tab === t.value ? "border-brand text-ink" : "border-transparent text-muted hover:text-ink"
+            }`}
           >
-            {p.label}
+            {t.label}
           </button>
         ))}
       </div>
 
-      {preset === "custom" && (
-        <div className="grid gap-3 md:grid-cols-3">
-          {(["email", "agent", "ticket"] as const).map((k) => (
-            <label key={k} className="space-y-1 text-sm">
-              <span className="font-medium capitalize">{k} merge tag</span>
-              <input
-                className="input"
-                maxLength={80}
-                value={custom[k]}
-                placeholder={k === "email" ? "{{customer.email}}" : ""}
-                onChange={(e) => setCustom({ ...custom, [k]: e.target.value })}
-              />
-            </label>
-          ))}
-        </div>
-      )}
+      <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+        {tab === "buttons" ? (
+          <SnippetPanel surveyId={survey.id} key={survey.updatedAt} />
+        ) : (
+          <SurveyForm
+            initial={survey}
+            hasResponses={hasResponses}
+            canEdit={canEdit}
+            submitLabel="Save changes"
+            onSubmit={async (values) => {
+              const res = await api<Survey>(`/api/surveys/${encodeURIComponent(id)}`, { method: "PATCH", body: values });
+              if (res.ok) {
+                setSurvey(res.data);
+                return { ok: true };
+              }
+              return { ok: false, message: res.message, fields: res.fields };
+            }}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
 
-      <FormMessage kind="error">{error}</FormMessage>
-
-      {snippet && (
-        <>
-          {!snippet.active && <FormMessage kind="error">This survey is not active, so clicks will show “survey closed”.</FormMessage>}
-          <div className="rounded-lg border border-dashed border-[var(--line)] bg-white p-4">
-            {/* Preview: our own server-generated, escaped HTML. Links are disabled in the preview. */}
-            <div className="pointer-events-none" dangerouslySetInnerHTML={{ __html: snippet.html }} />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className="btn btn-primary" onClick={() => copy("rich")}>
-              {copied === "rich" ? "Copied!" : "Copy for Gmail / Outlook signature"}
-            </button>
-            <button type="button" className="btn btn-secondary" onClick={() => copy("html")}>
-              {copied === "html" ? "Copied!" : "Copy HTML (helpdesk templates)"}
-            </button>
-          </div>
-          <details className="text-sm">
-            <summary className="cursor-pointer text-[var(--muted)]">Show HTML</summary>
-            <textarea readOnly className="input mt-2 h-40 font-mono text-xs" value={snippet.html} />
-          </details>
-        </>
-      )}
-    </section>
+export default function SurveyDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  return (
+    <Suspense>
+      <SurveyDetail id={id} />
+    </Suspense>
   );
 }

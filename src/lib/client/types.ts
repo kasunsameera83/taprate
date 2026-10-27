@@ -22,6 +22,7 @@ export type ResponseItem = {
   agent: string | null;
   ticket: string | null;
   verified: boolean;
+  sentiment: "positive" | "neutral" | "negative" | null;
   createdAt: string;
   confirmedAt: string | null;
 };

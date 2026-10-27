@@ -141,6 +141,8 @@ export const responsesQuerySchema = z
     surveyId: uuidSchema.optional(),
     rating: z.coerce.number().int().min(0).max(10).optional(),
     status: z.enum(["confirmed", "pending"]).default("confirmed"),
+    sentiment: z.enum(["positive", "neutral", "negative"]).optional(),
+    hasComment: z.enum(["yes"]).optional(),
     agent: z.string().trim().max(100).optional(),
     from: isoDate.optional(),
     to: isoDate.optional(),
