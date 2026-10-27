@@ -4,14 +4,14 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22.18.0"
+    "node": ">=20.9.0"
   },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "node --test \"tests/unit/**/*.test.ts\"",
+    "test": "node scripts/run-tests.mjs",
     "test:db": "node scripts/test-db.mjs",
     "check": "npm test && npm run build && npm run typecheck"
   },
@@ -22,7 +22,7 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "server-only": "^0.0.1",
-    "zod": "^3.25.76"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.13",
@@ -30,6 +30,10 @@
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
     "tailwindcss": "^4.1.13",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.2"
+  },
+  "overrides": {
+    "postcss": "^8.5.32"
   }
 }

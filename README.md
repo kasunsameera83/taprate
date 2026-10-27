@@ -18,7 +18,7 @@ Stack: Next.js 15 (App Router) + Supabase (Postgres, Auth) + Tailwind CSS 4. Wor
 
 ## Setup
 
-1. **Install**: Node 22.18+ is required.
+1. **Install**: Node 20.9+ (Node 22 LTS or newer recommended).
    ```bash
    npm install
    ```
@@ -103,5 +103,4 @@ rate limiter fails closed.
 ## Not in the MVP yet
 
 Password reset screen, two-factor login, inviting team members, billing/plan upgrades, Slack/Teams
-alerts, response drivers, QR/WhatsApp channels, a public API. Commit a `package-lock.json` after the
-first `npm install` and switch CI to `npm ci`.
+alerts, response drivers, QR/WhatsApp channels, a public API.

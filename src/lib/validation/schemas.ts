@@ -19,13 +19,13 @@ export function cleanText(value: string, { multiline = false } = {}): string {
 
 const text = (min: number, max: number, label: string) =>
   z
-    .string({ required_error: `${label} is required`, invalid_type_error: `${label} must be text` })
+    .string({ error: (issue) => (issue.input === undefined ? `${label} is required` : `${label} must be text`) })
     .max(max * 4, `${label} is too long`) // cheap guard before normalising huge input
     .transform((v) => cleanText(v))
     .pipe(z.string().min(min, min === 1 ? `${label} is required` : `${label} must be at least ${min} characters`).max(max, `${label} must be at most ${max} characters`));
 
 export const emailSchema = z
-  .string({ required_error: "Email is required" })
+  .string({ error: "Email is required" })
   .trim()
   .toLowerCase()
   .max(254, "Email is too long")
@@ -38,7 +38,7 @@ export const uuidSchema = z.string().uuid("Invalid id");
 // ---------------------------------------------------------------------------
 
 export const passwordSchema = z
-  .string({ required_error: "Password is required" })
+  .string({ error: "Password is required" })
   .min(10, "Use at least 10 characters")
   .max(128, "Password is too long")
   .refine((v) => !/^(.)\1+$/.test(v), "Password is too simple")
@@ -82,7 +82,7 @@ const httpsUrl = z
 const surveyFields = {
   name: text(1, 80, "Survey name"),
   question: text(1, 200, "Question"),
-  iconSet: z.enum(ICON_SET_IDS, { errorMap: () => ({ message: "Choose a rating scale" }) }),
+  iconSet: z.enum(ICON_SET_IDS, { error: "Choose a rating scale" }),
   brandColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Colour must look like #2563eb"),
   thankYouMessage: text(1, 300, "Thank-you message"),
   allowComment: z.boolean(),
@@ -234,7 +234,7 @@ export function parseClickParams(params: URLSearchParams): {
 export function fieldErrors(error: z.ZodError): Record<string, string> {
   const out: Record<string, string> = {};
   for (const issue of error.issues) {
-    const key = issue.path.join(".") || "_form";
+    const key = issue.path.map(String).join(".") || "_form";
     if (!out[key]) out[key] = issue.message;
   }
   return out;

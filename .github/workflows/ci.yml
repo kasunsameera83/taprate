@@ -35,8 +35,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      # Switch to `npm ci` once package-lock.json is committed.
-      - run: npm install --no-fund
+          cache: npm
+      - run: npm ci
       - run: npm audit --audit-level=high --omit=dev
       - run: npm test
       - run: sudo apt-get update && sudo apt-get install -y postgresql-client

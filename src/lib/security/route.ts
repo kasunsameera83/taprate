@@ -1,7 +1,7 @@
 import "server-only";
 import { NextResponse, type NextRequest } from "next/server";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
-import type { ZodType, ZodTypeDef } from "zod";
+import type { ZodType } from "zod";
 import { env } from "@/lib/env";
 import { userClient } from "@/lib/supabase/server";
 import { canPerform, isRole, type Action, type Role } from "@/lib/security/authz";
@@ -90,7 +90,7 @@ export function fail(code: ErrorCode, message?: string, fields?: Record<string, 
 // Any thrown error becomes a safe, generic response; details are logged server-side only.
 // ---------------------------------------------------------------------------
 
-type Schema<T> = ZodType<T, ZodTypeDef, unknown>;
+type Schema<T> = ZodType<T>;
 
 export type Membership = { accountId: string; role: Role };
 

@@ -4,7 +4,7 @@ import { z } from "zod";
 // Server configuration is validated once, at first use. A missing or weak secret stops the
 // app with a clear error instead of running insecurely.
 const secret = (name: string) =>
-  z.string({ required_error: `${name} is not set` }).min(32, `${name} must be at least 32 characters`);
+  z.string({ error: `${name} is not set` }).min(32, `${name} must be at least 32 characters`);
 
 const schema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url(),
