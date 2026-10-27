@@ -1,0 +1,57 @@
+import { z } from "zod";
+import { secureRoute, ok, fail } from "@/lib/security/route";
+import { LIMITS } from "@/lib/security/rateLimit";
+import { publicConfirmSchema } from "@/lib/validation/schemas";
+import { verifyResponseToken } from "@/lib/security/signing";
+import { adminClient } from "@/lib/supabase/server";
+import { env } from "@/lib/env";
+import { maybeSendLowRatingAlert } from "@/lib/alerts";
+import { isIconSetId } from "@/lib/surveys/iconSets";
+
+// Called by the thank-you page once it has loaded in a real browser. This is what turns a
+// pending click into a counted rating (and uses a credit). Scanners that only fetch the link
+// never get here.
+export const POST = secureRoute<undefined, undefined, z.infer<typeof publicConfirmSchema>, "public">(
+  { auth: "public", action: null, ipLimit: LIMITS.publicPerIp, body: publicConfirmSchema, maxBodyBytes: 1024 },
+  async ({ body }) => {
+    if (!verifyResponseToken(env().RESPONSE_TOKEN_SECRET, body.responseId, body.token)) {
+      return fail("forbidden", "This link has expired.");
+    }
+
+    const db = adminClient();
+    const { data, error } = await db.rpc("confirm_response", { p_response: body.responseId });
+    if (error) {
+      console.error("[confirm] failed", { code: error.code });
+      return fail("unavailable");
+    }
+    const result = (Array.isArray(data) ? data[0] : data) as
+      | { result: string; account_id: string | null; survey_id: string | null; rating: number | null; rating_changed: boolean }
+      | undefined;
+    if (!result || result.result === "not_found") return fail("not_found");
+    if (result.result === "no_credit") return ok({ status: "closed" });
+
+    if (result.result === "confirmed" && result.rating_changed && result.account_id && result.survey_id && result.rating !== null) {
+      const [{ data: survey }, { data: response }] = await Promise.all([
+        db
+          .from("surveys")
+          .select("id, name, icon_set, alert_threshold, alert_emails")
+          .eq("id", result.survey_id)
+          .eq("account_id", result.account_id)
+          .maybeSingle(),
+        db.from("responses").select("agent, respondent_email").eq("id", body.responseId).maybeSingle(),
+      ]);
+      if (survey && isIconSetId(survey.icon_set)) {
+        await maybeSendLowRatingAlert({
+          accountId: result.account_id,
+          responseId: body.responseId,
+          survey: { ...survey, icon_set: survey.icon_set },
+          rating: result.rating,
+          agent: response?.agent ?? null,
+          respondentEmail: response?.respondent_email ?? null,
+        });
+      }
+    }
+
+    return ok({ status: "recorded" });
+  },
+);

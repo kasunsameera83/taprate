@@ -1,0 +1,36 @@
+import "server-only";
+import { adminClient } from "@/lib/supabase/server";
+
+export type RateLimitRule = { name: string; limit: number; windowSec: number };
+
+// Central list so limits are easy to review in one place.
+export const LIMITS = {
+  signupPerIp: { name: "signup:ip", limit: 5, windowSec: 3600 },
+  loginPerIp: { name: "login:ip", limit: 20, windowSec: 900 },
+  loginPerIpEmail: { name: "login:ip-email", limit: 5, windowSec: 900 },
+  clickPerIp: { name: "click:ip", limit: 60, windowSec: 60 },
+  clickPerSurvey: { name: "click:survey", limit: 3000, windowSec: 60 },
+  publicPerIp: { name: "public:ip", limit: 30, windowSec: 60 },
+  commentPerResponse: { name: "comment:resp", limit: 10, windowSec: 3600 },
+  userRead: { name: "user:read", limit: 120, windowSec: 60 },
+  userWrite: { name: "user:write", limit: 30, windowSec: 60 },
+  userExport: { name: "user:export", limit: 5, windowSec: 60 },
+} as const satisfies Record<string, RateLimitRule>;
+
+/**
+ * Returns true if allowed. Fails CLOSED: if the limiter itself is unavailable we refuse the
+ * request rather than run without protection.
+ */
+export async function hitRateLimit(rule: RateLimitRule, subject: string): Promise<boolean> {
+  const key = `${rule.name}:${subject}`.slice(0, 200);
+  const { data, error } = await adminClient().rpc("rate_limit_hit", {
+    p_key: key,
+    p_limit: rule.limit,
+    p_window_seconds: rule.windowSec,
+  });
+  if (error) {
+    console.error("[rate-limit] limiter unavailable", { rule: rule.name, code: error.code });
+    return false;
+  }
+  return data === true;
+}
