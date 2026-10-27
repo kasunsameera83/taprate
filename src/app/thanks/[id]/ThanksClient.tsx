@@ -9,6 +9,9 @@ export function ThanksClient({ responseId, token, allowComment, existingComment,
   const [state, setState] = useState<"confirming" | "recorded" | "closed" | "error">("confirming");
   const [comment, setComment] = useState(existingComment);
   const [commentState, setCommentState] = useState<{ kind: "idle" | "saving" | "saved" | "error"; text?: string }>({ kind: "idle" });
+  // Show the saved comment (not the form) once sent, or when reopening a page that already has one.
+  const [savedComment, setSavedComment] = useState(existingComment);
+  const [editing, setEditing] = useState(existingComment === "");
   const sent = useRef(false);
 
   // Loading this page in a real browser is what confirms the rating.
@@ -32,7 +35,13 @@ export function ThanksClient({ responseId, token, allowComment, existingComment,
     }
     setCommentState({ kind: "saving" });
     const r = await api("/api/public/comment", { method: "POST", body: parsed.data });
-    setCommentState(r.ok ? { kind: "saved", text: "Thanks, we've got your comment." } : { kind: "error", text: r.message });
+    if (r.ok) {
+      setSavedComment(parsed.data.comment);
+      setEditing(false);
+      setCommentState({ kind: "saved" });
+    } else {
+      setCommentState({ kind: "error", text: r.message });
+    }
   }
 
   if (state === "closed") return <p className="mt-4 text-sm text-[var(--muted)]">This survey is no longer collecting responses.</p>;
@@ -43,7 +52,27 @@ export function ThanksClient({ responseId, token, allowComment, existingComment,
       <p className="text-center text-sm text-[var(--muted)]" role="status">
         {state === "confirming" ? "Saving your rating…" : "Your rating has been recorded."}
       </p>
-      {allowComment && state === "recorded" && (
+      {allowComment && state === "recorded" && !editing && savedComment && (
+        <div className="mt-6 rounded-lg bg-green-50 p-4" role="status">
+          <p className="text-sm font-medium text-[var(--ok)]">
+            {commentState.kind === "saved" ? "Thanks, we've got your comment." : "Your comment"}
+          </p>
+          {/* Rendered as text by React: never interpreted as HTML. */}
+          <p className="mt-2 whitespace-pre-wrap break-words text-sm text-[var(--ink)]">{savedComment}</p>
+          <button
+            type="button"
+            className="mt-3 text-sm font-medium text-[var(--accent)] underline-offset-2 hover:underline"
+            onClick={() => {
+              setComment(savedComment);
+              setCommentState({ kind: "idle" });
+              setEditing(true);
+            }}
+          >
+            Edit comment
+          </button>
+        </div>
+      )}
+      {allowComment && state === "recorded" && editing && (
         <form onSubmit={submit} noValidate className="mt-6 space-y-3">
           <label htmlFor="comment" className="block text-sm font-medium">
             Anything you'd like to add? (optional)
@@ -63,8 +92,8 @@ export function ThanksClient({ responseId, token, allowComment, existingComment,
               {commentState.kind === "saving" ? "Sending…" : "Send comment"}
             </button>
           </div>
-          {commentState.text && (
-            <p role="status" className={`text-sm ${commentState.kind === "error" ? "text-[var(--danger)]" : "text-[var(--ok)]"}`}>
+          {commentState.kind === "error" && commentState.text && (
+            <p role="alert" className="text-sm text-[var(--danger)]">
               {commentState.text}
             </p>
           )}
