@@ -24,7 +24,7 @@ Stack: Next.js 15 (App Router) + Supabase (Postgres, Auth) + Tailwind CSS 4. Wor
    ```
 2. **Create a Supabase project** at supabase.com.
 3. **Create the database**: open *SQL Editor* and run each file in `supabase/migrations/` **in order**
-   (`0001_init.sql`, `0002_sentiment.sql`, `0003_team_security.sql`, `0004_act_on_feedback.sql`, ...). Each file only needs running once.
+   (`0001_init.sql`, `0002_sentiment.sql`, `0003_team_security.sql`, `0004_act_on_feedback.sql`, `0005_channels_integrations.sql`, ...). Each file only needs running once.
    (Or with the Supabase CLI: `supabase db push`.)
 4. **Auth settings** (Authentication → Sign In / Providers, and URL Configuration):
    - Email provider on, **Confirm email** on
@@ -125,8 +125,17 @@ rate limiter fails closed.
 - "Review us" button for happy customers, and your logo on the thank-you page
   (the `logos` storage bucket is created by migration 0004)
 
+## More ways to collect
+
+- QR codes (SVG download) and a shareable rating page for WhatsApp, SMS and plain links
+- Website widget (iframe; only `/w/...` may be embedded in other sites)
+- Tablet kiosk mode: secret link per kiosk (only a hash stored), revocable, rate limited
+- Every rating records its channel; filter responses by channel
+- Integrations: Slack, Microsoft Teams (Workflows webhook), and signed webhooks
+  (`X-TapRate-Signature: t=…,v1=HMAC-SHA256`). URLs are stored encrypted (AES-256-GCM) and
+  re-checked against private networks before every delivery
+
 ## Still to come
 
-QR/kiosk/website widget,
-WhatsApp share links, Slack/Teams/webhooks, public API, helpdesk integrations, CSV import,
-billing (PayHere + Stripe), AI summaries, scheduled reports.
+Public API, helpdesk integrations, CSV import, billing (PayHere + Stripe), AI summaries,
+scheduled reports.

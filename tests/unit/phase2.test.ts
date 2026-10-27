@@ -151,3 +151,29 @@ test("phase 2 schemas: reasons, review button, follow-ups, public reasons", asyn
   assert.equal(s.followupNoteSchema.safeParse({ body: "   " }).success, false);
   assert.equal(s.leaderboardQuerySchema.safeParse({ days: "45" }).success, false);
 });
+
+test("logo metadata is stripped and broken files are rejected", async () => {
+  const { stripImageMetadata, readLimited } = await import("../../src/lib/branding.ts");
+  const u32 = (n: number) => [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255];
+  const chunk = (type: string, data: number[]) => [...u32(data.length), ...[...type].map((c) => c.charCodeAt(0)), ...data, 0, 0, 0, 0];
+  const sig = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+  const gps = [...new TextEncoder().encode("GPS 6.9271N 79.8612E")];
+  const png = new Uint8Array([...sig, ...chunk("IHDR", Array(13).fill(1)), ...chunk("tEXt", gps), ...chunk("eXIf", gps), ...chunk("IDAT", [9, 9]), ...chunk("IEND", [])]);
+  const clean = stripImageMetadata(png, { ext: "png", mime: "image/png" })!;
+  const text = new TextDecoder("latin1").decode(clean);
+  assert.ok(!text.includes("GPS"), "PNG text/EXIF removed");
+  assert.ok(text.includes("IHDR") && text.includes("IDAT") && text.includes("IEND"), "image data kept");
+  assert.equal(stripImageMetadata(png.subarray(0, png.length - 6), { ext: "png", mime: "image/png" }), null, "truncated PNG rejected");
+
+  const app1 = [0xff, 0xe1, 0x00, gps.length + 2, ...gps];
+  const jpg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x04, 1, 2, ...app1, 0xff, 0xda, 0x00, 0x02, 7, 7, 7, 0xff, 0xd9]);
+  const cleanJ = stripImageMetadata(jpg, { ext: "jpg", mime: "image/jpeg" })!;
+  assert.ok(!new TextDecoder("latin1").decode(cleanJ).includes("GPS"), "JPEG EXIF removed");
+  assert.equal(cleanJ[0], 0xff);
+  assert.equal(cleanJ[1], 0xd8);
+  assert.equal(stripImageMetadata(new Uint8Array([0xff, 0xd8, 0x00, 0x00]), { ext: "jpg", mime: "image/jpeg" }), null, "broken JPEG rejected");
+
+  const stream = (n: number) => new Blob([new Uint8Array(n)]).stream();
+  assert.equal((await readLimited(stream(100), 512))?.length, 100);
+  assert.equal(await readLimited(stream(600 * 1024), 512 * 1024), null, "stops reading over the limit");
+});

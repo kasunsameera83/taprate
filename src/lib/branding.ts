@@ -35,3 +35,123 @@ export function logoUrl(path: string | null | undefined): string | null {
   if (!base || !isLogoPath(path)) return null;
   return `${base.replace(/\/+$/, "")}/storage/v1/object/public/logos/${path}`;
 }
+
+// ---------------------------------------------------------------------------
+// Metadata stripping: removes hidden data (EXIF incl. GPS location, XMP, comments, text chunks)
+// without re-encoding the image. Returns null if the file structure is broken (then we reject it).
+// ---------------------------------------------------------------------------
+
+const PNG_KEEP = new Set(["IHDR", "PLTE", "IDAT", "IEND", "tRNS", "gAMA", "cHRM", "sRGB", "iCCP", "sBIT", "pHYs", "bKGD"]);
+
+function stripPng(b: Uint8Array): Uint8Array | null {
+  const out: Uint8Array[] = [b.subarray(0, 8)];
+  let i = 8;
+  let sawEnd = false;
+  while (i + 12 <= b.length) {
+    const len = ((b[i]! << 24) | (b[i + 1]! << 16) | (b[i + 2]! << 8) | b[i + 3]!) >>> 0;
+    const type = String.fromCharCode(b[i + 4]!, b[i + 5]!, b[i + 6]!, b[i + 7]!);
+    const end = i + 12 + len;
+    if (end > b.length) return null;
+    if (PNG_KEEP.has(type)) out.push(b.subarray(i, end));
+    i = end;
+    if (type === "IEND") {
+      sawEnd = true;
+      break;
+    }
+  }
+  return sawEnd ? concat(out) : null;
+}
+
+function stripJpeg(b: Uint8Array): Uint8Array | null {
+  const out: Uint8Array[] = [b.subarray(0, 2)]; // SOI
+  let i = 2;
+  while (i + 4 <= b.length) {
+    if (b[i] !== 0xff) return null;
+    const marker = b[i + 1]!;
+    if (marker === 0xd9) {
+      out.push(b.subarray(i, i + 2));
+      return concat(out);
+    }
+    const len = (b[i + 2]! << 8) | b[i + 3]!;
+    const end = i + 2 + len;
+    if (len < 2 || end > b.length) return null;
+    // Drop APP1/APP3-APP15 (EXIF, XMP, Photoshop...) and comments. Keep APP0 (JFIF) and APP2 (colour profile).
+    const isApp = marker >= 0xe1 && marker <= 0xef;
+    const drop = (isApp && marker !== 0xe2) || marker === 0xfe;
+    if (marker === 0xda) {
+      // Start of scan: the rest is image data.
+      out.push(b.subarray(i));
+      return concat(out);
+    }
+    if (!drop) out.push(b.subarray(i, end));
+    i = end;
+  }
+  return null;
+}
+
+function stripWebp(b: Uint8Array): Uint8Array | null {
+  const chunks: Uint8Array[] = [];
+  let i = 12;
+  while (i + 8 <= b.length) {
+    const type = String.fromCharCode(b[i]!, b[i + 1]!, b[i + 2]!, b[i + 3]!);
+    const size = (b[i + 4]! | (b[i + 5]! << 8) | (b[i + 6]! << 16) | (b[i + 7]! << 24)) >>> 0;
+    const end = i + 8 + size + (size % 2);
+    if (i + 8 + size > b.length) return null;
+    if (type !== "EXIF" && type !== "XMP ") {
+      const chunk = b.slice(i, Math.min(end, b.length));
+      // VP8X header carries "has EXIF/XMP" flags: clear them.
+      if (type === "VP8X" && chunk.length > 8) chunk[8] = chunk[8]! & ~0x0c;
+      chunks.push(chunk);
+    }
+    i = end;
+  }
+  const body = concat(chunks);
+  const header = new Uint8Array(12);
+  header.set(b.subarray(0, 4), 0); // RIFF
+  const riffSize = body.length + 4;
+  header[4] = riffSize & 0xff;
+  header[5] = (riffSize >> 8) & 0xff;
+  header[6] = (riffSize >> 16) & 0xff;
+  header[7] = (riffSize >>> 24) & 0xff;
+  header.set(b.subarray(8, 12), 8); // WEBP
+  return concat([header, body]);
+}
+
+function concat(parts: Uint8Array[]): Uint8Array {
+  const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
+  let o = 0;
+  for (const p of parts) {
+    out.set(p, o);
+    o += p.length;
+  }
+  return out;
+}
+
+export function stripImageMetadata(bytes: Uint8Array, type: LogoType): Uint8Array | null {
+  try {
+    if (type.ext === "png") return stripPng(bytes);
+    if (type.ext === "jpg") return stripJpeg(bytes);
+    return stripWebp(bytes);
+  } catch {
+    return null;
+  }
+}
+
+/** Reads a request body but stops (returns null) as soon as it exceeds maxBytes. */
+export async function readLimited(body: ReadableStream<Uint8Array> | null, maxBytes: number): Promise<Uint8Array | null> {
+  if (!body) return new Uint8Array();
+  const reader = body.getReader();
+  const parts: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      return null;
+    }
+    parts.push(value);
+  }
+  return concat(parts);
+}

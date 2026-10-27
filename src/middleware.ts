@@ -9,7 +9,7 @@ type CookieToSet = { name: string; value: string; options: CookieOptions };
 //   * sends signed-out visitors away from /app
 // API routes do their own full auth checks; middleware is never the only guard.
 
-function buildCsp(nonce: string): string {
+function buildCsp(nonce: string, framable: boolean): string {
   const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const dev = process.env.NODE_ENV !== "production";
   return [
@@ -20,7 +20,8 @@ function buildCsp(nonce: string): string {
     `img-src 'self' data: blob: ${supabase}`.trim(),
     "font-src 'self'",
     `connect-src 'self' ${supabase}`.trim(),
-    "frame-ancestors 'none'",
+    // Only the website widget (/w/...) may be shown inside other sites; everything else refuses framing.
+    framable ? "frame-ancestors https: http://localhost:*" : "frame-ancestors 'none'",
     "form-action 'self'",
     "base-uri 'self'",
     "object-src 'none'",
@@ -34,7 +35,7 @@ const NEEDS_SESSION = /^\/(app|login|signup|welcome|forgot-password|reset-passwo
 
 export async function middleware(request: NextRequest) {
   const nonce = btoa(crypto.randomUUID()); // Edge runtime: no Buffer
-  const csp = buildCsp(nonce);
+  const csp = buildCsp(nonce, request.nextUrl.pathname.startsWith("/w/"));
 
   const withSecurityHeaders = () => {
     const h = new Headers(request.headers);

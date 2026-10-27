@@ -31,6 +31,11 @@ const ACTIONS: Record<string, string> = {
   "followup.updated": "Updated a follow-up",
   "account.logo_updated": "Changed the logo",
   "account.logo_removed": "Removed the logo",
+  "kiosk.created": "Created a kiosk link",
+  "kiosk.revoked": "Switched off a kiosk",
+  "integration.created": "Connected an integration",
+  "integration.updated": "Changed an integration",
+  "integration.deleted": "Removed an integration",
 };
 
 function describe(e: Entry): string {

@@ -83,6 +83,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ token: stri
       p_verified: verified,
       p_ip_hash: ipHash,
       p_user_agent: userAgent,
+      p_channel: meta.channel === "kiosk" ? "email" : meta.channel,
     });
 
     if (error) {

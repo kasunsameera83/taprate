@@ -23,6 +23,10 @@ export const LIMITS = {
   dangerous: { name: "danger:user", limit: 5, windowSec: 3600 },
   upload: { name: "upload:user", limit: 10, windowSec: 3600 },
   cron: { name: "cron:ip", limit: 10, windowSec: 60 },
+  kioskPerIp: { name: "kiosk:ip", limit: 60, windowSec: 60 },
+  kioskBurst: { name: "kiosk:burst", limit: 1, windowSec: 2 },
+  kioskDaily: { name: "kiosk:day", limit: 2000, windowSec: 86400 },
+  integrationTest: { name: "integration:test", limit: 10, windowSec: 600 },
 } as const satisfies Record<string, RateLimitRule>;
 
 /**

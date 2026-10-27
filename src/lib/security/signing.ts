@@ -162,3 +162,35 @@ export function verifyPurposeToken(
   if (exp < nowSeconds || exp > nowSeconds + maxTtlSeconds + 60) return false;
   return safeEqual(hmac(secret, `purpose:v1|${purpose}|${subject}|${exp}`), m[2]);
 }
+
+// ---------------------------------------------------------------------------
+// Share links (QR codes, WhatsApp/SMS, website widget): /s/<surveyId>.<sig>
+// The signature proves the link was made by us for this survey, so survey ids can't be guessed into pages.
+// ---------------------------------------------------------------------------
+
+export function buildShareToken(secret: string, surveyId: string): string {
+  if (!isUuid(surveyId)) throw new Error("invalid survey id");
+  return `${surveyId}.${hmac(secret, `share:v1|${surveyId}`)}`;
+}
+
+export function verifyShareToken(secrets: readonly string[], token: string): string | null {
+  if (typeof token !== "string" || token.length > 80) return null;
+  const m = /^([0-9a-f-]{36})\.([A-Za-z0-9_-]{22})$/.exec(token);
+  if (!m || !m[1] || !m[2] || !isUuid(m[1])) return null;
+  let ok = false;
+  for (const secret of secrets) {
+    if (secret && safeEqual(hmac(secret, `share:v1|${m[1]}`), m[2])) ok = true;
+  }
+  return ok ? m[1] : null;
+}
+
+// ---------------------------------------------------------------------------
+// Kiosk links: /k/<kioskId>.<random secret>. Only sha256(secret) is stored.
+// ---------------------------------------------------------------------------
+
+export function parseKioskToken(token: string): { kioskId: string; secret: string } | null {
+  if (typeof token !== "string" || token.length > 100) return null;
+  const m = /^([0-9a-f-]{36})\.([A-Za-z0-9_-]{43})$/.exec(token);
+  if (!m || !m[1] || !m[2] || !isUuid(m[1])) return null;
+  return { kioskId: m[1], secret: m[2] };
+}

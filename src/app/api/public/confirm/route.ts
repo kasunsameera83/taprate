@@ -5,8 +5,8 @@ import { publicConfirmSchema } from "@/lib/validation/schemas";
 import { verifyResponseToken } from "@/lib/security/signing";
 import { adminClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
-import { maybeSendLowRatingAlert } from "@/lib/alerts";
-import { isIconSetId } from "@/lib/surveys/iconSets";
+import { notifyRating } from "@/lib/afterRating";
+import { after } from "next/server";
 
 // Called by the thank-you page once it has loaded in a real browser. This is what turns a
 // pending click into a counted rating (and uses a credit). Scanners that only fetch the link
@@ -30,27 +30,8 @@ export const POST = secureRoute<undefined, undefined, z.infer<typeof publicConfi
     if (!result || result.result === "not_found") return fail("not_found");
     if (result.result === "no_credit") return ok({ status: "closed" });
 
-    if (result.result === "confirmed" && result.rating_changed && result.account_id && result.survey_id && result.rating !== null) {
-      const [{ data: survey }, { data: response }] = await Promise.all([
-        db
-          .from("surveys")
-          .select("id, name, icon_set, alert_threshold, alert_emails")
-          .eq("id", result.survey_id)
-          .eq("account_id", result.account_id)
-          .maybeSingle(),
-        db.from("responses").select("agent, respondent_email").eq("id", body.responseId).maybeSingle(),
-      ]);
-      if (survey && isIconSetId(survey.icon_set)) {
-        await maybeSendLowRatingAlert({
-          accountId: result.account_id,
-          responseId: body.responseId,
-          survey: { ...survey, icon_set: survey.icon_set },
-          rating: result.rating,
-          agent: response?.agent ?? null,
-          respondentEmail: response?.respondent_email ?? null,
-        });
-      }
-    }
+    // Alerts and integrations run after the response is sent, so the customer never waits for them.
+    if (result.result === "confirmed" && result.rating_changed) after(() => notifyRating(body.responseId));
 
     return ok({ status: "recorded" });
   },

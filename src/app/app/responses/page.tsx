@@ -18,7 +18,18 @@ type Filters = {
   from: string;
   to: string;
   agent: string;
+  channel: string;
   page: number;
+};
+
+const CHANNEL_LABEL: Record<string, string> = {
+  email: "Email",
+  qr: "QR code",
+  whatsapp: "WhatsApp",
+  sms: "SMS",
+  link: "Link",
+  web: "Website",
+  kiosk: "Kiosk",
 };
 
 const SENTIMENT_OPTIONS: ReadonlyArray<{ value: SentimentFilter; label: string }> = [
@@ -40,6 +51,7 @@ function fromParams(sp: URLSearchParams): Filters {
     from: sp.get("from") ?? "",
     to: sp.get("to") ?? "",
     agent: sp.get("agent") ?? "",
+    channel: CHANNEL_LABEL[sp.get("channel") ?? ""] ? (sp.get("channel") as string) : "",
     page: 1,
   };
 }
@@ -66,6 +78,7 @@ function ResponsesView() {
     from: filters.from || undefined,
     to: filters.to || undefined,
     agent: filters.agent.trim() || undefined,
+    channel: filters.channel || undefined,
     page: filters.page,
     limit: PAGE_SIZE,
   };
@@ -90,6 +103,7 @@ function ResponsesView() {
         from: query.from,
         to: query.to,
         agent: query.agent,
+        channel: query.channel,
       })}`,
     );
 
@@ -111,8 +125,8 @@ function ResponsesView() {
   }, [queryKey, reload]);
 
   const update = (patch: Partial<Filters>) => setFilters((f) => ({ ...f, page: 1, ...patch }));
-  const filtersApplied = Boolean(filters.surveyId || filters.sentiment || filters.hasComment || filters.from || filters.to || filters.agent);
-  const clear = () => update({ surveyId: "", sentiment: "", hasComment: false, from: "", to: "", agent: "" });
+  const filtersApplied = Boolean(filters.surveyId || filters.sentiment || filters.hasComment || filters.from || filters.to || filters.agent || filters.channel);
+  const clear = () => update({ surveyId: "", sentiment: "", hasComment: false, from: "", to: "", agent: "", channel: "" });
   const pages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1;
   const exportHref = `/api/responses/export${qs({ surveyId: filters.surveyId || undefined, from: filters.from || undefined, to: filters.to || undefined })}`;
   const load = useCallback(() => setReload((n) => n + 1), []);
@@ -166,6 +180,17 @@ function ResponsesView() {
           {filters.status === "confirmed" && (
             <Segmented label="Sentiment" value={filters.sentiment} options={SENTIMENT_OPTIONS} onChange={(v) => update({ sentiment: v })} />
           )}
+          <label className="sr-only" htmlFor="f-channel">
+            Channel
+          </label>
+          <select id="f-channel" className="input w-auto" value={filters.channel} onChange={(e) => update({ channel: e.target.value })}>
+            <option value="">All channels</option>
+            {Object.entries(CHANNEL_LABEL).map(([v, l]) => (
+              <option key={v} value={v}>
+                {l}
+              </option>
+            ))}
+          </select>
           <label className="flex min-h-11 items-center gap-2 text-sm font-semibold">
             <input type="checkbox" checked={filters.hasComment} onChange={(e) => update({ hasComment: e.target.checked })} className="h-4 w-4 accent-[var(--color-brand)]" />
             With comments only
@@ -361,7 +386,10 @@ function ResponseTable({ items }: { items: ResponseItem[] }) {
                 <Customer r={r} />
               </td>
               <td className="px-4 py-3">{r.agent ?? <span className="text-faint">None</span>}</td>
-              <td className="px-4 py-3">{r.surveyName}</td>
+              <td className="px-4 py-3">
+                {r.surveyName}
+                <span className="block text-[12px] text-muted">{CHANNEL_LABEL[r.channel] ?? r.channel}</span>
+              </td>
               <td className="whitespace-nowrap px-4 py-3 text-muted">{when(r.createdAt)}</td>
             </tr>
           ))}
@@ -385,7 +413,9 @@ function ResponseCards({ items }: { items: ResponseItem[] }) {
           <div className="text-[13px] text-muted">
             <Customer r={r} />
             {r.agent && <span className="block">Agent: {r.agent}</span>}
-            <span className="block">{r.surveyName}</span>
+            <span className="block">
+              {r.surveyName}, via {CHANNEL_LABEL[r.channel] ?? r.channel}
+            </span>
           </div>
         </li>
       ))}

@@ -1,7 +1,7 @@
 import "server-only";
 
 export const RESPONSE_COLUMNS =
-  "id, survey_id, rating, pending_rating, status, comment, respondent_email, agent, ticket_ref, metadata_verified, sentiment, drivers, followup_status, assignee, due_at, resolved_at, created_at, confirmed_at, surveys(name, icon_set)";
+  "id, survey_id, rating, pending_rating, status, comment, respondent_email, agent, ticket_ref, metadata_verified, sentiment, drivers, channel, followup_status, assignee, due_at, resolved_at, created_at, confirmed_at, surveys(name, icon_set)";
 
 export type ResponseRow = {
   id: string;
@@ -16,6 +16,7 @@ export type ResponseRow = {
   metadata_verified: boolean;
   sentiment: "positive" | "neutral" | "negative" | null;
   drivers: string[] | null;
+  channel: string;
   followup_status: "open" | "in_progress" | "resolved" | null;
   assignee: string | null;
   due_at: string | null;
@@ -40,6 +41,7 @@ export function toResponseDto(r: ResponseRow) {
     verified: r.metadata_verified,
     sentiment: r.sentiment,
     drivers: r.drivers ?? [],
+    channel: r.channel,
     followup: r.followup_status
       ? { status: r.followup_status, assigneeId: r.assignee, dueAt: r.due_at, resolvedAt: r.resolved_at }
       : null,

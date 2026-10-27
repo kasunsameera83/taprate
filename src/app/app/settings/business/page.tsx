@@ -6,6 +6,7 @@ import { canPerform, isRole, type Role } from "@/lib/security/authz";
 import { Badge, Field, LoadError, Notice, PasswordInput, Skeleton, TextInput } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { IconDownload } from "@/components/icons";
+import { LOGO_MAX_BYTES, sniffImage } from "@/lib/branding";
 
 type Me = { account: { id: string; name: string; plan: string; credits: number; role: string; logoUrl: string | null } | null };
 
@@ -61,7 +62,11 @@ function Logo({ current, onChanged }: { current: string | null; onChanged: () =>
     setNotice(null);
     // Quick checks here for instant feedback; the server checks the real file type and size again.
     if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) return setNotice({ kind: "error", text: "Choose a PNG, JPG or WebP image." });
-    if (file.size > 512 * 1024) return setNotice({ kind: "error", text: "Logos must be 512 KB or smaller." });
+    if (file.size > LOGO_MAX_BYTES) return setNotice({ kind: "error", text: "Logos must be 512 KB or smaller." });
+    // Same byte check as the server, so a renamed file is caught before uploading.
+    const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+    const type = sniffImage(head);
+    if (!type || type.mime !== file.type) return setNotice({ kind: "error", text: "That file isn't really a PNG, JPG or WebP image." });
     setBusy(true);
     try {
       const res = await fetch("/api/account/logo", { method: "POST", credentials: "same-origin", headers: { "Content-Type": file.type }, body: file });

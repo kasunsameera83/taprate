@@ -111,7 +111,11 @@ test("public comment: cleaned, bounded, honeypot enforced", () => {
 
 test("click params: invalid optional values are dropped, not trusted", () => {
   const p = (q: string) => parseClickParams(new URLSearchParams(q));
-  assert.deepEqual(p("e=C%40X.com&a=Sarah&t=T-1"), { email: "c@x.com", agent: "Sarah", ticket: "T-1", metaSig: null });
+  assert.deepEqual(p("e=C%40X.com&a=Sarah&t=T-1"), { email: "c@x.com", agent: "Sarah", ticket: "T-1", metaSig: null, channel: "email" });
+  assert.equal(p("c=qr").channel, "qr");
+  assert.equal(p("c=whatsapp").channel, "whatsapp");
+  assert.equal(p("c=kiosk").channel, "email", "kiosk can't be claimed through a link");
+  assert.equal(p("c=<script>").channel, "email");
   assert.equal(p("e={{ticket.requester.email}}").email, null, "unreplaced merge tag");
   assert.equal(p("e=not-an-email").email, null);
   assert.equal(p("e=a@b.com&e=c@d.com").email, null, "duplicate param");

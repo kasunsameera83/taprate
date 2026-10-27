@@ -8,14 +8,16 @@ import { SurveyForm } from "@/components/SurveyForm";
 import { Badge, LoadError, Notice, Skeleton } from "@/components/ui";
 import { IconArrowLeft } from "@/components/icons";
 import { SnippetPanel } from "./SnippetPanel";
+import { CollectPanel } from "./CollectPanel";
 
-type Tab = "buttons" | "settings";
+type Tab = "buttons" | "collect" | "settings";
 
 function SurveyDetail({ id }: { id: string }) {
   const router = useRouter();
   const search = useSearchParams();
   const created = search.get("created") === "1";
-  const [tab, setTab] = useState<Tab>(search.get("tab") === "settings" ? "settings" : "buttons");
+  const initialTab = search.get("tab");
+  const [tab, setTab] = useState<Tab>(initialTab === "settings" || initialTab === "collect" ? initialTab : "buttons");
   const [survey, setSurvey] = useState<Survey | null>(null);
   const [hasResponses, setHasResponses] = useState(false);
   const [canEdit, setCanEdit] = useState(true);
@@ -34,7 +36,7 @@ function SurveyDetail({ id }: { id: string }) {
     setTab(next);
     const url = new URL(window.location.href);
     url.searchParams.delete("created");
-    if (next === "settings") url.searchParams.set("tab", "settings");
+    if (next !== "buttons") url.searchParams.set("tab", next);
     else url.searchParams.delete("tab");
     window.history.replaceState(null, "", url.toString());
   }
@@ -58,6 +60,7 @@ function SurveyDetail({ id }: { id: string }) {
 
   const tabs: Array<{ value: Tab; label: string }> = [
     { value: "buttons", label: "Add to emails" },
+    { value: "collect", label: "QR, WhatsApp & more" },
     { value: "settings", label: "Settings" },
   ];
 
@@ -91,7 +94,7 @@ function SurveyDetail({ id }: { id: string }) {
         {created && <Notice kind="success">Survey created. Now add the buttons to your emails.</Notice>}
       </header>
 
-      <div role="tablist" aria-label="Survey sections" className="flex gap-1 border-b border-line">
+      <div role="tablist" aria-label="Survey sections" className="flex gap-1 overflow-x-auto border-b border-line">
         {tabs.map((t) => (
           <button
             key={t.value}
@@ -101,7 +104,7 @@ function SurveyDetail({ id }: { id: string }) {
             aria-selected={tab === t.value}
             aria-controls={`panel-${t.value}`}
             onClick={() => switchTab(t.value)}
-            className={`-mb-px min-h-11 border-b-2 px-3 text-sm font-semibold ${
+            className={`-mb-px min-h-11 shrink-0 border-b-2 px-3 text-sm font-semibold ${
               tab === t.value ? "border-brand text-ink" : "border-transparent text-muted hover:text-ink"
             }`}
           >
@@ -113,6 +116,8 @@ function SurveyDetail({ id }: { id: string }) {
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
         {tab === "buttons" ? (
           <SnippetPanel surveyId={survey.id} key={survey.updatedAt} />
+        ) : tab === "collect" ? (
+          <CollectPanel surveyId={survey.id} surveyName={survey.name} canEdit={canEdit} />
         ) : (
           <SurveyForm
             initial={survey}

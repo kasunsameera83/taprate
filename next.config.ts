@@ -16,7 +16,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   async headers() {
     return [
-      { source: "/:path*", headers: securityHeaders },
+      // Everything except the embeddable widget refuses to be framed.
+      { source: "/((?!w/).*)", headers: securityHeaders },
+      { source: "/w/:path*", headers: securityHeaders.filter((h) => h.key !== "X-Frame-Options" && h.key !== "Cross-Origin-Opener-Policy") },
       // Never let browsers or proxies cache API answers or survey clicks.
       { source: "/api/:path*", headers: [{ key: "Cache-Control", value: "no-store" }] },
       {
@@ -24,6 +26,13 @@ const nextConfig: NextConfig = {
         headers: [
           { key: "Cache-Control", value: "no-store" },
           // Survey links carry the customer's email in the query string; never leak it onward.
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+        ],
+      },
+      {
+        source: "/(s|w|k)/:path*",
+        headers: [
           { key: "Referrer-Policy", value: "no-referrer" },
           { key: "X-Robots-Tag", value: "noindex, nofollow" },
         ],

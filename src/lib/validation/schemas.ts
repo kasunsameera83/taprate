@@ -174,6 +174,7 @@ export const responsesQuerySchema = z
     status: z.enum(["confirmed", "pending"]).default("confirmed"),
     sentiment: z.enum(["positive", "neutral", "negative"]).optional(),
     hasComment: z.enum(["yes"]).optional(),
+    channel: z.enum(["email", "qr", "whatsapp", "sms", "link", "web", "kiosk"]).optional(),
     agent: z.string().trim().max(100).optional(),
     from: isoDate.optional(),
     to: isoDate.optional(),
@@ -234,11 +235,15 @@ export const publicCommentSchema = z
  * Click links come from emails where merge tags may be unreplaced or mangled. A bad optional
  * field must not throw away the rating, so instead of rejecting we drop invalid values.
  */
+export const LINK_CHANNELS = ["qr", "whatsapp", "sms", "link", "web"] as const;
+export type Channel = "email" | (typeof LINK_CHANNELS)[number] | "kiosk";
+
 export function parseClickParams(params: URLSearchParams): {
   email: string | null;
   agent: string | null;
   ticket: string | null;
   metaSig: string | null;
+  channel: Channel;
 } {
   const get = (k: string) => {
     const all = params.getAll(k);
@@ -264,6 +269,8 @@ export function parseClickParams(params: URLSearchParams): {
     agent: plain(get("a"), 100),
     ticket,
     metaSig: sig && /^[A-Za-z0-9_-]{22}$/.test(sig) ? sig : null,
+    // Unknown or missing channel falls back to email (never trusted for anything but reporting).
+    channel: (LINK_CHANNELS as readonly string[]).includes(get("c") ?? "") ? (get("c") as Channel) : "email",
   };
 }
 
@@ -401,3 +408,35 @@ export const leaderboardQuerySchema = z
     minRatings: z.coerce.number().int().min(1).max(100).default(5),
   })
   .strict();
+
+// ---------------------------------------------------------------------------
+// Channels & integrations (Phase 3)
+// ---------------------------------------------------------------------------
+
+export const kioskRateSchema = z
+  .object({
+    kiosk: z.string().max(100).regex(/^[0-9a-f-]{36}\.[A-Za-z0-9_-]{43}$/, "Invalid kiosk link"),
+    rating: z.number().int().min(0).max(10),
+  })
+  .strict();
+
+export const kioskCreateSchema = z.object({ name: text(1, 60, "Kiosk name") }).strict();
+
+export const integrationCreateSchema = z
+  .object({
+    kind: z.enum(["slack", "teams", "webhook"], { error: "Choose where to send alerts" }),
+    name: text(1, 60, "Name"),
+    url: z.string().trim().min(1, "Paste the webhook URL").max(1000, "That URL is too long"),
+    events: z.array(z.enum(["negative", "all"])).min(1, "Choose at least one event").max(2),
+  })
+  .strict();
+export type IntegrationCreateInput = z.infer<typeof integrationCreateSchema>;
+
+export const integrationUpdateSchema = z
+  .object({
+    name: text(1, 60, "Name").optional(),
+    enabled: z.boolean().optional(),
+    events: z.array(z.enum(["negative", "all"])).min(1).max(2).optional(),
+  })
+  .strict()
+  .refine((v) => Object.keys(v).length > 0, "Nothing to update");
