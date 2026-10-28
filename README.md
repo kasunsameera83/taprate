@@ -182,6 +182,18 @@ businesses (search, usage, add/remove responses with a reason, suspend/restore),
   select id, 'Product owner' from auth.users where email = 'you@example.com';
   ```
 
+## Insights
+
+- AI summaries (Claude API): themes, real quotes and suggested actions from customer comments.
+  Off until an owner turns it on. Emails and phone numbers are removed before sending; comments are
+  escaped and treated as untrusted data; the answer must match a strict shape, and quotes that don't
+  appear in the real comments are dropped. Owners/admins can create (20 a day per business);
+  viewers can read. Set `ANTHROPIC_API_KEY` (and optionally `ANTHROPIC_MODEL`).
+- Email reports: weekly (Mondays) or monthly (1st), chosen per person, optional AI summary.
+  Membership and role are re-checked before every send; one-click unsubscribe with a signed link.
+  Daily job: `/api/cron/reports` (needs `CRON_SECRET` and Resend).
+- PDF report: `/app/reports/print` is laid out for paper; use the browser's "Save as PDF".
+
 ## Still to come
 
-AI summaries, scheduled reports.
+Launch readiness: deploy, domain, email sending (SPF/DKIM), terms & privacy pages, monitoring, backups.

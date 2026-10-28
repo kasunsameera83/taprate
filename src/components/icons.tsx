@@ -127,3 +127,8 @@ export const IconUpload = (p: P) => (
     <path d="M12 20V9m0 0-4 4m4-4 4 4M5 4h14" />
   </Svg>
 );
+export const IconSparkle = (p: P) => (
+  <Svg {...p}>
+    <path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z" />
+  </Svg>
+);

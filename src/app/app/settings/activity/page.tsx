@@ -44,6 +44,10 @@ const ACTIONS: Record<string, string> = {
   "billing.checkout_started": "Started a payment",
   "billing.paid": "Payment received",
   "billing.cancelled": "Cancelled the plan",
+  "insights.generated": "Made an AI summary",
+  "insights.enabled": "Turned on AI summaries",
+  "insights.disabled": "Turned off AI summaries",
+  "reports.updated": "Changed email report settings",
 };
 
 function describe(e: Entry): string {

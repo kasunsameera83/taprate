@@ -630,3 +630,28 @@ export const promoCodeSchema = z
   .refine((v) => v.kind !== "credits" || v.bonusCredits !== null, { message: "Enter the bonus responses", path: ["bonusCredits"] })
   .refine((v) => !v.endsAt || Date.parse(v.endsAt) > Date.parse(v.startsAt), { message: "The end must be after the start", path: ["endsAt"] });
 export type PromoCodeInput = z.infer<typeof promoCodeSchema>;
+
+// ---------------------------------------------------------------------------
+// Insights (Phase 6)
+// ---------------------------------------------------------------------------
+
+const periodDays = z.union([z.literal(7), z.literal(30), z.literal(90)], { error: "Choose 7, 30 or 90 days" });
+
+export const insightCreateSchema = z.object({ surveyId: z.union([uuidSchema, z.null()]).optional(), days: periodDays }).strict();
+export const insightsQuerySchema = z.object({ surveyId: uuidSchema.optional() }).strict();
+export const aiSettingSchema = z.object({ enabled: z.boolean() }).strict();
+
+export const reportSettingSchema = z
+  .object({
+    frequency: z.enum(["off", "weekly", "monthly"], { error: "Choose how often" }),
+    surveyId: z.union([uuidSchema, z.null()]).optional(),
+    includeAi: z.boolean().optional(),
+  })
+  .strict();
+
+export const reportQuerySchema = z
+  .object({
+    surveyId: uuidSchema.optional(),
+    days: z.coerce.number().pipe(z.union([z.literal(7), z.literal(30), z.literal(90)])).default(30),
+  })
+  .strict();

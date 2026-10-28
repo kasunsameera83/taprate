@@ -25,6 +25,9 @@ const schema = z.object({
   PAYHERE_APP_SECRET: z.string().max(200).optional().or(z.literal("")),
   PAYHERE_SANDBOX: z.enum(["true", "false"]).default("true"),
   STRIPE_SECRET_KEY: z.string().regex(/^(sk|rk)_(test|live)_[A-Za-z0-9]+$/, "STRIPE_SECRET_KEY must start with sk_test_ or sk_live_").optional().or(z.literal("")),
+  // AI summaries (optional). Model defaults to the fast, low-cost Haiku.
+  ANTHROPIC_API_KEY: z.string().regex(/^sk-ant-[A-Za-z0-9_-]+$/, "ANTHROPIC_API_KEY must start with sk-ant-").optional().or(z.literal("")),
+  ANTHROPIC_MODEL: z.string().regex(/^claude-[a-z0-9.-]{3,60}$/, "ANTHROPIC_MODEL must be a Claude model id").default("claude-haiku-5-5"),
   STRIPE_WEBHOOK_SECRET: z.string().regex(/^whsec_[A-Za-z0-9]+$/, "STRIPE_WEBHOOK_SECRET must start with whsec_").optional().or(z.literal("")),
 });
 

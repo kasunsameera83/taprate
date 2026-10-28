@@ -36,6 +36,8 @@ export const LIMITS = {
   checkoutPerUser: { name: "checkout:user", limit: 10, windowSec: 600 },
   // Trying promo codes: low enough that guessing codes is pointless.
   promoPerAccount: { name: "promo:account", limit: 10, windowSec: 3600 },
+  aiPerAccount: { name: "ai:account", limit: 20, windowSec: 86400 },
+  aiPerUser: { name: "ai:user", limit: 5, windowSec: 600 },
   webhookPerIp: { name: "webhook:ip", limit: 300, windowSec: 60 },
 } as const satisfies Record<string, RateLimitRule>;
 

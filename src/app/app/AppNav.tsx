@@ -4,13 +4,14 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "@/lib/client/api";
 import { ROLE_LABEL, type Role } from "@/lib/security/authz";
-import { IconDashboard, IconFollowUp, IconLogout, IconResponses, IconSettings, IconSurveys, IconTrophy, Logo } from "@/components/icons";
+import { IconDashboard, IconFollowUp, IconLogout, IconResponses, IconSettings, IconSparkle, IconSurveys, IconTrophy, Logo } from "@/components/icons";
 
-const NAV = [
+const NAV: Array<{ href: string; label: string; icon: (p: { className?: string }) => React.ReactElement; exact?: boolean; hideFor?: Role[] }> = [
   { href: "/app", label: "Dashboard", icon: IconDashboard, exact: true },
   { href: "/app/surveys", label: "Surveys", icon: IconSurveys },
   { href: "/app/responses", label: "Responses", icon: IconResponses },
   { href: "/app/follow-ups", label: "Follow-ups", icon: IconFollowUp },
+  { href: "/app/insights", label: "Insights", icon: IconSparkle, hideFor: ["agent"] as Role[] },
   { href: "/app/leaderboard", label: "Leaderboard", icon: IconTrophy },
   { href: "/app/settings", label: "Settings", icon: IconSettings },
 ];
@@ -99,7 +100,7 @@ export function AppNav({ isPlatformAdmin = false, email, accountId, accountName,
           <Logo />
         </Link>
         <nav aria-label="Main" className="mt-8 flex flex-col gap-1">
-          {NAV.map(({ href, label, icon: Icon, exact }) => {
+          {NAV.filter((n) => !n.hideFor?.includes(role)).map(({ href, label, icon: Icon, exact }) => {
             const active = isActive(href, exact);
             return (
               <Link
@@ -182,7 +183,7 @@ export function AppNav({ isPlatformAdmin = false, email, accountId, accountName,
         more={
           <div className="space-y-4">
             <nav aria-label="More" className="grid gap-1">
-              {MORE.map(({ href, label, icon: Icon, exact }) => {
+              {MORE.filter((n) => !n.hideFor?.includes(role)).map(({ href, label, icon: Icon, exact }) => {
                 const active = isActive(href, exact);
                 return (
                   <Link
