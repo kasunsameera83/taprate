@@ -14,6 +14,8 @@ import { ScrollStatement } from "./ScrollStatement";
 import { TapStory } from "./TapStory";
 import { TiltCard } from "./TiltCard";
 import { ShowcaseRow } from "./ShowcaseRow";
+import { AlertsScreen, RecoveryScreen } from "./GrowthScreens";
+import { MoreFeatures } from "./MoreFeatures";
 
 // The public landing page. Text marked "c." comes from /admin → Landing page; the product pictures and
 // their captions below are part of the design. Everything is rendered as text (React escapes it).
@@ -34,6 +36,18 @@ const SHOWCASE: Showcase[] = [
     body: "A bad rating opens a follow-up with an owner and a due date. Your team gets an alert in email, Slack or Teams, and the customer gets a call back.",
     points: ["Assign, add notes, mark resolved", "AI writes a first draft of your reply", "Added to the Zendesk or Freshdesk ticket"],
     Screen: FollowUpScreen,
+  },
+  {
+    title: "Win unhappy customers back",
+    body: "When your team marks a follow-up resolved, TapRate emails the customer to ask how you're doing now. Turn a bad day into a happy customer, and see how many you won back.",
+    points: ["Sent for you once the problem is fixed", "The new rating is linked to the old one", "\u201cWon back\u201d count on your dashboard"],
+    Screen: RecoveryScreen,
+  },
+  {
+    title: "Know the moment something slips",
+    body: "Get an alert on your phone the moment a customer is unhappy, and a warning when satisfaction falls sharply for your business or any branch. No app to install.",
+    points: ["Phone and computer alerts, straight from the browser", "A warning when this week falls 10 points below last week", "Owners and admins alerted; agents only for their own customers"],
+    Screen: AlertsScreen,
   },
   {
     title: "We'll send the survey for you",
@@ -206,6 +220,8 @@ export function LandingView({
             ))}
           </div>
         </section>
+
+        <MoreFeatures />
 
         {/* Also included (editable list) */}
         {c.features.length > 0 && (

@@ -492,3 +492,24 @@ textarea.input {
 html {
   scroll-padding-top: 5rem;
 }
+
+/* Landing: steps that appear one after another and loop (win-back story, phone alerts). */
+@keyframes lp-seq {
+  0% { opacity: 0; transform: translateY(10px) scale(0.98); }
+  7%, 78% { opacity: 1; transform: none; }
+  88%, 100% { opacity: 0; transform: translateY(-4px); }
+}
+@keyframes lp-pop {
+  0%, 40% { transform: scale(0.6); }
+  55% { transform: scale(1.25); }
+  70%, 100% { transform: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lp-seq { animation: lp-seq 8s cubic-bezier(0.2, 0.7, 0.2, 1) infinite both; }
+  .lp-pop { display: inline-block; animation: lp-pop 8s ease-out 3.3s infinite both; }
+  /* Cards rise in when the section is reached (only once the script is ready to reveal them). */
+  .lp-cards[data-ready] .lp-card { opacity: 0; transform: translateY(24px); }
+  .lp-card { transition: opacity 0.6s ease var(--d, 0ms), transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms), box-shadow 0.2s ease; }
+  .lp-cards[data-in] .lp-card { opacity: 1; transform: none; }
+  .lp-cards[data-in] .lp-card:hover { transform: translateY(-4px); transition-delay: 0ms; }
+}
