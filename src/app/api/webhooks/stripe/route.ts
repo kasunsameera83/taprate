@@ -1,3 +1,4 @@
+import { rewardReferral } from "@/lib/referrals/server";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 import { adminClient } from "@/lib/supabase/server";
@@ -77,7 +78,10 @@ async function grant(orderId: string | null, accountHint: string | null, payment
     if (/mismatch|unknown order|required/.test(error.message ?? "")) return { outcome: `rejected: ${error.message}`.slice(0, 80), accountId: order.account_id };
     throw new Retry();
   }
-  if (data === "granted") await audit({ accountId: order.account_id, userId: null, action: "billing.paid", targetType: "order", targetId: order.id, metadata: { provider: "stripe" } });
+  if (data === "granted") {
+    await audit({ accountId: order.account_id, userId: null, action: "billing.paid", targetType: "order", targetId: order.id, metadata: { provider: "stripe" } });
+    await rewardReferral(order.account_id);
+  }
   return { outcome: String(data), accountId: order.account_id };
 }
 

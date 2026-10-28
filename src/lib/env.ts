@@ -30,6 +30,10 @@ const schema = z.object({
   ANTHROPIC_MODEL: z.string().regex(/^claude-[a-z0-9.-]{3,60}$/, "ANTHROPIC_MODEL must be a Claude model id").default("claude-haiku-5-5"),
   STRIPE_WEBHOOK_SECRET: z.string().regex(/^whsec_[A-Za-z0-9]+$/, "STRIPE_WEBHOOK_SECRET must start with whsec_").optional().or(z.literal("")),
   // Bounce and spam-complaint notices from Resend (optional but recommended when sending surveys).
+  // Phone/desktop alerts (optional). Make them with: node scripts/vapid-keys.mjs
+  VAPID_PUBLIC_KEY: z.string().regex(/^[A-Za-z0-9_-]{86,88}$/, "VAPID_PUBLIC_KEY looks wrong (run node scripts/vapid-keys.mjs)").optional().or(z.literal("")),
+  VAPID_PRIVATE_KEY: z.string().regex(/^[A-Za-z0-9_-]{42,44}$/, "VAPID_PRIVATE_KEY looks wrong (run node scripts/vapid-keys.mjs)").optional().or(z.literal("")),
+  VAPID_SUBJECT: z.string().regex(/^(mailto:[^\s@]+@[^\s@]+|https:\/\/\S+)$/, "VAPID_SUBJECT must be mailto:you@domain or an https URL").optional().or(z.literal("")),
   RESEND_WEBHOOK_SECRET: z.string().regex(/^whsec_[A-Za-z0-9+/=]+$/, "RESEND_WEBHOOK_SECRET must start with whsec_").optional().or(z.literal("")),
 });
 

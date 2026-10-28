@@ -125,3 +125,26 @@ test("testimonial wall links: signed per business", () => {
   assert.equal(verifyWallToken([secret], tok.replace(acc, "0f1e2d3c-4b5a-4968-8776-655443322111")), null);
   assert.equal(verifyWallToken(["z".repeat(40)], tok), null);
 });
+
+import { buildRecoveryTag, verifyRecoveryTag } from "../../src/lib/security/signing.ts";
+test("recovery links: bound to one survey and one original rating", () => {
+  const secret = "r".repeat(40);
+  const survey = "5a000000-0000-4000-8000-000000000001";
+  const resp = "6c000000-0000-4000-8000-000000000001";
+  const tag = buildRecoveryTag(secret, survey, resp);
+  assert.equal(verifyRecoveryTag([secret], survey, tag), resp);
+  assert.equal(verifyRecoveryTag([secret], "5a000000-0000-4000-8000-000000000002", tag), null);
+  assert.equal(verifyRecoveryTag([secret], survey, tag.replace(resp, "6c000000-0000-4000-8000-000000000002")), null);
+});
+
+import { cleanRecords, sendingDomainSchema } from "../../src/lib/sending/domainRules.ts";
+test("own sending domain: real business domains only; provider records cleaned", () => {
+  assert.equal(sendingDomainSchema.parse({ domain: "https://Mail.Kova.lk/" }).domain, "mail.kova.lk");
+  assert.equal(sendingDomainSchema.safeParse({ domain: "gmail.com" }).success, false);
+  assert.equal(sendingDomainSchema.safeParse({ domain: "localhost" }).success, false);
+  assert.equal(sendingDomainSchema.safeParse({ domain: "x.taprate.lk" }).success, false);
+  assert.equal(sendingDomainSchema.safeParse({ domain: "kova.lk", fromLocal: "a b" }).success, false);
+  const recs = cleanRecords([{ record: "DKIM", type: "TXT", name: "resend._domainkey", value: "p=abc", status: "not_started" }, { type: "A", name: "x", value: "1.2.3.4" }, { type: "TXT", name: "<script>", value: "x" }]);
+  assert.equal(recs.length, 1);
+  assert.equal(recs[0]!.purpose, "DKIM");
+});

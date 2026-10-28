@@ -80,14 +80,31 @@ export const GET = secureRoute<undefined, z.infer<typeof statsQuerySchema>>(
     if (query.surveyId) pendingQ = pendingQ.eq("survey_id", query.surveyId);
     if (query.locationId) pendingQ = pendingQ.eq("location_id", query.locationId);
 
-    const [{ count: pending }, { data: account }] = await Promise.all([
+    // "Did we fix it?": emails sent in this period, answers received, and answers that were happy.
+    let sentQ = supabase.from("responses").select("id", { count: "exact", head: true }).eq("account_id", membership.accountId).gte("recovery_sent_at", since);
+    let answersQ = supabase.from("responses").select("sentiment").eq("account_id", membership.accountId).eq("status", "confirmed").not("recovery_of", "is", null).gte("created_at", since).limit(5000);
+    if (query.surveyId) {
+      sentQ = sentQ.eq("survey_id", query.surveyId);
+      answersQ = answersQ.eq("survey_id", query.surveyId);
+    }
+    if (query.locationId) {
+      sentQ = sentQ.eq("location_id", query.locationId);
+      answersQ = answersQ.eq("location_id", query.locationId);
+    }
+
+    const [{ count: pending }, { data: account }, { count: recSent }, { data: recAnswers }] = await Promise.all([
       pendingQ,
       supabase.from("accounts").select("name, plan, credit_balance").eq("id", membership.accountId).maybeSingle(),
+      sentQ,
+      answersQ,
     ]);
+    const answered = recAnswers?.length ?? 0;
+    const recovered = (recAnswers ?? []).filter((r) => r.sentiment === "positive").length;
 
     return ok({
       ...computeStats(current, previous, { days: query.days }),
       byLocation: branchStats(tagged, names),
+      recovery: { sent: recSent ?? 0, answered, recovered, ratePct: answered ? Math.round((recovered / answered) * 100) : null },
       pending: pending ?? 0,
       truncated: (data?.length ?? 0) >= MAX_ROWS,
       account: account ? { name: account.name, plan: account.plan, credits: account.credit_balance, role: membership.role } : null,

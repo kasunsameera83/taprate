@@ -236,3 +236,24 @@ export function verifyWallToken(secrets: readonly string[], token: string): stri
   }
   return ok ? m[1] : null;
 }
+
+// ---------------------------------------------------------------------------
+// "Did we fix it?" links: "rv=<originalResponseId>.<sig>", bound to the survey, so an answer can only be
+// linked to the rating the email was about. The database checks again that such an email was sent.
+// ---------------------------------------------------------------------------
+
+export function buildRecoveryTag(secret: string, surveyId: string, responseId: string): string {
+  if (!isUuid(surveyId) || !isUuid(responseId)) throw new Error("invalid id");
+  return `${responseId}.${hmac(secret, `rec:v1|${surveyId}|${responseId}`)}`;
+}
+
+export function verifyRecoveryTag(secrets: readonly string[], surveyId: string, tag: string | null | undefined): string | null {
+  if (typeof tag !== "string" || tag.length > 80 || !isUuid(surveyId)) return null;
+  const m = /^([0-9a-f-]{36})\.([A-Za-z0-9_-]{22})$/.exec(tag);
+  if (!m || !m[1] || !m[2] || !isUuid(m[1])) return null;
+  let ok = false;
+  for (const secret of secrets) {
+    if (secret && safeEqual(hmac(secret, `rec:v1|${surveyId}|${m[1]}`), m[2])) ok = true;
+  }
+  return ok ? m[1] : null;
+}

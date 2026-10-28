@@ -48,6 +48,19 @@ export const GET = secureRoute<z.infer<typeof params>>(
   },
 );
 
+const repeatSchema = z.object({ repeatDays: z.union([z.literal(30), z.literal(60), z.literal(90), z.null()]) }).strict();
+
+// Repeat this send every 30, 60 or 90 days with the same list (or stop repeating). Checked again in the database.
+export const PATCH = secureRoute<z.infer<typeof params>, undefined, z.infer<typeof repeatSchema>>(
+  { auth: "user", action: "sends:write", ipLimit: LIMITS.userWrite, userLimit: LIMITS.userWrite, params, body: repeatSchema, maxBodyBytes: 128 },
+  async ({ supabase, membership, user, params, body, ipHash }) => {
+    const { error } = await supabase.rpc("set_send_repeat", { p_send: params.id, p_days: body.repeatDays });
+    if (error) throw dbError(error);
+    await audit({ accountId: membership.accountId, userId: user.id, action: body.repeatDays ? "send.repeat_on" : "send.repeat_off", targetType: "survey_send", targetId: params.id, ipHash });
+    return ok({ repeatDays: body.repeatDays });
+  },
+);
+
 // Stop a send: emails not yet sent are dropped, and no reminder goes out.
 export const DELETE = secureRoute<z.infer<typeof params>>(
   { auth: "user", action: "sends:write", ipLimit: LIMITS.userWrite, userLimit: LIMITS.userWrite, params },

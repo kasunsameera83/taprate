@@ -10,6 +10,8 @@ import { LOGO_MAX_BYTES, sniffImage } from "@/lib/branding";
 import { confirmDialog } from "@/components/ConfirmDialog";
 import { DoNotEmail } from "./DoNotEmail";
 import { TvScreens } from "./TvScreens";
+import { OwnDomain } from "./OwnDomain";
+import { DropAlerts } from "./DropAlerts";
 
 type Me = { account: { id: string; name: string; plan: string; credits: number; role: string; logoUrl: string | null } | null };
 
@@ -47,6 +49,10 @@ export default function BusinessSettingsPage() {
           </a>
         </SettingsSection>
       )}
+
+      <DropAlerts canChange={canPerform(role, "account:write")} />
+
+      {canPerform(role, "sends:write") && <OwnDomain canChange={canPerform(role, "account:write")} />}
 
       {canPerform(role, "sends:write") && <DoNotEmail />}
 

@@ -10,6 +10,8 @@ export type OutgoingEmail = {
   text?: string;
   /** Shown as "<fromName> <our sending address>". Must already be made safe (see safeFromName). */
   fromName?: string;
+  /** The business's own verified address (feedback@their-domain); otherwise our sending address. */
+  fromAddress?: string | null;
   replyTo?: string | null;
   /** Only the headers we set ourselves (e.g. List-Unsubscribe). */
   headers?: Record<string, string>;
@@ -17,7 +19,10 @@ export type OutgoingEmail = {
 
 const HEADER_NAME = /^(List-Unsubscribe|List-Unsubscribe-Post|X-Entity-Ref-ID)$/;
 
-function toResend(from: string, m: OutgoingEmail) {
+const ADDRESS = /^[a-z0-9]([a-z0-9._-]{0,30}[a-z0-9])?@([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
+
+function toResend(defaultFrom: string, m: OutgoingEmail) {
+  const from = m.fromAddress && ADDRESS.test(m.fromAddress) ? m.fromAddress : defaultFrom;
   const headers: Record<string, string> = {};
   for (const [k, v] of Object.entries(m.headers ?? {})) {
     // Header injection guard: only known headers, single-line values.

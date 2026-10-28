@@ -6,6 +6,7 @@ import { ROLE_DESCRIPTION, ROLE_LABEL, isRole } from "@/lib/security/authz";
 import { Badge, Field, LoadError, Notice, PasswordInput, Skeleton, TextInput } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
+import { PhoneAlerts } from "./PhoneAlerts";
 
 type Me = {
   email: string | null;
@@ -46,6 +47,7 @@ export default function AccountSettingsPage() {
           )}
         </dl>
       </SettingsSection>
+      {me.account && <PhoneAlerts />}
       <TwoFactor enabled={me.mfaEnabled} onChange={load} />
       <ChangePassword />
       <ChangeEmail current={me.email ?? ""} />

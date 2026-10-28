@@ -1,3 +1,4 @@
+import { rewardReferral } from "@/lib/referrals/server";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 import { adminClient } from "@/lib/supabase/server";
@@ -65,7 +66,10 @@ export async function POST(req: NextRequest) {
           return done("retry", 500);
         }
       } else outcome = String(data);
-      if (outcome === "granted") await audit({ accountId: order.account_id, userId: null, action: "billing.paid", targetType: "order", targetId: order.id, metadata: { provider: "payhere" } });
+      if (outcome === "granted") {
+        await audit({ accountId: order.account_id, userId: null, action: "billing.paid", targetType: "order", targetId: order.id, metadata: { provider: "payhere" } });
+        await rewardReferral(order.account_id);
+      }
     }
   } else if (n.statusCode === -3) {
     const { data } = await db.rpc("billing_reverse_payment", { p_provider: "payhere", p_payment_id: n.paymentId ?? "" });

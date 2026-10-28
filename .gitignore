@@ -9,3 +9,5 @@ next-env.d.ts
 .DS_Store
 supabase/.temp/
 backups/
+e2e-report/
+test-results/

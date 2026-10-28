@@ -71,6 +71,11 @@ function AccountSwitcher({ accountId, accountName, role, accounts, compact = fal
         ))}
       </select>
       {error && <p className="mt-1 text-[12px] text-neg-text">{error}</p>}
+      {!compact && (
+        <Link href="/app/businesses" className="mt-1.5 inline-block text-[13px] font-semibold text-brand hover:underline">
+          See all businesses
+        </Link>
+      )}
     </div>
   );
 }

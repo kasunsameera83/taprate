@@ -3,6 +3,8 @@ import { secureRoute, ok, dbError } from "@/lib/security/route";
 import { LIMITS } from "@/lib/security/rateLimit";
 import { followupUpdateSchema, uuidSchema } from "@/lib/validation/schemas";
 import { audit } from "@/lib/audit";
+import { after } from "next/server";
+import { sendRecoveryFor } from "@/lib/sending/recovery";
 
 const params = z.object({ id: uuidSchema }).strict();
 
@@ -28,6 +30,8 @@ export const PATCH = secureRoute<z.infer<typeof params>, undefined, z.infer<type
       metadata: { status: body.status ?? null, reassigned: body.assigneeId !== undefined },
       ipHash,
     });
+    // "Did we fix it?" email to the customer (if the survey wants it and they have an email address).
+    if (body.status === "resolved") after(() => sendRecoveryFor(params.id, membership.accountId));
     return ok({ updated: true });
   },
 );

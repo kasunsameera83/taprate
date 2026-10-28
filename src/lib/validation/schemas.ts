@@ -51,6 +51,8 @@ export const signUpSchema = z
     password: passwordSchema,
     accountName: text(1, 80, "Business name"),
     acceptTerms: z.literal(true, { error: "Please agree to the Terms and Privacy Policy" }),
+    // Invite code from a referral link (?ref=). Bad codes are refused here, unknown ones ignored later.
+    ref: z.string().regex(/^[A-Z2-9]{8}$/, "Invalid invite code").optional(),
   })
   .strict();
 export type SignUpInput = z.infer<typeof signUpSchema>;
@@ -127,6 +129,7 @@ const surveyFields = {
   followupDueHours: z.number({ error: "Choose how soon to follow up" }).int().min(1).max(720),
   optionLabels: optionLabelsSchema,
   language: z.enum(LANGS, { error: "Choose a language" }),
+  recoveryEmail: z.boolean(),
   reasonsQuestionPositive: z.union([text(1, 80, "Question").refine((v) => !/[<>]/.test(v), "Questions can't contain < or >"), z.literal("").transform(() => null), z.null()]),
   reasonsQuestionNegative: z.union([text(1, 80, "Question").refine((v) => !/[<>]/.test(v), "Questions can't contain < or >"), z.literal("").transform(() => null), z.null()]),
 };
@@ -152,6 +155,7 @@ export const surveyCreateSchema = z
     followupDueHours: surveyFields.followupDueHours.default(48),
     optionLabels: optionLabelsSchema.default({}),
     language: surveyFields.language.default("en"),
+    recoveryEmail: z.boolean().default(true),
     reasonsQuestionPositive: surveyFields.reasonsQuestionPositive.default(null),
     reasonsQuestionNegative: surveyFields.reasonsQuestionNegative.default(null),
   })

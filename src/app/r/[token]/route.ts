@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 import { adminClient } from "@/lib/supabase/server";
-import { parseLinkToken, verifyLinkToken, verifyLocationTag, verifyMetadata, createResponseToken } from "@/lib/security/signing";
+import { parseLinkToken, verifyLinkToken, verifyLocationTag, verifyMetadata, verifyRecoveryTag, createResponseToken } from "@/lib/security/signing";
 import { detectBot } from "@/lib/security/bot";
 import { getClientIp, hashIp, buildDedupeKey } from "@/lib/security/request";
 import { hitRateLimit, LIMITS } from "@/lib/security/rateLimit";
@@ -74,9 +74,13 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ token: stri
     // Branch (QR code or link made for one branch): only trusted when signed for this survey.
     const lTags = req.nextUrl.searchParams.getAll("l");
     const locationId = lTags.length === 1 ? verifyLocationTag(e.linkSecrets, parsed.surveyId, lTags[0]) : null;
+    // "Did we fix it?" answer: links back to the original rating, only when signed for this survey.
+    const rvTags = req.nextUrl.searchParams.getAll("rv");
+    const recoveryOf = rvTags.length === 1 ? verifyRecoveryTag(e.linkSecrets, parsed.surveyId, rvTags[0]) : null;
 
     // 5. Record as pending
-    const dedupeKey = buildDedupeKey({ surveyId: parsed.surveyId, email: meta.email, ticket: meta.ticket, ipHash, userAgent });
+    // A recovery answer is a new rating, not a change to the original one.
+    const dedupeKey = buildDedupeKey({ surveyId: parsed.surveyId, email: meta.email, ticket: recoveryOf ? `rv:${recoveryOf}` : meta.ticket, ipHash, userAgent });
     const { data: responseId, error } = await adminClient().rpc("record_click", {
       p_survey: parsed.surveyId,
       p_rating: parsed.rating,
@@ -89,6 +93,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ token: stri
       p_user_agent: userAgent,
       p_channel: meta.channel === "kiosk" ? "email" : meta.channel,
       p_location: locationId,
+      p_recovery_of: recoveryOf,
     });
 
     if (error) {

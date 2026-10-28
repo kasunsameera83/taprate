@@ -21,6 +21,8 @@ type SendItem = {
   source: string;
   reminderDays: number | null;
   skipRecentDays: number;
+  repeatDays: number | null;
+  nextRunAt: string | null;
   createdAt: string;
   total: number;
   queued: number;
@@ -85,11 +87,46 @@ function Composer({ survey, credits, onSent }: { survey: Survey; credits: number
   const [replyTo, setReplyTo] = useState("");
   const [reminder, setReminder] = useState<"" | "3" | "5" | "7">("3");
   const [skipRecent, setSkipRecent] = useState<"0" | "30" | "60" | "90">("30");
+  const [repeat, setRepeat] = useState<"" | "30" | "60" | "90">("");
   const [confirm, setConfirm] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState<{ kind: "error" | "success" | "info"; text: string } | null>(null);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [myEmail, setMyEmail] = useState<string | null>(null);
+  useEffect(() => {
+    api<{ email: string | null }>("/api/account").then((r) => r.ok && setMyEmail(r.data.email));
+  }, []);
+
+  /** One email to yourself with this subject and message, to see exactly what customers get. */
+  async function sendTest() {
+    if (!myEmail) return;
+    setBusy(true);
+    setNotice(null);
+    const check = sendCreateSchema.safeParse({
+      name: `Test to yourself · ${today()}`,
+      subject,
+      intro,
+      replyTo,
+      reminderDays: null,
+      skipRecentDays: 0,
+      recipients: [{ email: myEmail }],
+      confirmCustomers: true,
+    });
+    if (!check.success) {
+      setBusy(false);
+      setErrors(fieldErrors(check.error));
+      return;
+    }
+    const r = await api<CreateResult>(`/api/surveys/${encodeURIComponent(survey.id)}/sends`, { method: "POST", body: check.data });
+    setBusy(false);
+    if (!r.ok) setNotice({ kind: "error", text: r.message });
+    else if (r.data.notConfigured) setNotice({ kind: "info", text: "Email isn't set up on this server yet (RESEND_API_KEY)." });
+    else if (r.data.suppressed) setNotice({ kind: "info", text: "Your own address is on the do-not-email list, so the test wasn't sent." });
+    else setNotice({ kind: "success", text: `Test sent to ${myEmail}. Open it and tap a button to see the whole journey.` });
+    requestAnimationFrame(() => noticeRef.current?.focus());
+    onSent();
+  }
   const fileRef = useRef<HTMLInputElement>(null);
   const noticeRef = useRef<HTMLDivElement>(null);
 
@@ -144,6 +181,8 @@ function Composer({ survey, credits, onSent }: { survey: Survey; credits: number
       setNotice({ kind: "error", text: r.message });
       return;
     }
+    // Repeating: the same list gets this survey again every 30/60/90 days.
+    if (repeat) await api(`/api/sends/${encodeURIComponent(r.data.id)}`, { method: "PATCH", body: { repeatDays: Number(repeat) } });
     let { sent, failed, remaining } = r.data;
     let notConfigured = r.data.notConfigured;
     const total = r.data.queued;
@@ -177,6 +216,7 @@ function Composer({ survey, credits, onSent }: { survey: Survey; credits: number
     setRaw("");
     setFileName("");
     setConfirm(false);
+    setRepeat("");
     setName(`Survey email · ${today()}`);
     onSent();
   }
@@ -313,6 +353,14 @@ function Composer({ survey, credits, onSent }: { survey: Survey; credits: number
                   <option value="0">Email everyone on the list</option>
                 </select>
               </Field>
+              <Field label="Send it again" name="repeat" hint="To the same list, so you can track how people feel over time.">
+                <select id="repeat" className="input" value={repeat} onChange={(e) => setRepeat(e.target.value as typeof repeat)} aria-describedby="repeat-hint">
+                  <option value="">Just once</option>
+                  <option value="30">Every month</option>
+                  <option value="60">Every 2 months</option>
+                  <option value="90">Every 3 months</option>
+                </select>
+              </Field>
               <Field label="Replies go to" name="replyTo" optional error={errors.replyTo} hint="Your support or sales inbox.">
                 <TextInput name="replyTo" type="email" inputMode="email" autoComplete="email" placeholder="help@yourbusiness.lk" value={replyTo} onChange={(e) => setReplyTo(e.target.value)} maxLength={254} error={errors.replyTo} hasHint />
               </Field>
@@ -332,6 +380,11 @@ function Composer({ survey, credits, onSent }: { survey: Survey; credits: number
           </fieldset>
 
           <div className="flex flex-wrap items-center gap-3 border-t border-line pt-5">
+            {myEmail && (
+              <button type="button" className="btn btn-secondary min-h-11" disabled={busy} onClick={sendTest}>
+                Send a test to me
+              </button>
+            )}
             <button className="btn btn-primary min-h-11" disabled={busy}>
               {busy ? "Sending…" : count ? `Send to ${n(count)} ${count === 1 ? "person" : "people"}` : "Send"}
             </button>
@@ -489,6 +542,7 @@ function SendRow({ s, canSend, onChanged }: { s: SendItem; canSend: boolean; onC
         {stat("Sent", n(s.sent), going ? `${n(s.queued)} still to go` : undefined)}
         {stat("Rated", n(s.rated), rate !== null ? `${rate}% of sent` : undefined)}
         {stat("Reminder", s.reminderDays ? n(s.reminded) : "Off", s.reminderDays ? `after ${s.reminderDays} days` : undefined)}
+        {s.repeatDays && stat("Repeats", `${s.repeatDays === 30 ? "Monthly" : `Every ${s.repeatDays / 30} months`}`, s.nextRunAt ? `next ${new Date(s.nextRunAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}` : undefined)}
         {s.skippedRecent + s.suppressed > 0 && stat("Skipped", n(s.skippedRecent + s.suppressed), `${n(s.skippedRecent)} recent · ${n(s.suppressed)} unsubscribed`)}
         {s.failed > 0 && stat("Not delivered", n(s.failed))}
       </div>
@@ -496,6 +550,20 @@ function SendRow({ s, canSend, onChanged }: { s: SendItem; canSend: boolean; onC
         <div className="mt-3">
           <Notice kind="error">{msg}</Notice>
         </div>
+      )}
+      {canSend && s.repeatDays && (
+        <button
+          type="button"
+          className="mr-4 mt-4 text-[13px] font-semibold text-muted hover:text-ink hover:underline"
+          onClick={async () => {
+            if (!(await confirmDialog({ title: "Stop repeating this send?", body: "Sends already made stay as they are; no new ones will go out.", confirmLabel: "Stop repeating" }))) return;
+            const r = await api(`/api/sends/${encodeURIComponent(s.id)}`, { method: "PATCH", body: { repeatDays: null } });
+            if (!r.ok) setMsg(r.message);
+            onChanged();
+          }}
+        >
+          Stop repeating
+        </button>
       )}
       <button type="button" className="mt-4 text-[13px] font-semibold text-brand hover:underline" aria-expanded={open} onClick={toggle}>
         {open ? "Hide people" : `Show people (${n(s.total)})`}

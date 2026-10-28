@@ -27,6 +27,7 @@ export type SurveyRow = {
   icon_images?: Record<string, string> | null;
   option_labels?: Record<string, string> | null;
   language?: string | null;
+  recovery_email?: boolean;
   reasons_question_positive?: string | null;
   reasons_question_negative?: string | null;
   created_at: string;
@@ -34,7 +35,7 @@ export type SurveyRow = {
 };
 
 export const SURVEY_COLUMNS =
-  "id, account_id, name, question, icon_set, brand_color, thank_you_message, allow_comment, website_url, alert_threshold, alert_emails, status, drivers_positive, drivers_negative, review_cta_label, review_cta_url, followups_enabled, followup_due_hours, icon_images, option_labels, language, reasons_question_positive, reasons_question_negative, created_at, updated_at";
+  "id, account_id, name, question, icon_set, brand_color, thank_you_message, allow_comment, website_url, alert_threshold, alert_emails, status, drivers_positive, drivers_negative, review_cta_label, review_cta_url, followups_enabled, followup_due_hours, icon_images, option_labels, language, recovery_email, reasons_question_positive, reasons_question_negative, created_at, updated_at";
 
 export type SurveyDto = {
   id: string;
@@ -59,6 +60,8 @@ export type SurveyDto = {
   optionLabels: Record<string, string>;
   /** Language of what customers see. */
   language: Lang;
+  /** Ask the customer again after their follow-up is resolved. */
+  recoveryEmail: boolean;
   reasonsQuestionPositive: string | null;
   reasonsQuestionNegative: string | null;
   createdAt: string;
@@ -87,6 +90,7 @@ export function toSurveyDto(r: SurveyRow): SurveyDto {
     iconImages: iconUrlMap(r.icon_set, r.icon_images),
     optionLabels: labelsFor(r.icon_set, r.option_labels),
     language: isLang(r.language) ? r.language : "en",
+    recoveryEmail: r.recovery_email ?? true,
     reasonsQuestionPositive: r.reasons_question_positive ?? null,
     reasonsQuestionNegative: r.reasons_question_negative ?? null,
     createdAt: r.created_at,
@@ -113,6 +117,7 @@ const FIELD_MAP = {
   followupDueHours: "followup_due_hours",
   optionLabels: "option_labels",
   language: "language",
+  recoveryEmail: "recovery_email",
   reasonsQuestionPositive: "reasons_question_positive",
   reasonsQuestionNegative: "reasons_question_negative",
 } as const;

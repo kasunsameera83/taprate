@@ -56,6 +56,8 @@ const en = {
   wallEmpty: "No reviews to show yet.",
   aCustomer: "A customer",
   collectedWith: "Ratings collected with TapRate",
+  recoverySubject: "Did we put it right?",
+  recoveryIntro: "Hi {name},\n\nYou told us recently that we didn't get it right. We've worked on it, and we'd love to know how you feel about {business} now.",
 };
 export type PublicKey = keyof typeof en;
 
@@ -104,6 +106,8 @@ const si: Record<PublicKey, string> = {
   wallEmpty: "පෙන්වීමට තවම සමාලෝචන නැත.",
   aCustomer: "පාරිභෝගිකයෙක්",
   collectedWith: "TapRate මගින් එකතු කළ ඇගයීම්",
+  recoverySubject: "අපි එය නිවැරදි කළාද?",
+  recoveryIntro: "ආයුබෝවන්,\n\nමෑතකදී අපි නිසි ලෙස කටයුතු නොකළ බව ඔබ අපට පැවසුවා. අපි ඒ ගැන කටයුතු කළා. දැන් {business} ගැන ඔබට කෙසේද හැඟෙන්නේ?",
 };
 
 const ta: Record<PublicKey, string> = {
@@ -151,6 +155,8 @@ const ta: Record<PublicKey, string> = {
   wallEmpty: "காட்ட இன்னும் மதிப்புரைகள் இல்லை.",
   aCustomer: "ஒரு வாடிக்கையாளர்",
   collectedWith: "TapRate மூலம் சேகரிக்கப்பட்ட மதிப்பீடுகள்",
+  recoverySubject: "நாங்கள் அதைச் சரிசெய்தோமா?",
+  recoveryIntro: "வணக்கம்,\n\nசமீபத்தில் நாங்கள் சரியாகச் செய்யவில்லை என்று எங்களிடம் சொன்னீர்கள். அதைச் சரிசெய்ய முயன்றோம். இப்போது {business} பற்றி நீங்கள் எப்படி உணர்கிறீர்கள்?",
 };
 
 const STRINGS: Record<Lang, Record<PublicKey, string>> = { en, si, ta };

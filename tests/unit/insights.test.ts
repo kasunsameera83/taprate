@@ -105,3 +105,16 @@ test("wins email: numbers, kind words escaped, stop link", () => {
   assert.match(m.html, /Kova &amp; Co/);
   assert.match(m.html, /unsubscribe\?w=1&amp;t=2/);
 });
+
+import { buildDropEmail, detectDrops } from "../../src/lib/insights/drops.ts";
+test("drop alerts: only real, sizeable drops with enough ratings", () => {
+  const now = Date.parse("2026-10-28T00:00:00Z");
+  const mk = (n: number, posShare: number, daysAgo: number, loc: string | null = null) =>
+    Array.from({ length: n }, (_, i) => ({ createdAt: new Date(now - (daysAgo + (i % 5) * 0.1) * 86_400_000).toISOString(), positive: i < n * posShare, locationId: loc }));
+  const rows = [...mk(30, 0.6, 2, "k"), ...mk(30, 0.9, 9, "k"), ...mk(30, 0.9, 2, "c"), ...mk(30, 0.9, 9, "c")];
+  const d = detectDrops(rows, new Map([["k", "Kandy"], ["c", "Colombo"]]), now);
+  assert.deepEqual(d.map((x) => x.scope).sort(), ["all", "k"]);
+  assert.equal(detectDrops(mk(10, 0.1, 2).concat(mk(10, 0.9, 9)), new Map(), now).length, 0, "too few ratings");
+  const mail = buildDropEmail("Kova <b>", d, "https://app.taprate.lk");
+  assert.match(mail.html, /Kova &lt;b&gt;/);
+});

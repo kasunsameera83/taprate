@@ -71,3 +71,13 @@ test("import: exports from other tools are recognised (Delighted-style headers, 
   assert.equal(parseDateCell("2023-05-14 10:22:01 -0700"), "2023-05-14T17:22:01Z");
   assert.equal(parseDateCell("14/05/2023"), null);
 });
+
+import { sampleStats } from "../../src/lib/onboarding/sample.ts";
+test("sample dashboard data is believable and the same every time", () => {
+  const a = sampleStats(30, Date.parse("2026-10-28T00:00:00Z"));
+  const b = sampleStats(30, Date.parse("2026-10-28T00:00:00Z"));
+  assert.deepEqual(a, b);
+  assert.ok(a.total > 100 && a.satisfactionPct! > 60 && a.satisfactionPct! < 95);
+  assert.equal(a.byAgent.length, 4);
+  assert.equal(a.recent.length, 60);
+});

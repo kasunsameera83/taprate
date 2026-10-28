@@ -63,6 +63,8 @@ Use a **separate project** for production (keep your current one for testing).
    | `PAYHERE_APP_ID`, `PAYHERE_APP_SECRET` | optional, see PayHere below |
    | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | from Stripe (live) |
    | `RESEND_WEBHOOK_SECRET` | from Resend webhooks (bounces), see step 3 |
+   | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | phone alerts: run `node scripts/vapid-keys.mjs` once and paste both |
+   | `VAPID_SUBJECT` | `mailto:support@YOUR-DOMAIN` (push services contact this if something's wrong) |
    | `ANTHROPIC_API_KEY` | optional (AI summaries) |
    | `SENTRY_DSN` | optional (error monitoring) |
 
@@ -86,7 +88,9 @@ Use a **separate project** for production (keep your current one for testing).
    **email.complained**. Copy its signing secret (starts with `whsec_`) into Vercel as
    `RESEND_WEBHOOK_SECRET`. Bounced or complaining addresses are then never emailed again, which keeps
    your domain's reputation (and everyone's delivery) healthy.
-5. Limits: trial businesses can send 100 survey emails a day, paid plans 2,000. Resend's own plan limits
+5. "Send from your own domain" (Scale plan) adds the business's domain to Resend through its API, so
+   `RESEND_API_KEY` must be a **full access** key (not "sending access only").
+6. Limits: trial businesses can send 100 survey emails a day, paid plans 2,000. Resend's own plan limits
    also apply; upgrade Resend before your customers send more than its plan allows.
 
 ## 4. PayHere (LKR)

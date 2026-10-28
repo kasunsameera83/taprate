@@ -59,6 +59,7 @@ function BillingView() {
       )}
       <BillingDetails profile={data.profile} onSaved={load} />
       {anyProvider && <Buy data={data} />}
+      <Invite />
       <History payments={data.payments} />
     </div>
   );
@@ -582,5 +583,39 @@ export default function BillingPage() {
     <Suspense>
       <BillingView />
     </Suspense>
+  );
+}
+
+type Referral = { code: string; link: string; bonus: number; joined: number; rewarded: number };
+
+// Invite another business: both get bonus responses after they make their first payment.
+function Invite() {
+  const [r, setR] = useState<Referral | null>(null);
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    api<Referral>("/api/referrals").then((res) => res.ok && setR(res.data));
+  }, []);
+  if (!r) return null;
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(r!.link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* the link stays selectable */
+    }
+  }
+  return (
+    <SettingsSection title="Invite a business" description={`Share your link. When a business that signs up through it makes its first payment, you both get ${r.bonus} bonus responses.`}>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <input readOnly value={r.link} aria-label="Your invite link" className="input flex-1 font-mono text-sm" onFocus={(e) => e.currentTarget.select()} />
+        <button type="button" className="btn btn-secondary" onClick={copy}>
+          {copied ? "Copied" : "Copy link"}
+        </button>
+      </div>
+      <p className="mt-3 text-sm text-muted">
+        {r.joined === 0 ? "Nobody has joined through your link yet." : `${r.joined} joined · ${r.rewarded} rewarded`}
+      </p>
+    </SettingsSection>
   );
 }

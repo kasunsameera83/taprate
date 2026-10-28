@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { CustomerTimelineButton } from "@/components/CustomerTimeline";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { api, qs } from "@/lib/client/api";
@@ -391,7 +392,7 @@ function Reasons({ r }: { r: ResponseItem }) {
 function Customer({ r }: { r: ResponseItem }) {
   return (
     <>
-      <span className="break-all">{r.email ?? <span className="text-muted">Not provided</span>}</span>
+      <span className="break-all">{r.email ? <CustomerTimelineButton email={r.email} /> : <span className="text-muted">Not provided</span>}</span>
       {r.ticket && <span className="block text-[12px] text-muted">Ticket {r.ticket}</span>}
       {(r.email || r.agent || r.ticket) && !r.verified && (
         <span className="block text-[12px] text-muted" title="Filled in by your email tool. TapRate can't confirm it.">

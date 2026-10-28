@@ -1,5 +1,6 @@
 "use client";
 import { Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
+import { CustomerTimelineButton } from "@/components/CustomerTimeline";
 import { useSearchParams } from "next/navigation";
 import { api, qs } from "@/lib/client/api";
 import { followupNoteSchema, fieldErrors } from "@/lib/validation/schemas";
@@ -203,7 +204,7 @@ function FollowUpCard({
             <span className="mr-1 text-lg" aria-hidden>
               {item.iconSet === "nps" || item.iconSet === "ces" ? "" : opt?.symbol}
             </span>
-            <span className="font-semibold">{item.email ?? "Unknown customer"}</span>
+            <span className="font-semibold">{item.email ? <CustomerTimelineButton email={item.email} /> : "Unknown customer"}</span>
             <span className="text-muted"> rated {opt?.label ?? item.rating}</span>
             {item.agent && <span className="text-muted"> for {item.agent}</span>}
           </p>

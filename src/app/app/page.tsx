@@ -7,6 +7,8 @@ import { isIconSetId, ratingOption } from "@/lib/surveys/iconSets";
 import { FeedbackStripe } from "@/components/FeedbackStripe";
 import { LoadError, Segmented, SentimentDot, Skeleton, Notice } from "@/components/ui";
 import { IconPlus } from "@/components/icons";
+import { Checklist } from "./Checklist";
+import { sampleStats } from "@/lib/onboarding/sample";
 
 type Days = 7 | 30 | 90;
 const PERIODS: ReadonlyArray<{ value: Days; label: string }> = [
@@ -25,10 +27,14 @@ export default function Dashboard() {
   const [followUps, setFollowUps] = useState<ResponseItem[] | null>(null);
   const [error, setError] = useState("");
   const [reload, setReload] = useState(0);
+  // Sample data preview for new accounts (never saved; clearly labelled).
+  const [sample, setSample] = useState(false);
+  const [accountId, setAccountId] = useState<string | null>(null);
 
   useEffect(() => {
     api<Survey[]>("/api/surveys").then((r) => setSurveys(r.ok ? r.data : []));
     api<Location[]>("/api/locations").then((r) => r.ok && setLocations(r.data));
+    api<{ account: { id: string } | null }>("/api/account").then((r) => r.ok && setAccountId(r.data.account?.id ?? null));
   }, []);
 
   const load = useCallback(() => setReload((n) => n + 1), []);
@@ -53,6 +59,7 @@ export default function Dashboard() {
   }, [days, surveyId, locationId, reload]);
 
   const noSurveys = surveys !== null && surveys.length === 0;
+  const shown: StatsResponse | null = sample ? (sampleStats(days) as StatsResponse) : stats;
 
   return (
     <div className="space-y-6">
@@ -97,8 +104,21 @@ export default function Dashboard() {
 
       {error && <LoadError message={error} onRetry={load} />}
 
-      {noSurveys ? (
-        <GettingStarted />
+      <Checklist accountId={accountId} />
+
+      {sample && (
+        <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-neu-fill bg-neu-soft px-4 py-3 text-sm text-neu-text">
+          <span>
+            <strong>Sample data.</strong> These aren&rsquo;t real ratings: it&rsquo;s a preview of what your dashboard will look like.
+          </span>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setSample(false)}>
+            Back to my data
+          </button>
+        </div>
+      )}
+
+      {noSurveys && !sample ? (
+        <GettingStarted onSample={() => setSample(true)} />
       ) : (
         <>
           {stats?.account && stats.account.credits <= 10 && (
@@ -106,15 +126,23 @@ export default function Dashboard() {
               Only {stats.account.credits} responses left. When they run out, your buttons show &ldquo;survey closed&rdquo; and new ratings are not saved.
             </Notice>
           )}
-          <Hero stats={stats} days={days} />
-          <KpiRow stats={stats} days={days} />
-          <DailyChart stats={stats} />
-          <Reasons stats={stats} />
+          {!sample && stats && stats.total === 0 && (
+            <p className="text-sm text-muted">
+              No ratings yet.{" "}
+              <button type="button" className="font-semibold text-brand hover:underline" onClick={() => setSample(true)}>
+                Preview the dashboard with sample data
+              </button>
+            </p>
+          )}
+          <Hero stats={shown} days={days} />
+          <KpiRow stats={shown} days={days} />
+          <DailyChart stats={shown} />
+          <Reasons stats={shown} />
           <div className="grid gap-6 lg:grid-cols-5">
-            <FollowUps items={followUps} surveyId={surveyId} />
-            <Agents stats={stats} />
+            <FollowUps items={sample ? [] : followUps} surveyId={surveyId} />
+            <Agents stats={shown} />
           </div>
-          {!locationId && stats && stats.byLocation.length > 0 && <Branches rows={stats.byLocation} days={days} onPick={setLocationId} />}
+          {!locationId && shown && shown.byLocation.length > 0 && <Branches rows={shown.byLocation} days={days} onPick={sample ? () => undefined : setLocationId} />}
         </>
       )}
     </div>
@@ -213,8 +241,8 @@ function Hero({ stats, days }: { stats: StatsResponse | null; days: number }) {
 function KpiRow({ stats, days }: { stats: StatsResponse | null; days: number }) {
   if (!stats) {
     return (
-      <div className="grid gap-4 sm:grid-cols-3">
-        {[0, 1, 2].map((i) => (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {[0, 1, 2, 3].map((i) => (
           <div key={i} className="panel space-y-3 p-5">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-8 w-16" />
@@ -224,7 +252,7 @@ function KpiRow({ stats, days }: { stats: StatsResponse | null; days: number }) 
     );
   }
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <div className="panel p-5">
         <h2 className="font-sans text-sm font-semibold tracking-normal text-muted">
           Ratings
@@ -255,6 +283,31 @@ function KpiRow({ stats, days }: { stats: StatsResponse | null; days: number }) 
           <>
             <p className="font-display mt-1 text-[32px] font-bold leading-tight text-faint">None yet</p>
             <p className="text-[13px] text-muted">Shown when a survey uses the 0–10 or effort scale.</p>
+          </>
+        )}
+      </div>
+      <div className="panel p-5">
+        <h2 className="font-sans text-sm font-semibold tracking-normal text-muted">
+          Won back
+        </h2>
+        {stats.recovery.answered > 0 ? (
+          <>
+            <p className="font-display tabular mt-1 text-[32px] font-bold leading-tight">
+              {stats.recovery.ratePct}
+              <span className="text-lg text-muted">%</span>
+            </p>
+            <p className="text-[13px] text-muted">
+              {stats.recovery.recovered} of {stats.recovery.answered} unhappy customers were happy when asked again after their follow-up.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="font-display mt-1 text-[32px] font-bold leading-tight text-faint">{stats.recovery.sent > 0 ? "Waiting" : "None yet"}</p>
+            <p className="text-[13px] text-muted">
+              {stats.recovery.sent > 0
+                ? `${stats.recovery.sent} “Did we put it right?” emails sent. Answers show here.`
+                : "Resolve a follow-up and the customer is asked how they feel now."}
+            </p>
           </>
         )}
       </div>
@@ -538,7 +591,7 @@ function Branches({ rows, days, onPick }: { rows: BranchStat[]; days: number; on
   );
 }
 
-function GettingStarted() {
+function GettingStarted({ onSample }: { onSample: () => void }) {
   const steps = [
     { title: "Create a survey", body: "Write your question and pick a rating scale: faces, stars, thumbs or 0–10." },
     { title: "Add the buttons to your emails", body: "Copy them into your Gmail or Outlook signature, or a helpdesk template." },
@@ -562,10 +615,15 @@ function GettingStarted() {
           </li>
         ))}
       </ol>
-      <Link href="/app/surveys/new" className="btn btn-primary mt-8">
-        <IconPlus className="h-4 w-4" />
-        Create your first survey
-      </Link>
+      <div className="mt-8 flex flex-wrap gap-2">
+        <Link href="/app/surveys/new" className="btn btn-primary">
+          <IconPlus className="h-4 w-4" />
+          Create your first survey
+        </Link>
+        <button type="button" className="btn btn-secondary" onClick={onSample}>
+          Preview with sample data
+        </button>
+      </div>
     </section>
   );
 }

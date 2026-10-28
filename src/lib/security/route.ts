@@ -270,6 +270,8 @@ const DB_MESSAGES: Array<[RegExp, ErrorCode, string]> = [
   [/survey is not active/, "conflict", "This survey is paused. Turn it back on to send it."],
   [/business is suspended/, "forbidden", "Sending is turned off for this business. Please contact support."],
   [/invalid recipients?/, "validation_failed", "Some of those email addresses aren't valid."],
+  [/only manual sends repeat/, "conflict", "Only sends you made yourself can repeat."],
+  [/invalid repeat/, "validation_failed", "Choose every 1, 2 or 3 months."],
   [/not shareable/, "conflict", "Only comments a happy customer agreed to share can be shown on your website."],
   [/too many featured/, "conflict", "You can show up to 50 testimonials. Hide some first."],
   [/too many screens/, "conflict", "You can have up to 20 TV screens. Switch some off first."],

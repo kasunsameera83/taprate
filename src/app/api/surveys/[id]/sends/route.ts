@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 // Sending up to 1,000 emails takes a little while (batches of 100, paced for the email provider).
 export const maxDuration = 60;
 
-type SendRow = { id: string; name: string; subject: string; source: string; reminder_days: number | null; skip_recent_days: number; recipient_count: number; created_at: string };
+type SendRow = { id: string; name: string; subject: string; source: string; reminder_days: number | null; skip_recent_days: number; recipient_count: number; created_at: string; repeat_days: number | null; next_run_at: string | null };
 type Summary = { send_id: string; total: number; queued: number; sent: number; failed: number; suppressed: number; skipped_recent: number; reminded: number; rated: number };
 
 // List this survey's sends with their numbers. Owners, admins and viewers (the database hides them from agents).
@@ -22,7 +22,7 @@ export const GET = secureRoute<z.infer<typeof params>>(
   async ({ supabase, membership, params }) => {
     const { data, error } = await supabase
       .from("survey_sends")
-      .select("id, name, subject, source, reminder_days, skip_recent_days, recipient_count, created_at")
+      .select("id, name, subject, source, reminder_days, skip_recent_days, recipient_count, created_at, repeat_days, next_run_at")
       .eq("account_id", membership.accountId)
       .eq("survey_id", params.id)
       .order("created_at", { ascending: false })
@@ -48,6 +48,8 @@ export const GET = secureRoute<z.infer<typeof params>>(
           source: s.source,
           reminderDays: s.reminder_days,
           skipRecentDays: s.skip_recent_days,
+          repeatDays: s.repeat_days,
+          nextRunAt: s.next_run_at,
           createdAt: s.created_at,
           total: m?.total ?? s.recipient_count,
           queued: m?.queued ?? 0,

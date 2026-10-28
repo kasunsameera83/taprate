@@ -26,6 +26,9 @@ function buildCsp(nonce: string, framable: boolean): string {
     "form-action 'self' https://www.payhere.lk https://sandbox.payhere.lk",
     "base-uri 'self'",
     "object-src 'none'",
+    // The alerts service worker (/sw.js) and the app manifest come from our own site only.
+    "worker-src 'self'",
+    "manifest-src 'self'",
     dev ? "" : "upgrade-insecure-requests",
   ]
     .filter(Boolean)

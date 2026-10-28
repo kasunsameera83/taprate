@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
+import { runDropAlerts } from "@/lib/insights/dropsServer";
 import { adminClient } from "@/lib/supabase/server";
 import { hitRateLimit, LIMITS } from "@/lib/security/rateLimit";
 import { getClientIp, hashIp } from "@/lib/security/request";
@@ -88,5 +89,7 @@ export async function GET(req: NextRequest) {
   if (items.length) {
     await db.from("responses").update({ reminded_at: now.toISOString() }).in("id", items.map((i) => i.id));
   }
-  return NextResponse.json({ ok: true, overdue: items.length, emailsSent: sent }, { headers: { "Cache-Control": "no-store" } });
+  // Sharp drops in satisfaction (business or branch), at most once a week each.
+  const drops = await runDropAlerts(adminClient());
+  return NextResponse.json({ ok: true, overdue: items.length, emailsSent: sent, drops }, { headers: { "Cache-Control": "no-store" } });
 }

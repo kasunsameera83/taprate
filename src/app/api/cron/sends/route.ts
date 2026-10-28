@@ -24,7 +24,9 @@ export async function GET(req: NextRequest) {
   if (!e.CRON_SECRET) return NextResponse.json({ ok: false, error: "CRON_SECRET is not set" }, { status: 503 });
   if (!authorized(req, e.CRON_SECRET)) return NextResponse.json({ ok: false }, { status: 401 });
   const db = adminClient();
+  // Repeating sends that are due get their next send first, then everything queued goes out.
+  const { data: repeats } = await db.rpc("run_repeat_sends");
   const queue = await processQueue(db, { sendId: null, budgetMs: 180_000 });
   const reminders = await sendReminders(db, 500);
-  return NextResponse.json({ ok: true, sent: queue.sent, failed: queue.failed, reminded: reminders.reminded });
+  return NextResponse.json({ ok: true, repeats: repeats ?? 0, sent: queue.sent, failed: queue.failed, reminded: reminders.reminded });
 }

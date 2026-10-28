@@ -2,7 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { env } from "@/lib/env";
 import { sendEmailBatch, type OutgoingEmail } from "@/lib/email";
-import { buildLinkToken, createPurposeToken, signMetadata } from "@/lib/security/signing";
+import { buildLinkToken, buildRecoveryTag, createPurposeToken, signMetadata } from "@/lib/security/signing";
 import { buildSnippetHtml } from "@/lib/surveys/snippet";
 import { isIconSetId } from "@/lib/surveys/iconSets";
 import { iconUrlMap, labelsFor, resolveOptions } from "@/lib/surveys/customIcons";
@@ -18,10 +18,10 @@ export const UNSUB_SEND_PURPOSE = "send-unsub";
 export const UNSUB_TTL_SECONDS = 400 * 86400;
 const BATCH = 100;
 
-type RecipientRow = { id: string; send_id: string; account_id: string; survey_id: string; email: string; name: string | null; agent: string | null; ticket: string | null };
+type RecipientRow = { id: string; send_id: string; account_id: string; survey_id: string; email: string; name: string | null; agent: string | null; ticket: string | null; recovery_of?: string | null };
 type SendInfo = { subject: string; intro: string; reply_to: string | null };
 type SurveyInfo = { id: string; question: string; icon_set: string; brand_color: string; icon_images: unknown; option_labels: unknown; language: string };
-type AccountInfo = { name: string; logo_path: string | null };
+type AccountInfo = { name: string; logo_path: string | null; fromAddress: string | null };
 
 export function unsubscribeLinks(recipientId: string, now = Math.floor(Date.now() / 1000)) {
   const e = env();
@@ -31,7 +31,7 @@ export function unsubscribeLinks(recipientId: string, now = Math.floor(Date.now(
 }
 
 /** Rating links that carry this customer's details, signed so they can't be altered. */
-export function recipientLinks(surveyId: string, r: Pick<RecipientRow, "email" | "agent" | "ticket">) {
+export function recipientLinks(surveyId: string, r: Pick<RecipientRow, "email" | "agent" | "ticket" | "recovery_of">) {
   const e = env();
   const meta = { email: r.email, agent: r.agent, ticket: r.ticket };
   const sp = new URLSearchParams();
@@ -39,6 +39,8 @@ export function recipientLinks(surveyId: string, r: Pick<RecipientRow, "email" |
   if (r.agent) sp.set("a", r.agent);
   if (r.ticket) sp.set("t", r.ticket);
   sp.set("s", signMetadata(e.LINK_SIGNING_SECRET, surveyId, meta));
+  // "Did we fix it?" emails link the answer to the original rating.
+  if (r.recovery_of) sp.set("rv", buildRecoveryTag(e.LINK_SIGNING_SECRET, surveyId, r.recovery_of));
   const qs = sp.toString();
   return (rating: number) => `${e.appOrigin}/r/${buildLinkToken(e.LINK_SIGNING_SECRET, surveyId, rating)}?${qs}`;
 }
@@ -64,8 +66,12 @@ class Cache {
   }
   async account(id: string) {
     if (!this.accounts.has(id)) {
-      const { data } = await this.db.from("accounts").select("name, logo_path").eq("id", id).maybeSingle();
-      this.accounts.set(id, (data as AccountInfo | null) ?? null);
+      const [{ data }, { data: dom }] = await Promise.all([
+        this.db.from("accounts").select("name, logo_path").eq("id", id).maybeSingle(),
+        // Only a domain the email provider has verified.
+        this.db.from("sending_domains").select("domain, from_local").eq("account_id", id).eq("status", "verified").maybeSingle(),
+      ]);
+      this.accounts.set(id, data ? { name: data.name as string, logo_path: (data.logo_path as string | null) ?? null, fromAddress: dom ? `${dom.from_local}@${dom.domain}` : null } : null);
     }
     return this.accounts.get(id) ?? null;
   }
@@ -110,6 +116,7 @@ async function buildFor(cache: Cache, r: RecipientRow, reminder: boolean, overri
     html: mail.html,
     text: mail.text,
     fromName: safeFromName(account.name),
+    fromAddress: account.fromAddress,
     replyTo: send.reply_to,
     headers: { "List-Unsubscribe": `<${unsub.oneClick}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click", "X-Entity-Ref-ID": r.id },
   };

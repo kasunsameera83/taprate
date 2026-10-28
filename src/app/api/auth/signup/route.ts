@@ -7,6 +7,7 @@ import { audit } from "@/lib/audit";
 import { COMPANY } from "@/lib/site/company";
 import { adminClient } from "@/lib/supabase/server";
 import { visitorCountry } from "@/lib/site/geo";
+import { attachReferral } from "@/lib/referrals/server";
 
 export const POST = secureRoute<undefined, undefined, SignUpInput, "public">(
   { auth: "public", action: null, ipLimit: LIMITS.signupPerIp, body: signUpSchema },
@@ -32,6 +33,7 @@ export const POST = secureRoute<undefined, undefined, SignUpInput, "public">(
     // Sinhala and Tamil for sign-ups from Sri Lanka (country from our host's edge, not from the browser).
     // Only touches a business this new person owns that was created in the last hour.
     if (data?.user && (await visitorCountry()) === "LK") await adminClient().rpc("enable_local_languages_for_new_user", { p_user: data.user.id });
+    if (data?.user) await attachReferral(data.user.id, body.ref);
     if (data?.user) await audit({ accountId: null, userId: data.user.id, action: "auth.signup", metadata: { terms_version: COMPANY.termsVersion }, ipHash });
 
     // Same answer whether or not the email already has an account (no account enumeration).

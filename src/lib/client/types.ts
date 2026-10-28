@@ -8,6 +8,7 @@ export type BranchStat = { id: string; name: string; total: number; satisfaction
 
 export type StatsResponse = Stats & {
   byLocation: BranchStat[];
+  recovery: { sent: number; answered: number; recovered: number; ratePct: number | null };
   pending: number;
   truncated: boolean;
   account: { name: string; plan: string; credits: number; role: "owner" | "admin" | "viewer" } | null;

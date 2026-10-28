@@ -11,7 +11,9 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: { default: "TapRate", template: "%s | TapRate" },
-  description: "One-click customer feedback inside the emails you already send.",
+  description: "One-tap customer feedback in emails, QR codes, WhatsApp, your website and kiosks.",
+  icons: { apple: "/apple-icon-180.png" },
+  appleWebApp: { capable: true, title: "TapRate", statusBarStyle: "default" },
 };
 
 // viewport-fit=cover lets the bottom tab bar sit above the iPhone home indicator (safe-area padding).

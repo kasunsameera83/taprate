@@ -64,6 +64,7 @@ const PART_OF: Record<string, Part> = {
   alertEmails: "unhappy",
   followupsEnabled: "unhappy",
   followupDueHours: "unhappy",
+  recoveryEmail: "unhappy",
   status: "status",
 };
 const partOf = (key: string) => PART_OF[key.split(".")[0] ?? ""];
@@ -182,6 +183,7 @@ export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, su
   const [reviewOn, setReviewOn] = useState(Boolean(initial?.reviewCtaUrl));
   const [followupsEnabled, setFollowupsEnabled] = useState(initial?.followupsEnabled ?? true);
   const [dueHours, setDueHours] = useState(String(initial?.followupDueHours ?? 48));
+  const [recoveryEmail, setRecoveryEmail] = useState(initial?.recoveryEmail ?? true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState<{ kind: "error" | "success"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -279,7 +281,7 @@ export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, su
   ].join(" · ");
   const unhappySummary = [
     thresholdLabel ? `Email alert at “${thresholdLabel}” or lower${emailCount ? ` to ${plural(emailCount, "address", "addresses")}` : " (add an email to turn on)"}` : "No email alerts",
-    followupsEnabled ? `follow-up within ${DUE_OPTIONS.find((d) => d.value === dueHours)?.label ?? `${dueHours} hours`}` : "no follow-ups",
+    followupsEnabled ? `follow-up within ${DUE_OPTIONS.find((d) => d.value === dueHours)?.label ?? `${dueHours} hours`}${recoveryEmail ? ", then ask again" : ""}` : "no follow-ups",
   ].join(" · ");
 
   async function handle(e: FormEvent<HTMLFormElement>) {
@@ -307,6 +309,7 @@ export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, su
       reviewCtaUrl: reviewOn ? String(f.get("reviewCtaUrl") ?? "").trim() : null,
       followupsEnabled,
       followupDueHours: Number(dueHours),
+      recoveryEmail,
       language,
       reasonsQuestionPositive: reasonsQPos,
       reasonsQuestionNegative: reasonsQNeg,
@@ -741,6 +744,14 @@ export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, su
                     ))}
                   </select>
                 </Field>
+                <div className="mt-4">
+                  <Toggle
+                    checked={recoveryEmail}
+                    onChange={setRecoveryEmail}
+                    label="Ask “Did we put it right?” after resolving"
+                    hint="When you mark a follow-up resolved, the customer gets one email asking how they feel now. You'll see how many unhappy customers you won back."
+                  />
+                </div>
               </div>
             )}
           </FormPart>
