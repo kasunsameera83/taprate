@@ -465,3 +465,30 @@ textarea.input {
     transform: none;
   }
 }
+
+/* Feature rows: the picture tilts up from the page and settles as you scroll to it (--p: 0 → 1). */
+.sc-row {
+  --p: 1;
+}
+.sc-screen {
+  transform-origin: 50% 100%;
+  transform: perspective(1400px) translateY(calc((1 - var(--p)) * 70px)) rotateX(calc((1 - var(--p)) * 14deg)) rotateY(calc((1 - var(--p)) * -6deg)) scale(calc(0.92 + var(--p) * 0.08));
+  opacity: calc(0.25 + var(--p) * 0.75);
+}
+.sc-flip {
+  transform: perspective(1400px) translateY(calc((1 - var(--p)) * 70px)) rotateX(calc((1 - var(--p)) * 14deg)) rotateY(calc((1 - var(--p)) * 6deg)) scale(calc(0.92 + var(--p) * 0.08));
+}
+.sc-text {
+  transform: translateY(calc((1 - var(--p)) * 36px));
+  opacity: calc(0.15 + var(--p) * 0.85);
+}
+
+/* Menu links glide to their section and stop just below the sticky header. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+html {
+  scroll-padding-top: 5rem;
+}

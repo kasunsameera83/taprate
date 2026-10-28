@@ -64,6 +64,11 @@ export const DEFAULT_LANDING: Landing = {
     { title: "QR, WhatsApp and kiosk", body: "Collect ratings at the counter, on receipts, in chats and on your website, not just email." },
     { title: "Team leaderboard", body: "See which agents customers love, and who needs coaching." },
     { title: "Slack, Teams and helpdesks", body: "Alerts where your team works, and ratings added to Zendesk and Freshdesk tickets." },
+    { title: "Survey emails sent for you", body: "Upload a customer list and TapRate emails them, with one reminder. Or send one email per order from Zapier, Make or Shopify." },
+    { title: "Branches", body: "A QR code and kiosk for each shop or counter, and every branch compared on your dashboard." },
+    { title: "Testimonials and TV screen", body: "Happy customers' comments on your website (with their permission), and a live screen for the office." },
+    { title: "AI reply drafts", body: "A thoughtful first draft of your reply to every unhappy customer. You check it and send it." },
+    { title: "Your history comes with you", body: "Import past ratings from a CSV, including exports from Delighted and other tools." },
   ],
   trust: {
     title: "Only real customers are counted",
@@ -74,6 +79,8 @@ export const DEFAULT_LANDING: Landing = {
   faq: [
     { q: "Do customers need to log in or fill a form?", a: "No. They tap a face or a number in your email and that's the answer. They can add a comment if they want." },
     { q: "What counts as a response?", a: "One confirmed rating. Clicks by email security scanners are never counted." },
+    { q: "Can TapRate send the survey emails for us?", a: "Yes. Upload a list of up to 1,000 customers (or connect Zapier, Make or Shopify) and we email them from your business name, with one reminder. People who unsubscribe are never emailed again." },
+    { q: "We used Delighted. Can we bring our history?", a: "Yes. Download your responses as a CSV and import them. Common column names are matched for you. See the Switching from Delighted page for the steps." },
   ],
   finalCta: { title: "Start hearing from every customer today.", button: "Start free" },
   footer: { tagline: "One-click customer feedback." },

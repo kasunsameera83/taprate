@@ -15,6 +15,26 @@ export function SiteHeader({ cta = "Start free", showPricing = true }: { cta?: s
   const [scrolled, setScrolled] = useState(false);
   const menu = useRef<HTMLDialogElement>(null);
   const progress = useRef<HTMLSpanElement>(null);
+  const [current, setCurrent] = useState<string | null>(null);
+
+  // Which section you're reading, so the menu can show it (landing page only; elsewhere nothing matches).
+  useEffect(() => {
+    const ids = LINKS.map((l) => l.href.replace("/#", ""));
+    const els = ids.map((id) => document.getElementById(id)).filter((el): el is HTMLElement => Boolean(el));
+    if (els.length === 0 || !("IntersectionObserver" in window)) return;
+    const visible = new Map<string, number>();
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) visible.set(e.target.id, e.isIntersecting ? e.intersectionRatio : 0);
+        // The section crossing the upper-middle of the screen wins.
+        const best = ids.find((id) => (visible.get(id) ?? 0) > 0) ?? null;
+        setCurrent(best);
+      },
+      { rootMargin: "-30% 0px -60% 0px", threshold: [0, 0.01] },
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
   const links = LINKS.filter((l) => showPricing || l.href !== "/#pricing");
 
   useEffect(() => {
@@ -46,11 +66,23 @@ export function SiteHeader({ cta = "Start free", showPricing = true }: { cta?: s
           <Logo />
         </Link>
         <nav aria-label="Site" className="hidden items-center gap-1 md:flex">
-          {links.map((l) => (
-            <a key={l.href} href={l.href} className="rounded-[8px] px-3 py-2 text-[15px] font-medium text-muted hover:text-ink">
-              {l.label}
-            </a>
-          ))}
+          {links.map((l) => {
+            const on = current === l.href.replace("/#", "");
+            return (
+              <a
+                key={l.href}
+                href={l.href}
+                aria-current={on ? "location" : undefined}
+                className={`relative rounded-[8px] px-3 py-2 text-[15px] font-medium transition-colors ${on ? "text-ink" : "text-muted hover:text-ink"}`}
+              >
+                {l.label}
+                <span
+                  aria-hidden
+                  className={`absolute inset-x-3 -bottom-0.5 h-[2px] origin-left rounded-full bg-brand transition-transform duration-300 motion-reduce:transition-none ${on ? "scale-x-100" : "scale-x-0"}`}
+                />
+              </a>
+            );
+          })}
         </nav>
         <div className="flex items-center gap-2">
           <Link href="/login" className="btn btn-ghost hidden sm:inline-flex">

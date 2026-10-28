@@ -8,18 +8,21 @@ import { SiteHeader } from "./SiteHeader";
 import { SiteFooter } from "./SiteFooter";
 import { HeroShowcase } from "./HeroShowcase";
 import { BrandMorph } from "./BrandMorph";
-import { ChannelsScreen, DashboardScreen, FollowUpScreen, InsightsScreen, LeaderboardScreen } from "./Screens";
+import { BranchesScreen, ChannelsScreen, DashboardScreen, FollowUpScreen, InsightsScreen, LanguagesScreen, LeaderboardScreen, SendScreen, WallScreen } from "./Screens";
 import { KineticTitle, Reveal } from "./KineticTitle";
 import { ScrollStatement } from "./ScrollStatement";
 import { TapStory } from "./TapStory";
 import { TiltCard } from "./TiltCard";
+import { ShowcaseRow } from "./ShowcaseRow";
 
 // The public landing page. Text marked "c." comes from /admin → Landing page; the product pictures and
 // their captions below are part of the design. Everything is rendered as text (React escapes it).
 
-const CHANNELS = ["Gmail & Outlook signatures", "Zendesk", "Freshdesk", "HubSpot", "WhatsApp", "QR codes", "Your website", "Tablet kiosk"];
+const CHANNELS = ["Gmail & Outlook signatures", "Zendesk", "Freshdesk", "HubSpot", "WhatsApp", "QR codes", "Your website", "Tablet kiosk", "Zapier & Make"];
 
-const SHOWCASE = [
+type Showcase = { title: string; body: string; points: string[]; Screen: () => React.ReactNode; localOnly?: boolean };
+
+const SHOWCASE: Showcase[] = [
   {
     title: "See how customers feel, today",
     body: "Every confirmed tap lands on your dashboard straight away. Satisfaction, trends, and the reasons customers pick, for every survey and every agent.",
@@ -29,14 +32,33 @@ const SHOWCASE = [
   {
     title: "Never miss an unhappy customer",
     body: "A bad rating opens a follow-up with an owner and a due date. Your team gets an alert in email, Slack or Teams, and the customer gets a call back.",
-    points: ["Assign, add notes, mark resolved", "Overdue reminders every morning", "Added to the Zendesk or Freshdesk ticket"],
+    points: ["Assign, add notes, mark resolved", "AI writes a first draft of your reply", "Added to the Zendesk or Freshdesk ticket"],
     Screen: FollowUpScreen,
+  },
+  {
+    title: "We'll send the survey for you",
+    body: "No helpdesk or email signature? Upload your customer list and TapRate emails them from your business name, with one gentle reminder for anyone who hasn't answered.",
+    points: ["Up to 1,000 people per send, from a CSV or pasted list", "Never asks the same person twice in a month", "Unsubscribes and bounces handled for you"],
+    Screen: SendScreen,
   },
   {
     title: "Collect ratings wherever you meet customers",
     body: "Not just email. Print a QR code for the counter or receipts, share a link on WhatsApp, add a widget to your website, or put a tablet at reception.",
     points: ["QR codes that print sharp at any size", "WhatsApp and SMS links", "Kiosk mode that resets for the next person"],
     Screen: ChannelsScreen,
+  },
+  {
+    title: "Compare every branch",
+    body: "Running more than one shop, clinic or counter? Give each branch its own QR code and kiosk, then see which one customers love and which needs help.",
+    points: ["A QR code and kiosk for each branch", "Side-by-side satisfaction on the dashboard", "Filter ratings and exports by branch"],
+    Screen: BranchesScreen,
+  },
+  {
+    title: "Ask in Sinhala, Tamil or English",
+    body: "Your customers see the rating buttons, thank-you page, kiosk and emails in their own language. Write your question in it too.",
+    points: ["Choose the language for each survey", "Rating labels translated for you", "Mix languages across surveys"],
+    Screen: LanguagesScreen,
+    localOnly: true,
   },
   {
     title: "Make the buttons yours",
@@ -53,8 +75,14 @@ const SHOWCASE = [
   {
     title: "Celebrate the people customers love",
     body: "See which agents earn the happiest customers, and where coaching would help. Agents can see their own ratings too.",
-    points: ["Fair ranking with a minimum number of ratings", "Agents see only their own feedback", "Owners, admins, viewers and agents"],
+    points: ["Fair ranking with a minimum number of ratings", "Agents see only their own feedback", "A Monday email with each agent's wins"],
     Screen: LeaderboardScreen,
+  },
+  {
+    title: "Show off your happy customers",
+    body: "Put real comments on your website with one line of code, and keep a live screen on the office wall so the whole team sees every win.",
+    points: ["Only comments customers agreed to share", "You choose which ones appear", "Office TV screen that updates every minute"],
+    Screen: WallScreen,
   },
 ];
 
@@ -151,26 +179,30 @@ export function LandingView({
         {/* Product showcase */}
         <section id="features" className="scroll-mt-20 bg-surface">
           <div className="mx-auto max-w-6xl space-y-24 px-5 py-24">
-            {SHOWCASE.map(({ title, body, points, Screen }, i) => (
-              <div key={title} className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
-                <div className={i % 2 ? "lg:order-2" : ""}>
-                  <h2 className="max-w-[18ch] text-[30px] font-bold leading-[1.1] sm:text-[38px]">{title}</h2>
-                  <p className="mt-4 max-w-[52ch] text-[17px] leading-relaxed text-muted">{body}</p>
-                  <ul className="mt-6 space-y-2.5">
-                    {points.map((p) => (
-                      <li key={p} className="flex gap-2.5">
-                        <Check />
-                        {p}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className={`min-w-0 ${i % 2 ? "lg:order-1" : ""}`}>
+            {SHOWCASE.filter((x) => !x.localOnly || currency === "LKR").map(({ title, body, points, Screen }, i) => (
+              <ShowcaseRow
+                key={title}
+                flip={i % 2 === 1}
+                text={
+                  <>
+                    <h2 className="max-w-[18ch] text-[30px] font-bold leading-[1.1] sm:text-[38px]">{title}</h2>
+                    <p className="mt-4 max-w-[52ch] text-[17px] leading-relaxed text-muted">{body}</p>
+                    <ul className="mt-6 space-y-2.5">
+                      {points.map((p) => (
+                        <li key={p} className="flex gap-2.5">
+                          <Check />
+                          {p}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                }
+                screen={
                   <TiltCard>
                     <Screen />
                   </TiltCard>
-                </div>
-              </div>
+                }
+              />
             ))}
           </div>
         </section>

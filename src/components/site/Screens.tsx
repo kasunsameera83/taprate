@@ -203,6 +203,146 @@ export function LeaderboardScreen() {
   );
 }
 
+/** TapRate sends the survey: a send's results, with the reminder. */
+export function SendScreen() {
+  const stats = [
+    ["Sent", "412", ""],
+    ["Rated", "168", "41% of sent"],
+    ["Reminder", "97", "after 3 days"],
+    ["Skipped", "23", "emailed recently"],
+  ] as const;
+  return (
+    <AppWindow title="Send by email" label="A survey email sent to 412 customers: 168 rated, a reminder went to 97 people after 3 days, and 23 were skipped because they were emailed recently.">
+      <div className="space-y-4 p-5">
+        <div className="rounded-[10px] border border-line bg-[#fafbfc] p-3">
+          <p className="text-[12px] text-muted">To: 412 customers from orders-october.csv</p>
+          <p className="mt-1 text-[13px] font-semibold">How was your delivery, {"{name}"}?</p>
+          <div className="mt-2 flex gap-1">
+            {["😡", "🙁", "😐", "🙂", "😍"].map((f) => (
+              <span key={f} className="flex h-8 w-9 items-center justify-center rounded-[6px] border border-line bg-white text-[16px]">
+                {f}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {stats.map(([label, value, sub]) => (
+            <div key={label}>
+              <p className="text-[12px] text-muted">{label}</p>
+              <p className="font-display text-[22px] font-bold leading-tight tabular">{value}</p>
+              {sub && <p className="text-[11px] text-muted">{sub}</p>}
+            </div>
+          ))}
+        </div>
+        <p className="flex items-center gap-2 text-[12px] text-muted">
+          <span className="h-2 w-2 rounded-full bg-pos-fill" aria-hidden /> Unsubscribes and bounced addresses are never emailed again.
+        </p>
+      </div>
+    </AppWindow>
+  );
+}
+
+/** Branch comparison table, like the dashboard's. */
+export function BranchesScreen() {
+  const rows = [
+    ["Colombo 07", 96, 2.1, 214],
+    ["Kandy", 91, -1.4, 132],
+    ["Galle Fort", 89, 3.8, 88],
+    ["Airport counter", 78, -6.2, 51],
+  ] as const;
+  return (
+    <AppWindow title="Dashboard · By branch" label="Satisfaction by branch: Colombo 07 96%, Kandy 91%, Galle Fort 89%, Airport counter 78% and falling.">
+      <div className="space-y-3 p-5">
+        {rows.map(([name, pct, diff, n]) => (
+          <div key={name} className="flex items-center gap-3">
+            <span className="w-28 truncate text-[13px] font-semibold">{name}</span>
+            <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-[#eceef2]">
+              <span className={`block h-full rounded-full ${pct < 80 ? "bg-neu-fill" : "bg-pos-fill"}`} style={{ width: `${pct}%` }} />
+            </span>
+            <span className="w-10 text-right text-[13px] font-bold tabular">{pct}%</span>
+            <span className={`w-12 text-right text-[12px] font-semibold tabular ${diff > 0 ? "text-pos-text" : "text-neg-text"}`}>
+              {diff > 0 ? "▲" : "▼"} {Math.abs(diff)}
+            </span>
+            <span className="hidden w-14 text-right text-[12px] text-muted sm:inline">{n}</span>
+          </div>
+        ))}
+        <div className="mt-2 flex items-center gap-3 rounded-[10px] border border-dashed border-line-strong p-3">
+          <Qr text="https://taprate.app/s/kandy" size={56} />
+          <p className="text-[12px] text-muted">
+            <span className="block font-semibold text-ink">Kandy counter QR</span>
+            Each branch gets its own QR code, links and kiosks.
+          </p>
+        </div>
+      </div>
+    </AppWindow>
+  );
+}
+
+/** The same rating buttons in English, Sinhala and Tamil. */
+export function LanguagesScreen() {
+  const rows = [
+    ["English", "How was your visit?", ["Very poor", "Okay", "Excellent"]],
+    ["සිංහල", "ඔබේ පැමිණීම කෙසේද?", ["ඉතා දුර්වලයි", "සාමාන්‍යයි", "විශිෂ්ටයි"]],
+    ["தமிழ்", "உங்கள் வருகை எப்படி இருந்தது?", ["மிக மோசம்", "பரவாயில்லை", "மிகச் சிறப்பு"]],
+  ] as const;
+  const faces = ["😡", "😐", "😍"];
+  return (
+    <div role="img" aria-label="The same rating question and buttons shown in English, Sinhala and Tamil." className="space-y-3">
+      {rows.map(([lang, q, labels]) => (
+        <div key={lang} aria-hidden className="rounded-[14px] border border-line bg-surface p-4 shadow-[0_20px_40px_-32px_rgba(16,21,61,0.45)]">
+          <p className="text-[11px] font-semibold text-muted">{lang}</p>
+          <p className="mt-0.5 text-[15px] font-bold">{q}</p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {labels.map((l, i) => (
+              <span key={l} className="flex min-w-[70px] flex-col items-center rounded-[8px] border-2 border-line bg-white px-2 py-1">
+                <span className="text-[18px]">{faces[i]}</span>
+                <span className="text-[10px] font-bold text-[#374151]">{l}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Testimonial wall on a website, and the office TV screen. */
+export function WallScreen() {
+  const quotes = [
+    ["Nimal sorted it in ten minutes. Brilliant.", "Amaya"],
+    ["Fresh, on time and the driver was lovely.", "A customer"],
+    ["Best coffee in Kandy, every single time.", "Ruwan"],
+  ] as const;
+  return (
+    <div role="img" aria-label="Happy customers' comments shown on a business's website, and a TV screen in the office showing 94% happy customers today." className="relative pb-10">
+      <div aria-hidden className="overflow-hidden rounded-[16px] border border-line bg-surface shadow-[0_30px_60px_-36px_rgba(16,21,61,0.45)]">
+        <div className="border-b border-line bg-[#fafbfc] px-4 py-2.5 text-[12px] font-semibold text-muted">kovacafe.lk · What our customers say</div>
+        <div className="grid gap-2 p-4 sm:grid-cols-3">
+          {quotes.map(([q, who]) => (
+            <div key={q} className="rounded-[10px] border border-line p-3">
+              <p className="text-[12px] leading-snug">&ldquo;{q}&rdquo;</p>
+              <p className="mt-2 text-[11px] font-semibold">
+                {who} <span className="text-neu-fill">★★★★★</span>
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div aria-hidden className="absolute -bottom-2 right-4 w-[210px] rounded-[12px] border-[5px] border-[#10153d] bg-[#0f1326] p-3 text-white shadow-[0_30px_60px_-30px_rgba(16,21,61,0.6)] sm:right-8">
+        <p className="text-[10px] text-[#9aa1c7]">Office TV · happy today</p>
+        <p className="font-display text-[34px] font-bold leading-none">
+          94<span className="text-[16px] text-[#9aa1c7]">%</span>
+        </p>
+        <div className="mt-2 flex h-6 items-end gap-[2px]">
+          {[1, 1, 0.66, 1, 1, 0.4, 1, 1, 1, 0.66, 1, 1, 1, 1].map((h, i) => (
+            <span key={i} className="flex-1 rounded-[1px]" style={{ height: `${h * 100}%`, background: h === 1 ? "#22c55e" : h > 0.5 ? "#f59e0b" : "#ef4444" }} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** The signature band: a long run of ticks, one per customer tap. */
 export function StripeBand() {
   const ticks = pattern(160, 23, 11, 6);
