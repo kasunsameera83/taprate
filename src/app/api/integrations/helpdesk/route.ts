@@ -2,7 +2,7 @@ import { secureRoute, ok, fail, dbError } from "@/lib/security/route";
 import { LIMITS } from "@/lib/security/rateLimit";
 import { helpdeskCreateSchema, type HelpdeskCreateInput } from "@/lib/validation/schemas";
 import { checkIntegrationUrl } from "@/lib/security/urlSafety";
-import { helpdeskBaseUrl, helpdeskCredential } from "@/lib/helpdesk";
+import { FRONT_BASE, helpdeskBaseUrl, helpdeskCredential, intercomBaseUrl } from "@/lib/helpdesk";
 import { seal } from "@/lib/security/secretBox";
 import { adminClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
@@ -10,15 +10,15 @@ import { audit } from "@/lib/audit";
 
 const MAX_INTEGRATIONS = 20;
 
-// Connect Zendesk or Freshdesk. We build the address ourselves from the subdomain (so it can only ever be
-// <name>.zendesk.com / <name>.freshdesk.com), and store the address and credentials encrypted.
+// Connect Zendesk, Freshdesk, Gorgias, Intercom or Front. We build the address ourselves (from the subdomain, or
+// Intercom's region), so it can only ever be the helpdesk's own domain, and store it and the credentials encrypted.
 // Nobody can read the token back after saving.
 export const POST = secureRoute<undefined, undefined, HelpdeskCreateInput>(
-  { auth: "user", action: "integrations:write", ipLimit: LIMITS.userWrite, userLimit: LIMITS.userWrite, body: helpdeskCreateSchema, maxBodyBytes: 2048 },
+  { auth: "user", action: "integrations:write", ipLimit: LIMITS.userWrite, userLimit: LIMITS.userWrite, body: helpdeskCreateSchema, maxBodyBytes: 4096 },
   async ({ membership, user, body, ipHash, requestId }) => {
-    const base = helpdeskBaseUrl(body.kind, body.subdomain);
+    const base = body.kind === "intercom" ? intercomBaseUrl(body.region) : body.kind === "front" ? FRONT_BASE : helpdeskBaseUrl(body.kind, body.subdomain);
     const check = checkIntegrationUrl(body.kind, base);
-    if (!check.ok) return fail("validation_failed", undefined, { subdomain: check.reason }, requestId);
+    if (!check.ok) return fail("validation_failed", undefined, { [body.kind === "intercom" ? "region" : body.kind === "front" ? "apiToken" : "subdomain"]: check.reason }, requestId);
 
     const db = adminClient();
     const { count } = await db.from("integrations").select("id", { count: "exact", head: true }).eq("account_id", membership.accountId);
@@ -26,7 +26,15 @@ export const POST = secureRoute<undefined, undefined, HelpdeskCreateInput>(
 
     const master = env().RESPONSE_TOKEN_SECRET;
     const credential =
-      body.kind === "zendesk" ? helpdeskCredential({ kind: "zendesk", email: body.email, apiToken: body.apiToken }) : helpdeskCredential({ kind: "freshdesk", apiKey: body.apiKey });
+      body.kind === "zendesk"
+        ? helpdeskCredential({ kind: "zendesk", email: body.email, apiToken: body.apiToken })
+        : body.kind === "freshdesk"
+          ? helpdeskCredential({ kind: "freshdesk", apiKey: body.apiKey })
+          : body.kind === "gorgias"
+            ? helpdeskCredential({ kind: "gorgias", email: body.email, apiKey: body.apiKey })
+            : body.kind === "intercom"
+              ? helpdeskCredential({ kind: "intercom", accessToken: body.accessToken })
+              : helpdeskCredential({ kind: "front", apiToken: body.apiToken });
     const { data, error } = await db
       .from("integrations")
       .insert({

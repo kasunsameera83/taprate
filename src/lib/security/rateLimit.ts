@@ -40,6 +40,8 @@ export const LIMITS = {
   aiPerUser: { name: "ai:user", limit: 5, windowSec: 600 },
   aiDraftPerAccount: { name: "ai:draft:account", limit: 100, windowSec: 86400 },
   webhookPerIp: { name: "webhook:ip", limit: 300, windowSec: 60 },
+  // Orders from one Shopify connection (a busy shop on sale day still fits; a flood doesn't).
+  shopifyPerConnection: { name: "shopify:conn", limit: 2000, windowSec: 3600 },
   sendCreate: { name: "send:create", limit: 20, windowSec: 3600 },
   sendProcess: { name: "send:process", limit: 60, windowSec: 600 },
   apiSend: { name: "api:send", limit: 120, windowSec: 60 },

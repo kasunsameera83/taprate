@@ -185,7 +185,7 @@ const mergeTag = z.string().max(80).regex(/^[A-Za-z0-9_.{}|*%$\[\]\- ]*$/, "Merg
 
 export const snippetQuerySchema = z
   .object({
-    preset: z.enum(["signature", "zendesk", "freshdesk", "hubspot", "mailchimp", "custom"]).default("signature"),
+    preset: z.enum(["signature", "zendesk", "freshdesk", "hubspot", "gorgias", "helpscout", "mailchimp", "custom"]).default("signature"),
     email: mergeTag.optional(),
     agent: mergeTag.optional(),
     ticket: mergeTag.optional(),
@@ -585,8 +585,70 @@ export const helpdeskCreateSchema = z.discriminatedUnion("kind", [
       events: z.array(z.enum(["negative", "all"])).min(1).max(2),
     })
     .strict(),
+  z
+    .object({
+      kind: z.literal("gorgias"),
+      name: text(1, 60, "Name"),
+      subdomain,
+      // The Gorgias user the API key belongs to; notes are written as this user.
+      email: emailSchema,
+      apiKey: z.string().trim().min(20, "Paste the API key from Gorgias").max(128, "That key is too long").regex(/^[A-Za-z0-9_-]+$/, "That doesn't look like a Gorgias API key"),
+      events: z.array(z.enum(["negative", "all"])).min(1).max(2),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("intercom"),
+      name: text(1, 60, "Name"),
+      region: z.enum(["us", "eu", "au"], { error: "Choose your Intercom region" }),
+      accessToken: z.string().trim().min(20, "Paste your Intercom access token").max(300, "That token is too long").regex(/^[A-Za-z0-9_\-=+/.:]+$/, "That doesn't look like an Intercom access token"),
+      events: z.array(z.enum(["negative", "all"])).min(1).max(2),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("front"),
+      name: text(1, 60, "Name"),
+      // Front API tokens are signed tokens (three dot-separated parts).
+      apiToken: z
+        .string()
+        .trim()
+        .min(40, "Paste your Front API token")
+        .max(1500, "That token is too long")
+        .regex(/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/, "That doesn't look like a Front API token"),
+      events: z.array(z.enum(["negative", "all"])).min(1).max(2),
+    })
+    .strict(),
 ]);
 export type HelpdeskCreateInput = z.infer<typeof helpdeskCreateSchema>;
+
+const shopifySigningKey = z
+  .string()
+  .trim()
+  .min(16, "Paste the signing key from Shopify")
+  .max(200, "That key is too long")
+  .regex(/^[A-Za-z0-9_-]+$/, "That doesn't look like a Shopify signing key");
+
+// Shopify: the shop's address, the webhook signing key Shopify shows in Settings → Notifications → Webhooks,
+// and the survey to email after an order.
+export const shopifyCreateSchema = z
+  .object({
+    name: text(1, 60, "Name"),
+    shop: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .max(200, "That address is too long")
+      .transform((v) => v.replace(/^https?:\/\//, "").replace(/\/.*$/, ""))
+      .transform((v) => (v.includes(".") ? v : `${v}.myshopify.com`))
+      .pipe(z.string().regex(/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.myshopify\.com$/, "Use your shop's myshopify.com address, like acme.myshopify.com")),
+    // Shopify only shows the key once a shop has a webhook, so it can be added after connecting.
+    signingSecret: shopifySigningKey.optional(),
+    surveyId: uuidSchema,
+  })
+  .strict();
+export type ShopifyCreateInput = z.infer<typeof shopifyCreateSchema>;
+export const shopifyKeySchema = z.object({ signingSecret: shopifySigningKey }).strict();
 
 // CSV import. One row after the browser has mapped the columns; the server checks every row again.
 export const IMPORT_MAX_ROWS = 5000;

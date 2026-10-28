@@ -23,6 +23,7 @@ const SPECIAL: Record<string, RegExp[]> = {
   "src/app/api/health/route.ts": [/hitRateLimit\(/],
   "src/app/api/webhooks/resend/route.ts": [/verifySvixSignature\(/, /hitRateLimit\(/, /MAX_BYTES/],
   "src/app/api/public/unsubscribe/one-click/route.ts": [/verifyPurposeToken\(/, /hitRateLimit\(/, /MAX_BYTES/],
+  "src/app/api/webhooks/shopify/[id]/route.ts": [/verifyShopifyHmac\(/, /hitRateLimit\(/, /MAX_BYTES/, /isUuid\(id\)/, /x-shopify-shop-domain/],
 };
 
 test("every API route goes through a security wrapper (or has its own checks)", () => {

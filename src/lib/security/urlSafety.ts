@@ -2,9 +2,14 @@
 // network, cloud metadata or localhost (SSRF). Checked when saving AND again right before sending.
 // Pure functions, unit-tested; the DNS check lives in integrations.ts.
 
-export type IntegrationKind = "slack" | "teams" | "webhook" | "zendesk" | "freshdesk";
-export type HelpdeskKind = "zendesk" | "freshdesk";
-export const isHelpdesk = (k: IntegrationKind): k is HelpdeskKind => k === "zendesk" || k === "freshdesk";
+export type IntegrationKind = "slack" | "teams" | "webhook" | "zendesk" | "freshdesk" | "gorgias" | "intercom" | "front" | "shopify";
+/** Helpdesks we add rating notes to. (Shopify only sends to us; we never send to it.) */
+export type HelpdeskKind = "zendesk" | "freshdesk" | "gorgias" | "intercom" | "front";
+export const isHelpdesk = (k: IntegrationKind): k is HelpdeskKind => k === "zendesk" || k === "freshdesk" || k === "gorgias" || k === "intercom" || k === "front";
+/** Intercom's API hosts for its US, EU and Australian data centres. */
+export const INTERCOM_HOSTS = { us: "api.intercom.io", eu: "api.eu.intercom.io", au: "api.au.intercom.io" } as const;
+/** Front's API host (the same for every Front account). */
+export const FRONT_HOST = "api2.frontapp.com";
 
 const BLOCKED_HOST_SUFFIXES = [".local", ".localhost", ".internal", ".lan", ".home", ".corp", ".intranet"];
 const TEAMS_HOSTS = [".webhook.office.com", ".logic.azure.com", ".powerplatform.com", ".environment.api.powerplatform.com"];
@@ -30,6 +35,10 @@ export function checkIntegrationUrl(kind: IntegrationKind, raw: string): { ok: t
   }
   if (kind === "zendesk" && !/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.zendesk\.com$/.test(host)) return { ok: false, reason: "Use your Zendesk address, like acme.zendesk.com." };
   if (kind === "freshdesk" && !/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.freshdesk\.com$/.test(host)) return { ok: false, reason: "Use your Freshdesk address, like acme.freshdesk.com." };
+  if (kind === "gorgias" && !/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.gorgias\.com$/.test(host)) return { ok: false, reason: "Use your Gorgias address, like acme.gorgias.com." };
+  if (kind === "intercom" && !(Object.values(INTERCOM_HOSTS) as string[]).includes(host)) return { ok: false, reason: "Choose your Intercom region." };
+  if (kind === "front" && host !== FRONT_HOST) return { ok: false, reason: "Front connections always use api2.frontapp.com." };
+  if (kind === "shopify") return { ok: false, reason: "TapRate never sends requests to Shopify." };
   if (raw.length > 1000) return { ok: false, reason: "That URL is too long." };
   const last4 = url.pathname.replace(/\/+$/, "").slice(-4);
   return { ok: true, url, hint: `${host}/…${last4}` };

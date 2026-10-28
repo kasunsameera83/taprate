@@ -16,10 +16,16 @@ export const GET = secureRoute(
     // RLS: owners/admins only; the encrypted URL and secret columns aren't even selectable.
     const { data, error } = await supabase
       .from("integrations")
-      .select("id, kind, name, url_hint, events, enabled, created_at, last_status, last_delivery_at")
+      .select("id, kind, name, url_hint, events, enabled, created_at, last_status, last_delivery_at, survey_id")
       .eq("account_id", membership.accountId)
       .order("created_at", { ascending: true });
     if (error) throw dbError(error);
+    // Shopify: only whether a signing key has been added (the key itself never leaves the server).
+    const withKey = new Set<string>();
+    if ((data ?? []).some((i) => i.kind === "shopify")) {
+      const { data: keys } = await adminClient().from("integrations").select("id, secret_encrypted").eq("account_id", membership.accountId).eq("kind", "shopify");
+      for (const k of keys ?? []) if (k.secret_encrypted) withKey.add(k.id as string);
+    }
     return ok(
       (data ?? []).map((i) => ({
         id: i.id as string,
@@ -31,6 +37,8 @@ export const GET = secureRoute(
         createdAt: i.created_at as string,
         lastStatus: (i.last_status as string | null) ?? null,
         lastDeliveryAt: (i.last_delivery_at as string | null) ?? null,
+        surveyId: (i.survey_id as string | null) ?? null,
+        hasKey: i.kind === "shopify" ? withKey.has(i.id as string) : null,
       })),
     );
   },

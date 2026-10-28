@@ -4,7 +4,20 @@ import { env } from "@/lib/env";
 import { adminClient } from "@/lib/supabase/server";
 import { open } from "@/lib/security/secretBox";
 import { checkIntegrationUrl, isHelpdesk, isPrivateAddress, type HelpdeskKind, type IntegrationKind } from "@/lib/security/urlSafety";
-import { buildCheckRequest, buildNoteRequest, checkResponseOk, noteText, ticketNumber } from "@/lib/helpdesk";
+import {
+  buildCheckRequest,
+  buildNoteRequest,
+  frontCommentRequest,
+  frontConversationId,
+  checkResponseOk,
+  intercomAdminId,
+  intercomMeRequest,
+  intercomNoteRequest,
+  intercomSearchRequest,
+  latestIntercomConversation,
+  noteText,
+  ticketNumber,
+} from "@/lib/helpdesk";
 import { isIconSetId, ratingOption } from "@/lib/surveys/iconSets";
 import { signWebhook } from "@/lib/security/webhookSignature";
 
@@ -133,7 +146,8 @@ async function sendSafely(
   }
 }
 
-async function logDelivery(row: IntegrationRow, accountId: string, event: string, result: { status: "ok" | "failed" | "blocked"; http?: number }) {
+async function logDelivery(row: IntegrationRow, accountId: string, event: string, result: { status: "ok" | "failed" | "blocked" | "skipped"; http?: number }) {
+  if (result.status === "skipped") return;
   const db = adminClient();
   await Promise.all([
     db.from("integration_deliveries").insert({ account_id: accountId, integration_id: row.id, event, status: result.status, http_status: result.http ?? null }),
@@ -141,10 +155,30 @@ async function logDelivery(row: IntegrationRow, accountId: string, event: string
   ]);
 }
 
-/** Adds a private note to the rating's helpdesk ticket. Ratings without a numeric ticket id are skipped. */
+/** Can this rating be matched to a ticket or conversation in this helpdesk? */
+const matchable = (kind: HelpdeskKind, e: RatingEvent) =>
+  kind === "intercom" ? Boolean(e.email) : kind === "front" ? Boolean(frontConversationId(e.ticket)) : Boolean(ticketNumber(e.ticket));
+
+/** Intercom: find the customer's latest conversation by email, then add the note as the token's admin. */
+async function deliverToIntercom(e: RatingEvent, base: string, token: string, text: string): Promise<{ status: "ok" | "failed" | "blocked" | "skipped"; http?: number }> {
+  const meReq = intercomMeRequest(base, token);
+  const me = await sendSafely("intercom", meReq.url, { method: meReq.method, headers: meReq.headers }, true);
+  if (me.status !== "ok") return me;
+  const adminId = intercomAdminId(me.json);
+  if (!adminId) return { status: "failed", http: me.http };
+  const search = intercomSearchRequest(base, token, e.email!, Date.now() / 1000 - 14 * 86400);
+  const found = await sendSafely("intercom", search.url, { method: search.method, body: search.body, headers: search.headers }, true);
+  if (found.status !== "ok") return found;
+  const conversation = latestIntercomConversation(found.json);
+  if (!conversation) return { status: "skipped" };
+  const note = intercomNoteRequest(base, token, conversation, adminId, text);
+  return sendSafely("intercom", note.url, { method: note.method, body: note.body, headers: note.headers });
+}
+
+/** Adds a private note to the rating's ticket (or Intercom conversation). Ratings we can't match are skipped. */
 async function deliverToHelpdesk(row: IntegrationRow & { kind: HelpdeskKind }, e: RatingEvent, what: "rating" | "comment"): Promise<"ok" | "failed" | "blocked" | "skipped"> {
+  if (!matchable(row.kind, e)) return "skipped";
   const ticket = ticketNumber(e.ticket);
-  if (!ticket) return "skipped";
   const ev = env();
   const base = open(ev.RESPONSE_TOKEN_SECRET, row.url_encrypted);
   const credential = row.secret_encrypted ? open(ev.RESPONSE_TOKEN_SECRET, row.secret_encrypted) : null;
@@ -152,9 +186,19 @@ async function deliverToHelpdesk(row: IntegrationRow & { kind: HelpdeskKind }, e
   const text = noteText(
     { ratingLabel: e.ratingLabel, rating: e.rating, sentiment: e.sentiment, surveyName: e.survey.name, agent: e.agent, comment: e.comment, link: `${ev.appOrigin}/app/responses?surveyId=${encodeURIComponent(e.survey.id)}` },
     what,
+    row.kind === "intercom" ? "customer" : "ticket",
   );
-  const req = buildNoteRequest(row.kind, base, credential, ticket, text);
-  const result = await sendSafely(row.kind, req.url, { method: req.method, body: req.body, headers: req.headers });
+  let result: { status: "ok" | "failed" | "blocked" | "skipped"; http?: number };
+  if (row.kind === "intercom") {
+    result = await deliverToIntercom(e, base, credential, text);
+    if (result.status === "skipped") return "skipped"; // no recent conversation with this customer
+  } else if (row.kind === "front") {
+    const req = frontCommentRequest(credential, frontConversationId(e.ticket)!, text);
+    result = await sendSafely("front", req.url, { method: req.method, body: req.body, headers: req.headers });
+  } else {
+    const req = buildNoteRequest(row.kind as "zendesk" | "freshdesk" | "gorgias", base, credential, ticket!, text);
+    result = await sendSafely(row.kind, req.url, { method: req.method, body: req.body, headers: req.headers });
+  }
   await logDelivery(row, e.accountId, what === "rating" ? "rating.created" : "rating.commented", result);
   return result.status;
 }
@@ -205,8 +249,8 @@ async function enabledIntegrations(accountId: string): Promise<IntegrationRow[]>
 export async function dispatchComment(responseId: string): Promise<void> {
   try {
     const e = await loadRatingEvent(responseId);
-    if (!e || !e.comment || !ticketNumber(e.ticket)) return;
-    const targets = (await enabledIntegrations(e.accountId)).filter((i) => isHelpdesk(i.kind) && wants(i, e));
+    if (!e || !e.comment) return;
+    const targets = (await enabledIntegrations(e.accountId)).filter((i) => isHelpdesk(i.kind) && matchable(i.kind, e) && wants(i, e));
     await Promise.allSettled(targets.map((t) => deliverToHelpdesk(t as IntegrationRow & { kind: HelpdeskKind }, e, "comment")));
   } catch (err) {
     console.error("[integrations] comment dispatch failed", { err });
@@ -218,7 +262,8 @@ export async function dispatchRating(responseId: string): Promise<void> {
   try {
     const e = await loadRatingEvent(responseId);
     if (!e) return;
-    const targets = (await enabledIntegrations(e.accountId)).filter((i) => wants(i, e));
+    // Shopify connections only send orders to us; they never receive ratings.
+    const targets = (await enabledIntegrations(e.accountId)).filter((i) => i.kind !== "shopify" && wants(i, e));
     await Promise.allSettled(targets.map((t) => deliverTo(t, e)));
   } catch (err) {
     console.error("[integrations] dispatch failed", { err });

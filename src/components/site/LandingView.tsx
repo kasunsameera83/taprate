@@ -20,7 +20,7 @@ import { MoreFeatures } from "./MoreFeatures";
 // The public landing page. Text marked "c." comes from /admin → Landing page; the product pictures and
 // their captions below are part of the design. Everything is rendered as text (React escapes it).
 
-const CHANNELS = ["Gmail & Outlook signatures", "Zendesk", "Freshdesk", "HubSpot", "WhatsApp", "QR codes", "Your website", "Tablet kiosk", "Zapier & Make"];
+const CHANNELS = ["Gmail & Outlook signatures", "Zendesk", "Freshdesk", "Gorgias", "Intercom", "Front", "Help Scout", "HubSpot", "Shopify", "WhatsApp", "QR codes", "Your website", "Tablet kiosk", "Zapier & Make"];
 
 type Showcase = { title: string; body: string; points: string[]; Screen: () => React.ReactNode; localOnly?: boolean };
 
@@ -34,7 +34,7 @@ const SHOWCASE: Showcase[] = [
   {
     title: "Never miss an unhappy customer",
     body: "A bad rating opens a follow-up with an owner and a due date. Your team gets an alert in email, Slack or Teams, and the customer gets a call back.",
-    points: ["Assign, add notes, mark resolved", "AI writes a first draft of your reply", "Added to the Zendesk or Freshdesk ticket"],
+    points: ["Assign, add notes, mark resolved", "AI writes a first draft of your reply", "Added to your Zendesk, Freshdesk, Gorgias, Intercom or Front ticket"],
     Screen: FollowUpScreen,
   },
   {

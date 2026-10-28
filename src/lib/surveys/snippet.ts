@@ -13,6 +13,10 @@ export const MERGE_PRESETS = {
   zendesk: { label: "Zendesk", email: "{{ticket.requester.email}}", agent: "{{ticket.assignee.name}}", ticket: "{{ticket.id}}" },
   freshdesk: { label: "Freshdesk", email: "{{ticket.contact.email}}", agent: "{{ticket.agent.name}}", ticket: "{{ticket.id}}" },
   hubspot: { label: "HubSpot", email: "{{contact.email}}", agent: "{{owner.firstname}}", ticket: "{{ticket.hs_object_id}}" },
+  gorgias: { label: "Gorgias", email: "{{ticket.customer.email}}", agent: "{{current_user.firstname}}", ticket: "{{ticket.id}}" },
+  front: { label: "Front", email: "{{recipient.email}}", agent: "{{user.first_name}}", ticket: "{{conversation.id}}" },
+  // Help Scout's conversation *number* (what agents see), so no note post-back, but ratings still show the agent and customer.
+  helpscout: { label: "Help Scout", email: "{%customer.email%}", agent: "{%user.firstName%}", ticket: "{%conversation.number%}" },
   mailchimp: { label: "Mailchimp", email: "*|EMAIL|*", agent: "", ticket: "" },
 } as const;
 export type MergePresetId = keyof typeof MERGE_PRESETS;

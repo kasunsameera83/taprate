@@ -94,7 +94,7 @@ test("helpdesk: addresses can only be the provider's own domain", () => {
   assert.equal(checkIntegrationUrl("freshdesk", "https://evil.com/.freshdesk.com").ok, false);
   assert.equal(checkIntegrationUrl("freshdesk", "https://acme.freshdesk.com").ok, true);
   const zd = helpdeskCreateSchema.safeParse({ kind: "zendesk", name: "ZD", subdomain: "Acme", email: "a@b.co", apiToken: "a".repeat(40), events: ["all"] });
-  assert.equal(zd.success && zd.data.subdomain, "acme");
+  assert.equal(zd.success && zd.data.kind === "zendesk" && zd.data.subdomain, "acme");
   assert.equal(helpdeskCreateSchema.safeParse({ kind: "zendesk", name: "ZD", subdomain: "acme.zendesk.com", email: "a@b.co", apiToken: "a".repeat(40), events: ["all"] }).success, false);
   assert.equal(helpdeskCreateSchema.safeParse({ kind: "freshdesk", name: "FD", subdomain: "acme", apiKey: "abc def ghijk", events: ["all"] }).success, false);
 });

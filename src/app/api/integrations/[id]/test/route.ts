@@ -21,6 +21,11 @@ export const POST = secureRoute<z.infer<typeof params>>(
     if (!row) return fail("not_found", undefined, undefined, requestId);
     const integration = row as IntegrationRow;
 
+    // Shopify sends to us, not the other way round: the test happens on Shopify's side.
+    if (integration.kind === "shopify") {
+      return fail("validation_failed", "In Shopify, open Settings → Notifications → Webhooks and press “Send test” next to this webhook. This connection shows “working” when it arrives.", undefined, requestId);
+    }
+
     // Helpdesks: a read-only check of the address and credentials (no test note on a real ticket).
     if (isHelpdesk(integration.kind)) {
       const r = await checkHelpdesk(integration as IntegrationRow & { kind: HelpdeskKind });

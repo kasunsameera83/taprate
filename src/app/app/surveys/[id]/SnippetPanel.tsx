@@ -14,6 +14,9 @@ const PRESETS: Array<{ id: PresetId; label: string; tracks: string }> = [
   { id: "zendesk", label: "Zendesk", tracks: "Adds customer email, agent and ticket number automatically." },
   { id: "freshdesk", label: "Freshdesk", tracks: "Adds customer email, agent and ticket number automatically." },
   { id: "hubspot", label: "HubSpot", tracks: "Adds contact email, owner and ticket automatically." },
+  { id: "gorgias", label: "Gorgias", tracks: "Adds customer email, agent and ticket number automatically." },
+  { id: "front", label: "Front", tracks: "Adds customer email, teammate and conversation automatically." },
+  { id: "helpscout", label: "Help Scout", tracks: "Adds customer email, agent and conversation number automatically." },
   { id: "mailchimp", label: "Mailchimp", tracks: "Adds the subscriber's email automatically." },
   { id: "custom", label: "Other tool", tracks: "Use your tool's merge tags for customer, agent and ticket." },
 ];
@@ -26,6 +29,15 @@ const HOW_TO: Record<PresetId, string[]> = {
   zendesk: ["Admin Center → Objects and rules → Triggers. Open “Notify requester of solved request”, paste into the email body (HTML), save."],
   freshdesk: ["Admin → Email notifications → “Agent solves the ticket”. Switch the editor to code view, paste, save."],
   hubspot: ["Open your ticket-closed email template, add a Rich text module, switch to source code, paste."],
+  gorgias: [
+    "Settings → Macros → Create macro. Paste the buttons into the reply (use the editor's HTML/source option if it has one) and save.",
+    "Use the macro when you close a ticket. Connect Gorgias in Settings → Integrations to see ratings as notes on the ticket.",
+  ],
+  front: [
+    "Copy the buttons (not the HTML), then in Front: Settings → Message templates → New template (or Signatures). Paste and save.",
+    "Use the template when you close a conversation. Connect Front in Settings → Integrations to see ratings as comments on the conversation.",
+  ],
+  helpscout: ["Manage → Company → Mailboxes → choose the mailbox → Email Signature. Switch to the HTML (<>) view, paste, save."],
   mailchimp: ["Add a Code block to your campaign or automation email and paste."],
   custom: ["Paste into your email template's HTML or code view, where merge tags are supported."],
 };
