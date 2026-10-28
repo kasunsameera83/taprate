@@ -1,6 +1,7 @@
 import { secureRoute, ok, dbError } from "@/lib/security/route";
 import { LIMITS } from "@/lib/security/rateLimit";
 import { billingProviders } from "@/lib/env";
+import { payWays } from "@/lib/billing/catalog";
 import { loadCatalog } from "@/lib/billing/catalogServer";
 import { preferredCurrency } from "@/lib/site/geo";
 
@@ -32,6 +33,8 @@ export const GET = secureRoute(
       plan: account.data?.plan ?? "trial",
       credits: account.data?.credit_balance ?? 0,
       providers: billingProviders(),
+      // Ways to pay, the preferred one first: Sri Lanka -> rupees (PayHere); elsewhere -> dollars (Stripe, or PayHere in dollars).
+      payWays: payWays(billingProviders()).sort((a, b) => (a.currency === currency ? 0 : 1) - (b.currency === currency ? 0 : 1)),
       catalog,
       // Which way to pay to show first: Sri Lanka -> PayHere (rupees), elsewhere -> Stripe (dollars).
       suggestedProvider: currency === "LKR" ? "payhere" : "stripe",

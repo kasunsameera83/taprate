@@ -24,6 +24,7 @@ const schema = z.object({
   PAYHERE_APP_ID: z.string().max(100).optional().or(z.literal("")),
   PAYHERE_APP_SECRET: z.string().max(200).optional().or(z.literal("")),
   PAYHERE_SANDBOX: z.enum(["true", "false"]).default("true"),
+  PAYHERE_USD_ENABLED: z.enum(["true", "false", ""]).optional(),
   STRIPE_SECRET_KEY: z.string().regex(/^(sk|rk)_(test|live)_[A-Za-z0-9]+$/, "STRIPE_SECRET_KEY must start with sk_test_ or sk_live_").optional().or(z.literal("")),
   // AI summaries (optional). Model defaults to the fast, low-cost Haiku.
   ANTHROPIC_API_KEY: z.string().regex(/^sk-ant-[A-Za-z0-9_-]+$/, "ANTHROPIC_API_KEY must start with sk-ant-").optional().or(z.literal("")),
@@ -61,10 +62,13 @@ export function env(): ServerEnv {
 }
 
 /** Which payment providers are fully configured. */
-export function billingProviders(): { payhere: boolean; stripe: boolean } {
+export function billingProviders(): { payhere: boolean; stripe: boolean; payhereUsd: boolean } {
   const e = env();
+  const payhere = Boolean(e.PAYHERE_MERCHANT_ID && e.PAYHERE_MERCHANT_SECRET);
   return {
-    payhere: Boolean(e.PAYHERE_MERCHANT_ID && e.PAYHERE_MERCHANT_SECRET),
+    payhere,
     stripe: Boolean(e.STRIPE_SECRET_KEY && e.STRIPE_WEBHOOK_SECRET),
+    // Only once PayHere has switched on USD for your merchant account (otherwise their checkout refuses it).
+    payhereUsd: payhere && e.PAYHERE_USD_ENABLED === "true",
   };
 }

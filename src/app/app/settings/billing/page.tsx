@@ -4,7 +4,7 @@ import { Suspense, useCallback, useEffect, useState, type FormEvent } from "reac
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/client/api";
 import { billingProfileSchema, fieldErrors } from "@/lib/validation/schemas";
-import { PROVIDER_CURRENCY, formatMoney, type BillingInterval, type Catalog, type PackId, type PlanId, type Provider } from "@/lib/billing/catalog";
+import { formatMoney, type BillingInterval, type Catalog, type Currency, type PackId, type PayWay, type PlanId, type Provider } from "@/lib/billing/catalog";
 import { Badge, Field, LoadError, Notice, Segmented, Skeleton, TextInput } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
@@ -12,7 +12,8 @@ import { confirmDialog } from "@/components/ConfirmDialog";
 type Summary = {
   plan: string;
   credits: number;
-  providers: { payhere: boolean; stripe: boolean };
+  providers: { payhere: boolean; stripe: boolean; payhereUsd: boolean };
+  payWays: PayWay[];
   catalog: Catalog;
   suggestedProvider: Provider;
   subscription: {
@@ -283,15 +284,15 @@ function BillingDetails({ profile, onSaved }: { profile: Summary["profile"]; onS
 }
 
 function Buy({ data }: { data: Summary }) {
-  const providers = (["payhere", "stripe"] as const).filter((p) => data.providers[p]);
-  // One currency, chosen from where the business is: Sri Lanka pays in rupees (PayHere), everyone else in
-  // dollars (Stripe). Sri Lankans with a foreign card can still switch to dollars.
-  const [provider, setProvider] = useState<Provider>(providers.includes(data.suggestedProvider) ? data.suggestedProvider : (providers[0] ?? "payhere"));
-  const canSwitchToUsd = data.suggestedProvider === "payhere" && providers.includes("stripe");
+  // Ways to pay, preferred first (Sri Lanka: rupees; elsewhere: dollars). The other currency is one tap away.
+  const ways = data.payWays;
+  const [way, setWay] = useState<PayWay>(ways[0] ?? { provider: "payhere", currency: "LKR" });
+  const provider: Provider = way.provider;
+  const otherCurrency = ways.find((w) => w.currency !== way.currency);
   const [interval, setBillingInterval] = useState<BillingInterval>("month");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const currency = PROVIDER_CURRENCY[provider];
+  const currency: Currency = way.currency;
   const s = data.subscription;
   const hasLivePlan = Boolean(s && s.status !== "cancelled");
   const [codeInput, setCodeInput] = useState("");
@@ -300,14 +301,14 @@ function Buy({ data }: { data: Summary }) {
   const [promoBusy, setPromoBusy] = useState(false);
 
   // Prices change with currency and period, so a code is re-checked whenever those change.
-  async function applyCode(code: string, prov = provider, per = interval) {
+  async function applyCode(code: string, w = way, per = interval) {
     const c = code.trim().toUpperCase();
     if (!/^[A-Z0-9_-]{4,30}$/.test(c)) return setPromoError("That code isn't valid.");
     setPromoError("");
     setPromoBusy(true);
     const r = await api<{ code: string; summary: string; prices: Record<string, { amountMinor: number; listAmountMinor: number; bonusCredits: number }> }>("/api/billing/promo", {
       method: "POST",
-      body: { code: c, provider: prov, interval: per },
+      body: { code: c, provider: w.provider, currency: w.currency, interval: per },
     });
     setPromoBusy(false);
     if (r.ok) setPromo(r.data);
@@ -316,13 +317,13 @@ function Buy({ data }: { data: Summary }) {
       setPromoError(r.message);
     }
   }
-  const changeProvider = (p: Provider) => {
-    setProvider(p);
-    if (promo) applyCode(promo.code, p, interval);
+  const changeWay = (w: PayWay) => {
+    setWay(w);
+    if (promo) applyCode(promo.code, w, interval);
   };
   const changeInterval = (i: BillingInterval) => {
     setBillingInterval(i);
-    if (promo) applyCode(promo.code, provider, i);
+    if (promo) applyCode(promo.code, way, i);
   };
   const priceFor = (item: string, list: number) => {
     const p = promo?.prices[item];
@@ -346,7 +347,7 @@ function Buy({ data }: { data: Summary }) {
     setBusy(item);
     const r = await api<{ type: "payhere"; url: string; fields: Record<string, string> } | { type: "redirect"; url: string }>("/api/billing/checkout", {
       method: "POST",
-      body: { item, provider, ...(item.startsWith("pack_") ? {} : { interval }), ...(promo?.prices[item] ? { promoCode: promo.code } : {}) },
+      body: { item, provider, currency, ...(item.startsWith("pack_") ? {} : { interval }), ...(promo?.prices[item] ? { promoCode: promo.code } : {}) },
     });
     if (!r.ok) {
       setBusy(null);
@@ -388,12 +389,12 @@ function Buy({ data }: { data: Summary }) {
           />
         </div>
         <p className="mb-4 text-[13px] text-muted">
-          {provider === "payhere" ? "Prices in Sri Lankan rupees, paid with PayHere." : "Prices in US dollars, paid by card with Stripe."}
-          {canSwitchToUsd && (
+          {currency === "LKR" ? "Prices in Sri Lankan rupees, paid with PayHere." : provider === "payhere" ? "Prices in US dollars, paid by card with PayHere." : "Prices in US dollars, paid by card with Stripe."}
+          {otherCurrency && (
             <>
               {" "}
-              <button type="button" className="font-semibold text-brand underline underline-offset-2" onClick={() => changeProvider(provider === "payhere" ? "stripe" : "payhere")}>
-                {provider === "payhere" ? "Paying with a foreign card? Pay in US dollars" : "Pay in rupees instead"}
+              <button type="button" className="font-semibold text-brand underline underline-offset-2" onClick={() => changeWay(otherCurrency)}>
+                {otherCurrency.currency === "USD" ? "Paying with a foreign card? Pay in US dollars" : "Pay in rupees instead"}
               </button>
             </>
           )}

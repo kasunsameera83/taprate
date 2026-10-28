@@ -73,6 +73,15 @@ export default async function ThanksPage({
       : null;
   const symbol = survey.icon_set === "stars5" && rating !== null ? "★".repeat(rating) : (survey.icon_set === "nps" || survey.icon_set === "ces") && rating !== null ? String(rating) : option?.symbol;
 
+  // The business's website link, only if it's a valid https address (a bad value never breaks the page).
+  const websiteHost = (() => {
+    try {
+      const u = new URL(survey.website_url ?? "");
+      return u.protocol === "https:" ? u.hostname : null;
+    } catch {
+      return null;
+    }
+  })();
   return (
     <div lang={HTML_LANG[lang]} className="min-h-screen" style={{ background: `linear-gradient(180deg, ${survey.brand_color}14 0, transparent 260px)` }}>
       <div className="h-1.5" style={{ background: survey.brand_color }} />
@@ -117,9 +126,9 @@ export default async function ThanksPage({
             review={review}
           />
         </div>
-        {survey.website_url && (
+        {websiteHost && survey.website_url && (
           <a href={survey.website_url} rel="noopener noreferrer nofollow" className="link mx-auto mt-6 inline-flex min-h-11 items-center text-sm">
-            {pt(lang, "goTo", { host: new URL(survey.website_url).hostname })}
+            {pt(lang, "goTo", { host: websiteHost })}
           </a>
         )}
         <p className="mt-10 text-center text-[12px] text-muted">

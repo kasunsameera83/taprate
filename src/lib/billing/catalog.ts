@@ -13,7 +13,24 @@ export const PLAN_IDS: readonly PlanId[] = ["starter", "growth", "scale"];
 export const PACK_IDS: readonly PackId[] = ["pack_250", "pack_1000", "pack_5000"];
 
 /** PayHere is for Sri Lankan payments in rupees; Stripe for international cards in dollars. */
+/** The currency each provider uses unless another is chosen. */
 export const PROVIDER_CURRENCY: Record<Provider, Currency> = { payhere: "LKR", stripe: "USD" };
+/** Currencies a provider can ever take. PayHere's USD also needs PAYHERE_USD_ENABLED (checked on the server). */
+export const PROVIDER_CURRENCIES: Record<Provider, readonly Currency[]> = { payhere: ["LKR", "USD"], stripe: ["USD"] };
+
+/** One way to pay: a provider and a currency. */
+export type PayWay = { provider: Provider; currency: Currency };
+
+/** The ways to pay that are switched on, in a stable order. */
+export function payWays(p: { payhere: boolean; stripe: boolean; payhereUsd: boolean }): PayWay[] {
+  const out: PayWay[] = [];
+  if (p.payhere) out.push({ provider: "payhere", currency: "LKR" });
+  if (p.stripe) out.push({ provider: "stripe", currency: "USD" });
+  if (p.payhere && p.payhereUsd) out.push({ provider: "payhere", currency: "USD" });
+  return out;
+}
+
+export const isPayWayOn = (ways: PayWay[], provider: Provider, currency: Currency) => ways.some((w) => w.provider === provider && w.currency === currency);
 
 export type Plan = {
   id: PlanId;
@@ -56,8 +73,8 @@ export type Quote = {
 };
 
 /** Server-side price lookup. Returns null for anything that isn't in the catalog or isn't on sale. */
-export function quote(catalog: Catalog, item: string, interval: BillingInterval | null | undefined, provider: Provider): Quote | null {
-  const currency = PROVIDER_CURRENCY[provider];
+export function quote(catalog: Catalog, item: string, interval: BillingInterval | null | undefined, provider: Provider, currency: Currency = PROVIDER_CURRENCY[provider]): Quote | null {
+  if (!PROVIDER_CURRENCIES[provider].includes(currency)) return null;
   if (isPlanId(item)) {
     if (interval !== "month" && interval !== "year") return null;
     const p = catalog.plans.find((x) => x.id === item && x.active);

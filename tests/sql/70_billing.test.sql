@@ -34,7 +34,7 @@ insert into public.billing_orders (id, account_id, provider, kind, item, billing
   values ((select id from o_plan), (select acc from d7), 'stripe', 'plan', 'growth', 'month', 2000, 4900, 'USD');
 insert into public.billing_orders (id, account_id, provider, kind, item, credits, amount_minor, currency)
   values ((select id from o_top), (select acc from d7), 'payhere', 'topup', 'pack_250', 250, 350000, 'LKR');
-select pg_temp.expect_fail($q$insert into public.billing_orders (account_id, provider, kind, item, credits, amount_minor, currency) values ((select acc from d7), 'payhere', 'topup', 'pack_250', 250, 1200, 'USD')$q$, 'PayHere order in USD', 'check');
+select pg_temp.expect_fail($q$insert into public.billing_orders (account_id, provider, kind, item, credits, amount_minor, currency) values ((select acc from d7), 'stripe', 'topup', 'pack_250', 250, 350000, 'LKR')$q$, 'Stripe order in rupees', 'check');
 reset role;
 grant select on o_plan, o_top to authenticated, service_role;
 

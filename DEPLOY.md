@@ -93,7 +93,7 @@ Use a **separate project** for production (keep your current one for testing).
 6. Limits: trial businesses can send 100 survey emails a day, paid plans 2,000. Resend's own plan limits
    also apply; upgrade Resend before your customers send more than its plan allows.
 
-## 4. PayHere (LKR)
+## 4. PayHere (LKR, and USD when enabled)
 
 1. Switch from the sandbox to your **live** merchant account (PayHere must approve your business).
 2. Settings → Domains & Credentials → add `YOUR-DOMAIN`. The **Merchant Secret is per domain**: copy the
@@ -104,6 +104,9 @@ Use a **separate project** for production (keep your current one for testing).
    mode only accepts whitelisted server IP addresses. Vercel doesn't give fixed IPs on normal plans, so
    until that's solved, cancel PayHere subscriptions in the PayHere merchant portal when a customer asks.
    Stripe cancellations work from inside the app.
+6. **US dollars:** ask PayHere to enable USD (and USD recurring payments) on your merchant account. Once they
+   confirm, set `PAYHERE_USD_ENABLED=true` in Vercel. Overseas customers then see dollar prices and pay with
+   PayHere; Sri Lankan customers can switch to dollars too. Test one sandbox USD payment first.
 
 ## 5. Stripe (USD)
 

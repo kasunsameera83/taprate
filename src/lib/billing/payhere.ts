@@ -23,7 +23,7 @@ export function buildPayhereCheckout(args: {
   merchantSecret: string;
   orderId: string;
   amount: string; // "1490.00"
-  currency: "LKR";
+  currency: "LKR" | "USD";
   items: string;
   customer: PayhereCustomer;
   appOrigin: string;

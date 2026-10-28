@@ -2,7 +2,7 @@ import { secureRoute, ok, fail } from "@/lib/security/route";
 import { LIMITS } from "@/lib/security/rateLimit";
 import { checkoutSchema, type CheckoutInput } from "@/lib/validation/schemas";
 import { billingProviders } from "@/lib/env";
-import { quote } from "@/lib/billing/catalog";
+import { PROVIDER_CURRENCY, isPayWayOn, payWays, quote } from "@/lib/billing/catalog";
 import { loadCatalog } from "@/lib/billing/catalogServer";
 import { createOrder, liveSubscription, loadProfile, loadPromo, startPayhere, startStripe } from "@/lib/billing/server";
 import { applyPromo } from "@/lib/billing/promo";
@@ -15,8 +15,9 @@ import { audit } from "@/lib/audit";
 export const POST = secureRoute<undefined, undefined, CheckoutInput>(
   { auth: "user", action: "billing:manage", ipLimit: LIMITS.userWrite, userLimit: LIMITS.checkoutPerUser, body: checkoutSchema, maxBodyBytes: 512 },
   async ({ membership, user, body, ipHash, requestId }) => {
-    if (!billingProviders()[body.provider]) return fail("unavailable", "That payment method isn't set up yet.", undefined, requestId);
-    const listQuote = quote(await loadCatalog(), body.item, body.interval ?? null, body.provider);
+    const currency = body.currency ?? PROVIDER_CURRENCY[body.provider];
+    if (!isPayWayOn(payWays(billingProviders()), body.provider, currency)) return fail("unavailable", "That payment method isn't set up yet.", undefined, requestId);
+    const listQuote = quote(await loadCatalog(), body.item, body.interval ?? null, body.provider, currency);
     if (!listQuote) return fail("validation_failed", "Choose a plan or pack.", undefined, requestId);
 
     // A promo code is checked again here (never trusted from the preview) and baked into the order amount.
@@ -50,7 +51,7 @@ export const POST = secureRoute<undefined, undefined, CheckoutInput>(
     const orderId = await createOrder(membership.accountId, user.id, body.provider, q, promo);
     const start = body.provider === "payhere" ? await startPayhere(orderId, q, profile) : await startStripe(orderId, membership.accountId, q, profile);
     if (!start) return fail("unavailable", "Couldn't start the payment. Please try again.", undefined, requestId);
-    await audit({ accountId: membership.accountId, userId: user.id, action: "billing.checkout_started", targetType: "order", targetId: orderId, metadata: { item: q.item, provider: body.provider }, ipHash });
+    await audit({ accountId: membership.accountId, userId: user.id, action: "billing.checkout_started", targetType: "order", targetId: orderId, metadata: { item: q.item, provider: body.provider, currency: q.currency }, ipHash });
     return ok({ orderId, ...start }, 201);
   },
 );

@@ -82,7 +82,7 @@ export async function startPayhere(orderId: string, q: Quote, profile: ProfileRo
     merchantSecret: e.PAYHERE_MERCHANT_SECRET!,
     orderId,
     amount: majorAmount(q.amountMinor),
-    currency: "LKR",
+    currency: q.currency,
     items: q.description,
     customer: {
       firstName: profile.first_name,
