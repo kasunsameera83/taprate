@@ -36,12 +36,17 @@ const ACTIONS: Record<string, string> = {
   "integration.created": "Connected an integration",
   "integration.updated": "Changed an integration",
   "integration.deleted": "Removed an integration",
+  "apikey.created": "Created an API key",
+  "apikey.revoked": "Revoked an API key",
+  "import.created": "Imported past ratings",
+  "import.deleted": "Undid an import",
 };
 
 function describe(e: Entry): string {
   const base = ACTIONS[e.action] ?? e.action;
   if (e.action === "team.invite" || e.action === "team.role_changed") return `${base} (${String(e.metadata.role ?? "")})`;
   if (e.action === "responses.export" || e.action === "account.export") return e.metadata.rows ? `${base} (${e.metadata.rows} rows)` : base;
+  if (e.action === "import.created" || e.action === "import.deleted") return `${base} (${e.metadata.rows ?? 0} ratings)`;
   if (e.action === "privacy.customer_erased") return `${base} (${e.metadata.deleted ?? 0} ratings)`;
   return base;
 }

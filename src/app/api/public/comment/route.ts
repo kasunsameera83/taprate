@@ -1,10 +1,12 @@
 import { z } from "zod";
+import { after } from "next/server";
 import { secureRoute, ok, fail } from "@/lib/security/route";
 import { LIMITS, hitRateLimit } from "@/lib/security/rateLimit";
 import { publicCommentSchema } from "@/lib/validation/schemas";
 import { verifyResponseToken } from "@/lib/security/signing";
 import { adminClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
+import { dispatchComment } from "@/lib/integrations";
 
 // Adds the customer's comment and/or reasons to their own response. The signed, time-limited token
 // proves they are the person who clicked. Reasons must be ones the survey offers for that rating
@@ -22,7 +24,7 @@ export const POST = secureRoute<undefined, undefined, z.infer<typeof publicComme
     const db = adminClient();
     const { data: response, error: readErr } = await db
       .from("responses")
-      .select("id, status, sentiment, surveys(allow_comment, status, drivers_positive, drivers_negative)")
+      .select("id, status, sentiment, comment, surveys(allow_comment, status, drivers_positive, drivers_negative)")
       .eq("id", body.responseId)
       .maybeSingle();
     if (readErr) return fail("unavailable", undefined, undefined, requestId);
@@ -51,6 +53,8 @@ export const POST = secureRoute<undefined, undefined, z.infer<typeof publicComme
 
     const { error } = await db.from("responses").update(update).eq("id", body.responseId);
     if (error) return fail("unavailable", undefined, undefined, requestId);
+    // The first comment is also added to the helpdesk ticket (later edits aren't, so a ticket can't be spammed).
+    if (update.comment && !response.comment) after(() => dispatchComment(body.responseId));
     return ok({ saved: true });
   },
 );

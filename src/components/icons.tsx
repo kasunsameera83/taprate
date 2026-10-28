@@ -122,3 +122,8 @@ export const IconTrophy = (p: P) => (
     <path d="M8 4h8v5a4 4 0 0 1-8 0V4ZM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8M9.5 17h5" />
   </Svg>
 );
+export const IconUpload = (p: P) => (
+  <Svg {...p}>
+    <path d="M12 20V9m0 0-4 4m4-4 4 4M5 4h14" />
+  </Svg>
+);

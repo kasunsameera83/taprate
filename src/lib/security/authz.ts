@@ -20,6 +20,8 @@ export const ACTIONS = [
   "audit:read",
   "integrations:read",
   "integrations:write",
+  "apikeys:manage",
+  "responses:import",
 ] as const;
 export type Action = (typeof ACTIONS)[number];
 
@@ -38,6 +40,8 @@ const MATRIX: Record<Role, ReadonlySet<Action>> = {
     "audit:read",
     "integrations:read",
     "integrations:write",
+    "apikeys:manage",
+    "responses:import",
   ]),
   viewer: new Set<Action>(["survey:read", "response:read", "stats:read", "account:read"]),
   // Agents see surveys and only the ratings given for them (filtered in the database).

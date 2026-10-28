@@ -27,6 +27,12 @@ export const LIMITS = {
   kioskBurst: { name: "kiosk:burst", limit: 1, windowSec: 2 },
   kioskDaily: { name: "kiosk:day", limit: 2000, windowSec: 86400 },
   integrationTest: { name: "integration:test", limit: 10, windowSec: 600 },
+  apiPerIp: { name: "api:ip", limit: 600, windowSec: 60 },
+  apiBadKeyPerIp: { name: "api:badkey", limit: 20, windowSec: 600 },
+  apiRead: { name: "api:read", limit: 120, windowSec: 60 },
+  apiWrite: { name: "api:write", limit: 60, windowSec: 60 },
+  apiKeysPerUser: { name: "apikey:user", limit: 10, windowSec: 3600 },
+  importPerUser: { name: "import:user", limit: 10, windowSec: 3600 },
 } as const satisfies Record<string, RateLimitRule>;
 
 /**

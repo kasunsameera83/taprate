@@ -2,7 +2,9 @@
 // network, cloud metadata or localhost (SSRF). Checked when saving AND again right before sending.
 // Pure functions, unit-tested; the DNS check lives in integrations.ts.
 
-export type IntegrationKind = "slack" | "teams" | "webhook";
+export type IntegrationKind = "slack" | "teams" | "webhook" | "zendesk" | "freshdesk";
+export type HelpdeskKind = "zendesk" | "freshdesk";
+export const isHelpdesk = (k: IntegrationKind): k is HelpdeskKind => k === "zendesk" || k === "freshdesk";
 
 const BLOCKED_HOST_SUFFIXES = [".local", ".localhost", ".internal", ".lan", ".home", ".corp", ".intranet"];
 const TEAMS_HOSTS = [".webhook.office.com", ".logic.azure.com", ".powerplatform.com", ".environment.api.powerplatform.com"];
@@ -26,6 +28,8 @@ export function checkIntegrationUrl(kind: IntegrationKind, raw: string): { ok: t
   if (kind === "teams" && !TEAMS_HOSTS.some((s) => host.endsWith(s))) {
     return { ok: false, reason: "Use the webhook URL from a Teams workflow (…webhook.office.com, …logic.azure.com or …powerplatform.com)." };
   }
+  if (kind === "zendesk" && !/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.zendesk\.com$/.test(host)) return { ok: false, reason: "Use your Zendesk address, like acme.zendesk.com." };
+  if (kind === "freshdesk" && !/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.freshdesk\.com$/.test(host)) return { ok: false, reason: "Use your Freshdesk address, like acme.freshdesk.com." };
   if (raw.length > 1000) return { ok: false, reason: "That URL is too long." };
   const last4 = url.pathname.replace(/\/+$/, "").slice(-4);
   return { ok: true, url, hint: `${host}/…${last4}` };

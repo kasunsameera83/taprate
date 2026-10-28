@@ -9,6 +9,7 @@ import { Badge, LoadError, Notice, Skeleton } from "@/components/ui";
 import { IconArrowLeft } from "@/components/icons";
 import { SnippetPanel } from "./SnippetPanel";
 import { CollectPanel } from "./CollectPanel";
+import { confirmDialog } from "@/components/ConfirmDialog";
 
 type Tab = "buttons" | "collect" | "settings";
 
@@ -42,7 +43,7 @@ function SurveyDetail({ id }: { id: string }) {
   }
 
   async function archive() {
-    if (!window.confirm("Archive this survey? Buttons already sent in emails will show “survey closed”. Ratings you've collected are kept.")) return;
+    if (!(await confirmDialog({ title: "Archive this survey?", body: "Buttons already sent in emails will show “survey closed”. Ratings you've collected are kept.", confirmLabel: "Archive", danger: true }))) return;
     const r = await api(`/api/surveys/${encodeURIComponent(id)}`, { method: "DELETE" });
     if (r.ok) router.push("/app/surveys");
     else setArchiveError(r.message);

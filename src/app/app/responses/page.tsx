@@ -7,7 +7,7 @@ import type { ResponseItem, ResponsesPage, Survey } from "@/lib/client/types";
 import { ratingOption, isIconSetId, type Sentiment } from "@/lib/surveys/iconSets";
 import { responsesQuerySchema, fieldErrors } from "@/lib/validation/schemas";
 import { EmptyState, LoadError, Notice, Segmented, SentimentDot, Skeleton } from "@/components/ui";
-import { IconDownload, IconResponses } from "@/components/icons";
+import { IconDownload, IconResponses, IconUpload } from "@/components/icons";
 
 type SentimentFilter = "" | Sentiment;
 type Filters = {
@@ -30,6 +30,7 @@ const CHANNEL_LABEL: Record<string, string> = {
   link: "Link",
   web: "Website",
   kiosk: "Kiosk",
+  import: "Imported",
 };
 
 const SENTIMENT_OPTIONS: ReadonlyArray<{ value: SentimentFilter; label: string }> = [
@@ -139,10 +140,16 @@ function ResponsesView() {
           <p className="text-sm text-muted">Every rating and comment, newest first.</p>
         </div>
         {canExport && (
-          <a className="btn btn-secondary" href={exportHref}>
-            <IconDownload className="h-4 w-4" />
-            Export CSV
-          </a>
+          <div className="flex flex-wrap gap-2">
+            <Link className="btn btn-ghost" href="/app/responses/import">
+              <IconUpload className="h-4 w-4" />
+              Import
+            </Link>
+            <a className="btn btn-secondary" href={exportHref}>
+              <IconDownload className="h-4 w-4" />
+              Export CSV
+            </a>
+          </div>
         )}
       </header>
 

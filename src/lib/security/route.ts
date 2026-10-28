@@ -263,6 +263,9 @@ const DB_MESSAGES: Array<[RegExp, ErrorCode, string]> = [
   [/invalid due date/, "validation_failed", "Choose a due date within the next year."],
   [/too many notes/, "conflict", "This follow-up has reached the note limit."],
   [/invalid driver/, "validation_failed", "Pick reasons from the list."],
+  [/invalid import (row|date)/, "validation_failed", "Some rows in the file aren't valid. Check the dates, ratings and emails."],
+  [/survey is archived/, "conflict", "This survey is archived."],
+  [/too many api keys/, "conflict", "You have 25 active keys. Revoke some first."],
 ];
 
 export function dbError(error: { code?: string; message?: string } | null): ApiError {

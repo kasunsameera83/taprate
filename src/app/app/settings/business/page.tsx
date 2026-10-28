@@ -7,6 +7,7 @@ import { Badge, Field, LoadError, Notice, PasswordInput, Skeleton, TextInput } f
 import { SettingsSection } from "@/components/SettingsSection";
 import { IconDownload } from "@/components/icons";
 import { LOGO_MAX_BYTES, sniffImage } from "@/lib/branding";
+import { confirmDialog } from "@/components/ConfirmDialog";
 
 type Me = { account: { id: string; name: string; plan: string; credits: number; role: string; logoUrl: string | null } | null };
 
@@ -167,7 +168,7 @@ function EraseCustomer() {
     const formEl = e.currentTarget;
     const parsed = eraseCustomerSchema.safeParse({ email: String(new FormData(formEl).get("eraseEmail") ?? "") });
     if (!parsed.success) return setErrors({ eraseEmail: fieldErrors(parsed.error).email ?? "" });
-    if (!window.confirm(`Permanently delete every rating and comment from ${parsed.data.email}? This can't be undone.`)) return;
+    if (!(await confirmDialog({ title: "Delete this customer's data?", body: `Every rating and comment from ${parsed.data.email} will be permanently deleted. This can't be undone.`, confirmLabel: "Delete data", danger: true }))) return;
     setErrors({});
     setBusy(true);
     const r = await api<{ deleted: number }>("/api/privacy/erase", { method: "POST", body: parsed.data });
@@ -210,7 +211,7 @@ function Leave({ name }: { name: string }) {
         className="btn btn-secondary"
         disabled={busy}
         onClick={async () => {
-          if (!window.confirm(`Leave ${name}?`)) return;
+          if (!(await confirmDialog({ title: `Leave ${name}?`, body: "You'll lose access until someone invites you again.", confirmLabel: "Leave", danger: true }))) return;
           setBusy(true);
           const r = await api("/api/account/leave", { method: "POST" });
           if (r.ok) window.location.assign("/app");

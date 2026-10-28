@@ -6,6 +6,7 @@ import { ROLE_DESCRIPTION, ROLE_LABEL, isRole, type Role } from "@/lib/security/
 import { Badge, Field, LoadError, Notice, Skeleton, TextInput } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { IconCopy } from "@/components/icons";
+import { confirmDialog } from "@/components/ConfirmDialog";
 
 type Member = { userId: string; email: string; role: string; agentName: string | null; joinedAt: string };
 type Invite = { id: string; email: string; role: string; agentName: string | null; createdAt: string; expiresAt: string };
@@ -176,7 +177,7 @@ function MemberRow({ member, myRole, isMe, onChanged }: { member: Member; myRole
   }
 
   async function remove() {
-    if (!window.confirm(`Remove ${member.email} from this business? They'll lose access straight away.`)) return;
+    if (!(await confirmDialog({ title: `Remove ${member.email}?`, body: "They'll lose access to this business straight away.", confirmLabel: "Remove", danger: true }))) return;
     setBusy(true);
     const r = await api(`/api/team/members/${encodeURIComponent(member.userId)}`, { method: "DELETE" });
     setBusy(false);

@@ -3,7 +3,8 @@ import { lookup } from "node:dns/promises";
 import { env } from "@/lib/env";
 import { adminClient } from "@/lib/supabase/server";
 import { open } from "@/lib/security/secretBox";
-import { checkIntegrationUrl, isPrivateAddress, type IntegrationKind } from "@/lib/security/urlSafety";
+import { checkIntegrationUrl, isHelpdesk, isPrivateAddress, type HelpdeskKind, type IntegrationKind } from "@/lib/security/urlSafety";
+import { buildCheckRequest, buildNoteRequest, checkResponseOk, noteText, ticketNumber } from "@/lib/helpdesk";
 import { isIconSetId, ratingOption } from "@/lib/surveys/iconSets";
 import { signWebhook } from "@/lib/security/webhookSignature";
 
@@ -19,15 +20,16 @@ export type RatingEvent = {
   ticket: string | null;
   channel: string;
   createdAt: string;
+  comment?: string | null;
 };
 
-type IntegrationRow = { id: string; kind: IntegrationKind; url_encrypted: string; secret_encrypted: string | null; events: string[] };
+export type IntegrationRow = { id: string; kind: IntegrationKind; url_encrypted: string; secret_encrypted: string | null; events: string[] };
 
 /** Loads everything needed about a confirmed rating (service role, scoped to the response id). */
 export async function loadRatingEvent(responseId: string): Promise<RatingEvent | null> {
   const { data } = await adminClient()
     .from("responses")
-    .select("id, account_id, rating, sentiment, respondent_email, agent, ticket_ref, channel, created_at, surveys(id, name, icon_set)")
+    .select("id, account_id, rating, sentiment, comment, respondent_email, agent, ticket_ref, channel, created_at, surveys(id, name, icon_set)")
     .eq("id", responseId)
     .eq("status", "confirmed")
     .maybeSingle();
@@ -45,6 +47,7 @@ export async function loadRatingEvent(responseId: string): Promise<RatingEvent |
     ticket: data.ticket_ref,
     channel: data.channel,
     createdAt: data.created_at,
+    comment: data.comment,
   };
 }
 
@@ -92,7 +95,12 @@ export function buildPayload(kind: IntegrationKind, e: RatingEvent, appOrigin: s
 }
 
 /** Sends one request after re-checking the URL and that its DNS doesn't point at a private network. */
-async function sendSafely(kind: IntegrationKind, rawUrl: string, body: string, headers: Record<string, string>): Promise<{ status: "ok" | "failed" | "blocked"; http?: number }> {
+async function sendSafely(
+  kind: IntegrationKind,
+  rawUrl: string,
+  init: { method: "GET" | "POST" | "PUT"; body?: string; headers: Record<string, string> },
+  readJson = false,
+): Promise<{ status: "ok" | "failed" | "blocked"; http?: number; json?: unknown }> {
   const check = checkIntegrationUrl(kind, rawUrl);
   if (!check.ok) return { status: "blocked" };
   try {
@@ -103,19 +111,68 @@ async function sendSafely(kind: IntegrationKind, rawUrl: string, body: string, h
   }
   try {
     const res = await fetch(check.url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "User-Agent": "TapRate-Webhooks/1.0", ...headers },
-      body,
+      method: init.method,
+      headers: { ...(init.body !== undefined ? { "Content-Type": "application/json" } : {}), Accept: "application/json", "User-Agent": "TapRate-Webhooks/1.0", ...init.headers },
+      body: init.body,
       redirect: "manual", // never follow redirects to somewhere we didn't check
       signal: AbortSignal.timeout(5000),
     });
-    return { status: res.ok ? "ok" : "failed", http: res.status };
+    let json: unknown = undefined;
+    if (readJson) {
+      // Read at most 64 KB of the answer.
+      const text = (await res.text()).slice(0, 65536);
+      try {
+        json = JSON.parse(text);
+      } catch {
+        json = null;
+      }
+    }
+    return { status: res.ok ? "ok" : "failed", http: res.status, json };
   } catch {
     return { status: "failed" };
   }
 }
 
-export async function deliverTo(row: IntegrationRow, e: RatingEvent): Promise<"ok" | "failed" | "blocked"> {
+async function logDelivery(row: IntegrationRow, accountId: string, event: string, result: { status: "ok" | "failed" | "blocked"; http?: number }) {
+  const db = adminClient();
+  await Promise.all([
+    db.from("integration_deliveries").insert({ account_id: accountId, integration_id: row.id, event, status: result.status, http_status: result.http ?? null }),
+    db.from("integrations").update({ last_status: result.status === "ok" ? "ok" : "failed", last_delivery_at: new Date().toISOString() }).eq("id", row.id),
+  ]);
+}
+
+/** Adds a private note to the rating's helpdesk ticket. Ratings without a numeric ticket id are skipped. */
+async function deliverToHelpdesk(row: IntegrationRow & { kind: HelpdeskKind }, e: RatingEvent, what: "rating" | "comment"): Promise<"ok" | "failed" | "blocked" | "skipped"> {
+  const ticket = ticketNumber(e.ticket);
+  if (!ticket) return "skipped";
+  const ev = env();
+  const base = open(ev.RESPONSE_TOKEN_SECRET, row.url_encrypted);
+  const credential = row.secret_encrypted ? open(ev.RESPONSE_TOKEN_SECRET, row.secret_encrypted) : null;
+  if (!base || !credential) return "failed";
+  const text = noteText(
+    { ratingLabel: e.ratingLabel, rating: e.rating, sentiment: e.sentiment, surveyName: e.survey.name, agent: e.agent, comment: e.comment, link: `${ev.appOrigin}/app/responses?surveyId=${encodeURIComponent(e.survey.id)}` },
+    what,
+  );
+  const req = buildNoteRequest(row.kind, base, credential, ticket, text);
+  const result = await sendSafely(row.kind, req.url, { method: req.method, body: req.body, headers: req.headers });
+  await logDelivery(row, e.accountId, what === "rating" ? "rating.created" : "rating.commented", result);
+  return result.status;
+}
+
+/** "Send test" for a helpdesk: a read-only call that proves the address and credentials work. */
+export async function checkHelpdesk(row: IntegrationRow & { kind: HelpdeskKind }): Promise<"ok" | "failed" | "blocked"> {
+  const ev = env();
+  const base = open(ev.RESPONSE_TOKEN_SECRET, row.url_encrypted);
+  const credential = row.secret_encrypted ? open(ev.RESPONSE_TOKEN_SECRET, row.secret_encrypted) : null;
+  if (!base || !credential) return "failed";
+  const req = buildCheckRequest(row.kind, base, credential);
+  const result = await sendSafely(row.kind, req.url, { method: req.method, headers: req.headers }, true);
+  if (result.status !== "ok") return result.status;
+  return checkResponseOk(row.kind, result.http ?? 0, result.json) ? "ok" : "failed";
+}
+
+export async function deliverTo(row: IntegrationRow, e: RatingEvent): Promise<"ok" | "failed" | "blocked" | "skipped"> {
+  if (isHelpdesk(row.kind)) return deliverToHelpdesk(row as IntegrationRow & { kind: HelpdeskKind }, e, "rating");
   const ev = env();
   const url = open(ev.RESPONSE_TOKEN_SECRET, row.url_encrypted);
   if (!url) return "failed";
@@ -127,13 +184,33 @@ export async function deliverTo(row: IntegrationRow, e: RatingEvent): Promise<"o
     headers["X-TapRate-Event"] = "rating.created";
     headers["X-TapRate-Signature"] = signWebhook(secret, body);
   }
-  const result = await sendSafely(row.kind, url, body, headers);
-  const db = adminClient();
-  await Promise.all([
-    db.from("integration_deliveries").insert({ account_id: e.accountId, integration_id: row.id, event: "rating.created", status: result.status, http_status: result.http ?? null }),
-    db.from("integrations").update({ last_status: result.status === "ok" ? "ok" : "failed", last_delivery_at: new Date().toISOString() }).eq("id", row.id),
-  ]);
+  const result = await sendSafely(row.kind, url, { method: "POST", body, headers });
+  await logDelivery(row, e.accountId, "rating.created", result);
   return result.status;
+}
+
+const wants = (i: IntegrationRow, e: RatingEvent) => i.events.includes("all") || (i.events.includes("negative") && e.sentiment === "negative");
+
+async function enabledIntegrations(accountId: string): Promise<IntegrationRow[]> {
+  const { data } = await adminClient()
+    .from("integrations")
+    .select("id, kind, url_encrypted, secret_encrypted, events")
+    .eq("account_id", accountId)
+    .eq("enabled", true)
+    .limit(20);
+  return (data ?? []) as IntegrationRow[];
+}
+
+/** A customer's first comment on a rating goes to the helpdesk ticket too (Slack/Teams/webhooks get ratings only). */
+export async function dispatchComment(responseId: string): Promise<void> {
+  try {
+    const e = await loadRatingEvent(responseId);
+    if (!e || !e.comment || !ticketNumber(e.ticket)) return;
+    const targets = (await enabledIntegrations(e.accountId)).filter((i) => isHelpdesk(i.kind) && wants(i, e));
+    await Promise.allSettled(targets.map((t) => deliverToHelpdesk(t as IntegrationRow & { kind: HelpdeskKind }, e, "comment")));
+  } catch (err) {
+    console.error("[integrations] comment dispatch failed", { err });
+  }
 }
 
 /** Sends a confirmed rating to every enabled integration that wants it. Never throws. */
@@ -141,13 +218,7 @@ export async function dispatchRating(responseId: string): Promise<void> {
   try {
     const e = await loadRatingEvent(responseId);
     if (!e) return;
-    const { data } = await adminClient()
-      .from("integrations")
-      .select("id, kind, url_encrypted, secret_encrypted, events")
-      .eq("account_id", e.accountId)
-      .eq("enabled", true)
-      .limit(20);
-    const targets = ((data ?? []) as IntegrationRow[]).filter((i) => i.events.includes("all") || (i.events.includes("negative") && e.sentiment === "negative"));
+    const targets = (await enabledIntegrations(e.accountId)).filter((i) => wants(i, e));
     await Promise.allSettled(targets.map((t) => deliverTo(t, e)));
   } catch (err) {
     console.error("[integrations] dispatch failed", { err });

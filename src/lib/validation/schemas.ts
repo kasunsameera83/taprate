@@ -174,7 +174,7 @@ export const responsesQuerySchema = z
     status: z.enum(["confirmed", "pending"]).default("confirmed"),
     sentiment: z.enum(["positive", "neutral", "negative"]).optional(),
     hasComment: z.enum(["yes"]).optional(),
-    channel: z.enum(["email", "qr", "whatsapp", "sms", "link", "web", "kiosk"]).optional(),
+    channel: z.enum(["email", "qr", "whatsapp", "sms", "link", "web", "kiosk", "import"]).optional(),
     agent: z.string().trim().max(100).optional(),
     from: isoDate.optional(),
     to: isoDate.optional(),
@@ -440,3 +440,126 @@ export const integrationUpdateSchema = z
   })
   .strict()
   .refine((v) => Object.keys(v).length > 0, "Nothing to update");
+
+// ---------------------------------------------------------------------------
+// Public API, helpdesk post-back, CSV import (Phase 4)
+// ---------------------------------------------------------------------------
+
+/** Ticket references: same rule as the one-click link uses. */
+export const TICKET_RE = /^[A-Za-z0-9#._\/-]{1,100}$/;
+const MERGE_TAG_LIKE = /\{\{|\}\}|\*\||\|\*/;
+
+export const apiKeyCreateSchema = z
+  .object({
+    name: text(1, 60, "Name"),
+    access: z.enum(["read", "read_write"], { error: "Choose what the key can do" }),
+    expiresInDays: z.union([z.literal(30), z.literal(90), z.literal(365), z.null()], { error: "Choose when the key expires" }),
+    password: z.string().min(1, "Enter your password").max(128),
+  })
+  .strict();
+export type ApiKeyCreateInput = z.infer<typeof apiKeyCreateSchema>;
+
+const isoDateTime = z.string().max(40).datetime({ offset: true, error: "Use an ISO 8601 date-time, e.g. 2026-10-01T00:00:00Z" });
+
+export const apiSurveysQuerySchema = z
+  .object({ status: z.enum(["active", "paused", "all"]).default("all") })
+  .strict();
+
+export const apiResponsesQuerySchema = z
+  .object({
+    survey_id: uuidSchema.optional(),
+    since: isoDateTime.optional(),
+    until: isoDateTime.optional(),
+    sentiment: z.enum(["positive", "neutral", "negative"]).optional(),
+    channel: z.enum(["email", "qr", "whatsapp", "sms", "link", "web", "kiosk", "import"]).optional(),
+    limit: z.coerce.number().int().min(1).max(100).default(50),
+    cursor: z.string().max(120).regex(/^[A-Za-z0-9_-]+$/, "Invalid cursor").optional(),
+  })
+  .strict()
+  .refine((v) => !v.since || !v.until || Date.parse(v.since) <= Date.parse(v.until), { message: "'since' must be before 'until'", path: ["since"] });
+export type ApiResponsesQuery = z.infer<typeof apiResponsesQuerySchema>;
+
+/** Recipient details to sign into rating links. Values must survive the click link's own parsing unchanged. */
+export const apiLinksSchema = z
+  .object({
+    email: emailSchema.optional(),
+    agent: z
+      .string()
+      .max(400)
+      .transform((v) => cleanText(v))
+      .pipe(z.string().min(1, "Agent can't be empty").max(100, "Agent must be at most 100 characters"))
+      .refine((v) => !MERGE_TAG_LIKE.test(v), "Agent looks like an unreplaced merge tag")
+      .optional(),
+    ticket: z.string().trim().regex(TICKET_RE, "Ticket may use letters, numbers and # . _ / - (up to 100)").optional(),
+  })
+  .strict();
+export type ApiLinksInput = z.infer<typeof apiLinksSchema>;
+
+// Helpdesks: we build the URL ourselves from the subdomain, so nobody can point us at another host.
+const subdomain = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/, "Use just the first part of your helpdesk address, e.g. acme");
+
+export const helpdeskCreateSchema = z.discriminatedUnion("kind", [
+  z
+    .object({
+      kind: z.literal("zendesk"),
+      name: text(1, 60, "Name"),
+      subdomain,
+      email: emailSchema,
+      apiToken: z.string().trim().min(20, "Paste the API token from Zendesk").max(100, "That token is too long").regex(/^[A-Za-z0-9]+$/, "That doesn't look like a Zendesk API token"),
+      events: z.array(z.enum(["negative", "all"])).min(1).max(2),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("freshdesk"),
+      name: text(1, 60, "Name"),
+      subdomain,
+      apiKey: z.string().trim().min(10, "Paste your Freshdesk API key").max(100, "That key is too long").regex(/^[A-Za-z0-9]+$/, "That doesn't look like a Freshdesk API key"),
+      events: z.array(z.enum(["negative", "all"])).min(1).max(2),
+    })
+    .strict(),
+]);
+export type HelpdeskCreateInput = z.infer<typeof helpdeskCreateSchema>;
+
+// CSV import. One row after the browser has mapped the columns; the server checks every row again.
+export const IMPORT_MAX_ROWS = 5000;
+
+export const importRowSchema = z
+  .object({
+    date: z
+      .string()
+      .max(40)
+      .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/, "Date must be like 2025-03-14 or 2025-03-14 09:30")
+      .refine((v) => {
+        const t = Date.parse(v);
+        return Number.isFinite(t) && t >= Date.parse("2000-01-01T00:00:00Z") && t <= Date.now() + 86_400_000;
+      }, "Date must be between 2000 and today"),
+    rating: z.number({ error: "Rating must be a whole number" }).int("Rating must be a whole number").min(0).max(10),
+    email: emailSchema.optional(),
+    comment: z
+      .string()
+      .max(8000)
+      .transform((v) => cleanText(v, { multiline: true }))
+      .pipe(z.string().min(1).max(2000, "Comment must be at most 2000 characters"))
+      .optional(),
+    agent: z
+      .string()
+      .max(400)
+      .transform((v) => cleanText(v))
+      .pipe(z.string().min(1).max(100, "Agent must be at most 100 characters"))
+      .optional(),
+    ticket: z.string().trim().regex(TICKET_RE, "Ticket may use letters, numbers and # . _ / -").optional(),
+  })
+  .strict();
+export type ImportRow = z.infer<typeof importRowSchema>;
+
+export const importSchema = z
+  .object({
+    fileName: text(1, 120, "File name"),
+    rows: z.array(z.unknown()).min(1, "The file has no rows").max(IMPORT_MAX_ROWS, `Up to ${IMPORT_MAX_ROWS} rows per import`),
+  })
+  .strict();

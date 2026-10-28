@@ -135,7 +135,17 @@ rate limiter fails closed.
   (`X-TapRate-Signature: t=…,v1=HMAC-SHA256`). URLs are stored encrypted (AES-256-GCM) and
   re-checked against private networks before every delivery
 
+## Integrations & API
+
+- Public API at `/api/v1` (server-to-server): `GET /surveys`, `GET /responses` (cursor pagination),
+  `GET /responses/{id}`, `POST /surveys/{id}/links` (signed, "verified" links for one recipient).
+  Keys: `Authorization: Bearer tr_…` only (never in the URL); only a hash is stored; read or
+  read+write scope; optional expiry; revocable; per-key rate limits; creating one needs the password.
+- Zendesk / Freshdesk: each rating (and the customer's first comment) is added as a private note on
+  its ticket. The address is built from the subdomain only; credentials stored encrypted.
+- CSV import of past ratings: checked in the browser (preview), again on the server and again in the
+  database; duplicates skipped; no credits, follow-ups or alerts; one-click undo per import.
+
 ## Still to come
 
-Public API, helpdesk integrations, CSV import, billing (PayHere + Stripe), AI summaries,
-scheduled reports.
+Billing (PayHere + Stripe), AI summaries, scheduled reports.

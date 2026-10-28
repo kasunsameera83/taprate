@@ -5,6 +5,7 @@ import { changeEmailSchema, mfaCodeSchema, mfaConfirmSchema, newPasswordSchema, 
 import { ROLE_DESCRIPTION, ROLE_LABEL, isRole } from "@/lib/security/authz";
 import { Badge, Field, LoadError, Notice, PasswordInput, Skeleton, TextInput } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
+import { confirmDialog } from "@/components/ConfirmDialog";
 
 type Me = {
   email: string | null;
@@ -276,7 +277,7 @@ function SignOutEverywhere() {
         className="btn btn-secondary"
         disabled={busy}
         onClick={async () => {
-          if (!window.confirm("Sign out on all devices, including this one?")) return;
+          if (!(await confirmDialog({ title: "Sign out everywhere?", body: "You'll be signed out on all devices, including this one.", confirmLabel: "Sign out everywhere" }))) return;
           setBusy(true);
           await api("/api/account/sessions", { method: "DELETE" });
           window.location.assign("/login");

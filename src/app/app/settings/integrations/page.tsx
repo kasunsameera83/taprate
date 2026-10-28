@@ -1,14 +1,15 @@
 "use client";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { api } from "@/lib/client/api";
-import { integrationCreateSchema, fieldErrors } from "@/lib/validation/schemas";
+import { helpdeskCreateSchema, integrationCreateSchema, fieldErrors } from "@/lib/validation/schemas";
 import { Badge, EmptyState, Field, LoadError, Notice, Skeleton, TextInput } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { IconCopy } from "@/components/icons";
+import { confirmDialog } from "@/components/ConfirmDialog";
 
 type Integration = {
   id: string;
-  kind: "slack" | "teams" | "webhook";
+  kind: "slack" | "teams" | "webhook" | "zendesk" | "freshdesk";
   name: string;
   urlHint: string;
   events: string[];
@@ -34,7 +35,18 @@ const KIND: Record<Integration["kind"], { label: string; help: string; placehold
     help: "We POST a JSON event to your https URL, signed with a secret so you can check it came from TapRate.",
     placeholder: "https://example.com/taprate-webhook",
   },
+  zendesk: {
+    label: "Zendesk",
+    help: "Adds each rating as a private note on its ticket. In Zendesk: Admin Center → Apps and integrations → Zendesk API → turn on token access → Add API token.",
+    placeholder: "",
+  },
+  freshdesk: {
+    label: "Freshdesk",
+    help: "Adds each rating as a private note on its ticket. In Freshdesk: your profile picture → Profile settings → copy “Your API Key”.",
+    placeholder: "",
+  },
 };
+const isHelpdeskKind = (k: Integration["kind"]): k is "zendesk" | "freshdesk" => k === "zendesk" || k === "freshdesk";
 
 export default function IntegrationsPage() {
   const [items, setItems] = useState<Integration[] | null>(null);
@@ -87,37 +99,58 @@ function AddIntegration({ onAdded }: { onAdded: () => void }) {
   const [events, setEvents] = useState<"negative" | "all">("negative");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState<{ kind: "error" | "success"; text: string; secret?: string } | null>(null);
+
   const [busy, setBusy] = useState(false);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formEl = e.currentTarget;
     const f = new FormData(formEl);
-    const parsed = integrationCreateSchema.safeParse({ kind, name: String(f.get("intName") ?? ""), url: String(f.get("intUrl") ?? ""), events: [events] });
-    if (!parsed.success) {
-      const errs = fieldErrors(parsed.error);
-      return setErrors({ intName: errs.name ?? "", intUrl: errs.url ?? "" });
+    const name = String(f.get("intName") ?? "");
+    let path = "/api/integrations";
+    let payload: unknown;
+    if (isHelpdeskKind(kind)) {
+      // Same schema the server uses.
+      const parsed = helpdeskCreateSchema.safeParse(
+        kind === "zendesk"
+          ? { kind, name, subdomain: String(f.get("hdSub") ?? ""), email: String(f.get("hdEmail") ?? ""), apiToken: String(f.get("hdSecret") ?? ""), events: [events] }
+          : { kind, name, subdomain: String(f.get("hdSub") ?? ""), apiKey: String(f.get("hdSecret") ?? ""), events: [events] },
+      );
+      if (!parsed.success) {
+        const errs = fieldErrors(parsed.error);
+        return setErrors({ intName: errs.name ?? "", hdSub: errs.subdomain ?? "", hdEmail: errs.email ?? "", hdSecret: errs.apiToken ?? errs.apiKey ?? "" });
+      }
+      path = "/api/integrations/helpdesk";
+      payload = parsed.data;
+    } else {
+      const parsed = integrationCreateSchema.safeParse({ kind, name, url: String(f.get("intUrl") ?? ""), events: [events] });
+      if (!parsed.success) {
+        const errs = fieldErrors(parsed.error);
+        return setErrors({ intName: errs.name ?? "", intUrl: errs.url ?? "" });
+      }
+      payload = parsed.data;
     }
     setErrors({});
     setBusy(true);
-    const r = await api<{ id: string; signingSecret: string | null }>("/api/integrations", { method: "POST", body: parsed.data });
+    const r = await api<{ id: string; signingSecret?: string | null }>(path, { method: "POST", body: payload });
     setBusy(false);
     if (r.ok) {
       formEl.reset();
       setNotice(
         r.data.signingSecret
           ? { kind: "success", text: "Webhook added. Copy your signing secret now: it won't be shown again.", secret: r.data.signingSecret }
-          : { kind: "success", text: "Connected. Use “Send test” to check it." },
+          : { kind: "success", text: isHelpdeskKind(kind) ? "Connected. Use “Check connection” to make sure the token works." : "Connected. Use “Send test” to check it." },
       );
       onAdded();
     } else {
-      setErrors({ intName: r.fields?.name ?? "", intUrl: r.fields?.url ?? "" });
+      const fl = r.fields ?? {};
+      setErrors({ intName: fl.name ?? "", intUrl: fl.url ?? "", hdSub: fl.subdomain ?? "", hdEmail: fl.email ?? "", hdSecret: fl.apiToken ?? fl.apiKey ?? "" });
       setNotice(r.fields ? null : { kind: "error", text: r.message });
     }
   }
 
   return (
-    <SettingsSection title="Send alerts to another app" description="Get a message in Slack, Teams or your own system when customers rate you.">
+    <SettingsSection title="Connect another app" description="Get a message in Slack, Teams or your own system, or add ratings to Zendesk / Freshdesk tickets.">
       <form onSubmit={onSubmit} noValidate className="space-y-4">
         {notice && (
           <Notice kind={notice.kind}>
@@ -139,7 +172,10 @@ function AddIntegration({ onAdded }: { onAdded: () => void }) {
               type="button"
               role="radio"
               aria-checked={kind === k}
-              onClick={() => setKind(k)}
+              onClick={() => {
+                setKind(k);
+                setErrors({});
+              }}
               className={`min-h-11 rounded-[10px] border px-3 py-2 text-left text-sm font-semibold ${kind === k ? "border-brand bg-brand-soft text-brand" : "border-line hover:border-line-strong"}`}
             >
               {KIND[k].label}
@@ -147,14 +183,43 @@ function AddIntegration({ onAdded }: { onAdded: () => void }) {
           ))}
         </div>
         <p className="text-[13px] text-muted">{KIND[kind].help}</p>
-        <div className="grid gap-4 sm:grid-cols-[200px_minmax(0,1fr)]">
-          <Field label="Name" name="intName" error={errors.intName || undefined}>
-            <TextInput name="intName" placeholder="e.g. #support" maxLength={60} error={errors.intName || undefined} />
-          </Field>
-          <Field label="Webhook URL" name="intUrl" error={errors.intUrl || undefined}>
-            <TextInput name="intUrl" type="url" inputMode="url" autoComplete="off" placeholder={KIND[kind].placeholder} maxLength={1000} error={errors.intUrl || undefined} />
-          </Field>
-        </div>
+        {isHelpdeskKind(kind) ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Name" name="intName" error={errors.intName || undefined}>
+              <TextInput name="intName" placeholder={`e.g. ${KIND[kind].label}`} maxLength={60} error={errors.intName || undefined} />
+            </Field>
+            <Field label={`${KIND[kind].label} address`} name="hdSub" error={errors.hdSub || undefined}>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm text-muted">https://</span>
+                <TextInput name="hdSub" placeholder="acme" autoComplete="off" maxLength={63} error={errors.hdSub || undefined} />
+                <span className="text-sm text-muted">.{kind}.com</span>
+              </div>
+            </Field>
+            {kind === "zendesk" && (
+              <Field label="Agent email" name="hdEmail" error={errors.hdEmail || undefined} hint="The Zendesk user the notes are added as.">
+                <TextInput name="hdEmail" type="email" autoComplete="off" maxLength={254} error={errors.hdEmail || undefined} hasHint />
+              </Field>
+            )}
+            <Field label={kind === "zendesk" ? "API token" : "API key"} name="hdSecret" error={errors.hdSecret || undefined}>
+              <TextInput name="hdSecret" type="password" autoComplete="off" maxLength={100} error={errors.hdSecret || undefined} />
+            </Field>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-[200px_minmax(0,1fr)]">
+            <Field label="Name" name="intName" error={errors.intName || undefined}>
+              <TextInput name="intName" placeholder="e.g. #support" maxLength={60} error={errors.intName || undefined} />
+            </Field>
+            <Field label="Webhook URL" name="intUrl" error={errors.intUrl || undefined}>
+              <TextInput name="intUrl" type="url" inputMode="url" autoComplete="off" placeholder={KIND[kind].placeholder} maxLength={1000} error={errors.intUrl || undefined} />
+            </Field>
+          </div>
+        )}
+        {isHelpdeskKind(kind) && (
+          <p className="text-[13px] text-muted">
+            Ratings are matched to tickets by the ticket number in the link, so use the {KIND[kind].label} option on a survey&rsquo;s &ldquo;Add to emails&rdquo; tab.
+            The customer&rsquo;s first comment is added too.
+          </p>
+        )}
         <fieldset>
           <legend className="text-sm font-semibold">Send</legend>
           <div className="mt-1 flex flex-wrap gap-4 text-sm">
@@ -171,7 +236,9 @@ function AddIntegration({ onAdded }: { onAdded: () => void }) {
         <button className="btn btn-primary" disabled={busy}>
           {busy ? "Connecting…" : "Connect"}
         </button>
-        <p className="text-[13px] text-muted">The URL is stored encrypted and can&rsquo;t be viewed again after saving.</p>
+        <p className="text-[13px] text-muted">
+          {isHelpdeskKind(kind) ? "The address and token are" : "The URL is"} stored encrypted and can&rsquo;t be viewed again after saving.
+        </p>
       </form>
     </SettingsSection>
   );
@@ -201,6 +268,7 @@ function Row({ item, onChanged }: { item: Integration; onChanged: () => void }) 
           </p>
           <p className="text-[13px] text-muted">
             {item.urlHint}, {item.events.includes("all") ? "every rating" : "negative ratings"}
+            {isHelpdeskKind(item.kind) ? " added to tickets" : ""}
             {item.lastStatus && (
               <>
                 , last delivery <Badge tone={item.lastStatus === "ok" ? "pos" : "neg"}>{item.lastStatus === "ok" ? "OK" : "failed"}</Badge>
@@ -209,8 +277,8 @@ function Row({ item, onChanged }: { item: Integration; onChanged: () => void }) 
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => run(() => api(`/api/integrations/${item.id}/test`, { method: "POST" }), "Test sent. Check your channel.")}>
-            Send test
+          <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => run(() => api(`/api/integrations/${item.id}/test`, { method: "POST" }), isHelpdeskKind(item.kind) ? "Connected: TapRate can sign in to your helpdesk." : "Test sent. Check your channel.")}>
+            {isHelpdeskKind(item.kind) ? "Check connection" : "Send test"}
           </button>
           <button
             type="button"
@@ -224,8 +292,9 @@ function Row({ item, onChanged }: { item: Integration; onChanged: () => void }) 
             type="button"
             className="btn btn-danger btn-sm"
             disabled={busy}
-            onClick={() => {
-              if (window.confirm(`Disconnect ${item.name}?`)) run(() => api(`/api/integrations/${item.id}`, { method: "DELETE" }));
+            onClick={async () => {
+              if (await confirmDialog({ title: `Disconnect ${item.name}?`, body: "TapRate will stop sending ratings there.", confirmLabel: "Disconnect", danger: true }))
+                run(() => api(`/api/integrations/${item.id}`, { method: "DELETE" }));
             }}
           >
             Remove

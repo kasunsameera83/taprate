@@ -4,6 +4,7 @@ import { api } from "@/lib/client/api";
 import { kioskCreateSchema, fieldErrors } from "@/lib/validation/schemas";
 import { Field, LoadError, Notice, Skeleton, TextInput } from "@/components/ui";
 import { IconCheck, IconCopy, IconDownload } from "@/components/icons";
+import { confirmDialog } from "@/components/ConfirmDialog";
 
 type Share = {
   active: boolean;
@@ -149,7 +150,7 @@ function Kiosks({ surveyId, kiosks, canEdit, onChanged }: { surveyId: string; ki
   }
 
   async function revoke(id: string, name: string) {
-    if (!window.confirm(`Switch off “${name}”? The tablet will stop accepting ratings straight away.`)) return;
+    if (!(await confirmDialog({ title: `Switch off “${name}”?`, body: "The tablet will stop accepting ratings straight away.", confirmLabel: "Switch off", danger: true }))) return;
     const r = await api(`/api/kiosks/${encodeURIComponent(id)}`, { method: "DELETE" });
     if (r.ok) onChanged();
     else setError(r.message);
