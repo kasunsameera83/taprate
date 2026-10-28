@@ -83,7 +83,7 @@ export function ThanksClient({ responseId, token, allowComment, existingComment,
   }
 
   if (state === "closed") {
-    return <p className="mt-6 rounded-[10px] bg-[#eceef2] px-4 py-3 text-sm text-muted">{t.notCollecting}</p>;
+    return <p className="mt-6 rounded-[10px] bg-[#f1f5f9] px-4 py-3 text-sm text-muted">{t.notCollecting}</p>;
   }
   if (state === "error") {
     return (

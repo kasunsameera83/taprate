@@ -38,7 +38,7 @@ export function checkIntegrationUrl(kind: IntegrationKind, raw: string): { ok: t
   if (kind === "gorgias" && !/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.gorgias\.com$/.test(host)) return { ok: false, reason: "Use your Gorgias address, like acme.gorgias.com." };
   if (kind === "intercom" && !(Object.values(INTERCOM_HOSTS) as string[]).includes(host)) return { ok: false, reason: "Choose your Intercom region." };
   if (kind === "front" && host !== FRONT_HOST) return { ok: false, reason: "Front connections always use api2.frontapp.com." };
-  if (kind === "shopify") return { ok: false, reason: "TapRate never sends requests to Shopify." };
+  if (kind === "shopify") return { ok: false, reason: "TapTruly never sends requests to Shopify." };
   if (raw.length > 1000) return { ok: false, reason: "That URL is too long." };
   const last4 = url.pathname.replace(/\/+$/, "").slice(-4);
   return { ok: true, url, hint: `${host}/…${last4}` };

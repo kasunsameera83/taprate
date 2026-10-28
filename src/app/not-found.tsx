@@ -6,7 +6,7 @@ export default function NotFound() {
       <h1 className="text-[26px] font-bold">Page not found</h1>
       <p className="mt-2 text-muted">The link may have expired or been mistyped.</p>
       <Link href="/" className="btn btn-secondary mt-6">
-        Go to TapRate
+        Go to TapTruly
       </Link>
     </main>
   );

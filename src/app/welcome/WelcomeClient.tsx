@@ -33,7 +33,7 @@ export function WelcomeClient({ email, hasAccounts, ownsAccount }: { email: stri
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-[28px] font-bold leading-tight">{hasAccounts ? "Your invites" : "Welcome to TapRate"}</h1>
+        <h1 className="text-[28px] font-bold leading-tight">{hasAccounts ? "Your invites" : "Welcome to TapTruly"}</h1>
         <p className="mt-1 text-muted">
           Signed in as <strong className="break-all text-ink">{email}</strong>
         </p>

@@ -8,7 +8,7 @@ import { SettingsSection } from "@/components/SettingsSection";
 type Item = { email: string; reason: "unsubscribed" | "added_by_team" | string; createdAt: string };
 const REASON: Record<string, string> = { unsubscribed: "Unsubscribed", added_by_team: "Added by your team" };
 
-// People TapRate will never send survey emails to for this business.
+// People TapTruly will never send survey emails to for this business.
 export function DoNotEmail() {
   const [items, setItems] = useState<Item[] | null>(null);
   const [email, setEmail] = useState("");
@@ -43,7 +43,7 @@ export function DoNotEmail() {
   return (
     <SettingsSection
       title="Do-not-email list"
-      description="People TapRate will never send your survey emails to. Customers who unsubscribe are added automatically, and only they can undo it."
+      description="People TapTruly will never send your survey emails to. Customers who unsubscribe are added automatically, and only they can undo it."
     >
       <form onSubmit={add} noValidate className="flex flex-wrap items-end gap-2">
         <div className="min-w-[14rem] flex-1">

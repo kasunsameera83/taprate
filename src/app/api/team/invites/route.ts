@@ -22,13 +22,13 @@ export const POST = secureRoute<undefined, undefined, InviteCreateInput>(
 
     const joinUrl = `${env().appOrigin}/welcome`;
     const html = `
-      <p>${escapeHtml(user.email ?? "A teammate")} invited you to join <strong>${escapeHtml(membership.accountName)}</strong> on TapRate as ${escapeHtml(
+      <p>${escapeHtml(user.email ?? "A teammate")} invited you to join <strong>${escapeHtml(membership.accountName)}</strong> on TapTruly as ${escapeHtml(
         ROLE_LABEL[body.role],
       )}.</p>
       <p>Sign in or create an account with this email address (${escapeHtml(body.email)}), then accept the invite.</p>
-      <p><a href="${escapeHtml(joinUrl)}">Open TapRate</a></p>
-      <p style="color:#586074;font-size:13px">The invite expires in 7 days. If you weren't expecting it, you can ignore this email.</p>`;
-    const sent = await sendEmail({ to: body.email, subject: `Join ${membership.accountName} on TapRate`, html });
+      <p><a href="${escapeHtml(joinUrl)}">Open TapTruly</a></p>
+      <p style="color:#475569;font-size:13px">The invite expires in 7 days. If you weren't expecting it, you can ignore this email.</p>`;
+    const sent = await sendEmail({ to: body.email, subject: `Join ${membership.accountName} on TapTruly`, html });
 
     await audit({
       accountId: membership.accountId,

@@ -96,7 +96,7 @@ export function SiteHeader({ cta = "Start free", showPricing = true }: { cta?: s
   return (
     <header className={`sticky top-0 z-40 transition-[background-color,border-color] duration-200 ${scrolled ? "border-b border-line bg-canvas/90 backdrop-blur" : "border-b border-transparent bg-canvas"}`}>
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
-        <Link href="/" aria-label="TapRate home" className="shrink-0">
+        <Link href="/" aria-label="TapTruly home" className="shrink-0">
           <Logo />
         </Link>
         <nav aria-label="Site" className="hidden items-center gap-1 md:flex">

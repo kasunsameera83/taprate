@@ -41,7 +41,7 @@ export function toApiResponse(r: Row) {
     customer: { email: r.respondent_email },
     agent: r.agent,
     ticket: r.ticket_ref,
-    // true only when the recipient details came from a link signed by TapRate (e.g. made with this API).
+    // true only when the recipient details came from a link signed by TapTruly (e.g. made with this API).
     verified: r.metadata_verified,
     channel: r.channel,
     location: r.location_id ? { id: r.location_id, name: r.locations?.name ?? null } : null,

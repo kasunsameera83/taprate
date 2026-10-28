@@ -97,18 +97,28 @@ export const IconLogout = (p: P) => (
   </Svg>
 );
 
-/** The TapRate mark: three ascending ticks, echoing the feedback stripe. */
-export function Logo({ className }: { className?: string }) {
+/**
+ * The TapTruly logo (mark + wordmark), from public/brand. "white" is for dark backgrounds.
+ * An image file rather than inline SVG, so the logo's gradient works however many times it appears on a page.
+ */
+export function Logo({ className, variant = "color", height = 28 }: { className?: string; variant?: "color" | "white"; height?: number }) {
   return (
-    <span className={`inline-flex items-center gap-2 ${className ?? ""}`}>
-      <svg viewBox="0 0 24 24" className="h-6 w-6" aria-hidden>
-        <rect x="3" y="11" width="4.5" height="9" rx="1.5" fill="#dc2626" />
-        <rect x="9.75" y="7" width="4.5" height="13" rx="1.5" fill="#d97706" />
-        <rect x="16.5" y="3" width="4.5" height="17" rx="1.5" fill="#16a34a" />
-      </svg>
-      <span className="font-display text-lg font-bold tracking-tight">TapRate</span>
-    </span>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={variant === "white" ? "/brand/taptruly-logo-white.svg" : "/brand/taptruly-logo.svg"}
+      alt="TapTruly"
+      width={Math.round((height * 341) / 78.81)}
+      height={height}
+      className={`block h-auto max-w-none ${className ?? ""}`}
+      style={{ height }}
+    />
   );
+}
+
+/** Just the app icon (rounded square). */
+export function LogoMark({ className, size = 32 }: { className?: string; size?: number }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src="/brand/taptruly-icon.svg" alt="" aria-hidden width={size} height={size} className={className} />;
 }
 
 export const IconFollowUp = (p: P) => (

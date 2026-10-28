@@ -24,7 +24,7 @@ export const POST = secureRoute<undefined, undefined, z.infer<typeof body>, "pub
       if (error) return fail("internal_error", undefined, undefined, requestId);
       return ok({ unsubscribed: true });
     }
-    if (!verifyPurposeToken(secret, UNSUB_PURPOSE, b.s, b.t, 90 * 86400)) return fail("forbidden", "This link has expired. You can change reports in TapRate settings.", undefined, requestId);
+    if (!verifyPurposeToken(secret, UNSUB_PURPOSE, b.s, b.t, 90 * 86400)) return fail("forbidden", "This link has expired. You can change reports in TapTruly settings.", undefined, requestId);
     await adminClient().from("report_subscriptions").delete().eq("id", b.s);
     return ok({ unsubscribed: true });
   },

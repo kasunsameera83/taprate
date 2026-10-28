@@ -1,4 +1,4 @@
-// Believable sample numbers for a brand-new account, so people can see what TapRate will show before
+// Believable sample numbers for a brand-new account, so people can see what TapTruly will show before
 // their first real rating. Pure and deterministic (same picture every time); never saved anywhere.
 import { computeStats, type StatRow } from "../surveys/stats.ts";
 

@@ -414,7 +414,7 @@ function Reasons({ stats }: { stats: StatsResponse | null }) {
                   <span className="truncate">{i.label}</span>
                   <span className="tabular shrink-0 font-semibold">{i.count}</span>
                 </div>
-                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[#eceef2]" aria-hidden>
+                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[#f1f5f9]" aria-hidden>
                   <div className={`h-full rounded-full ${tone === "pos" ? "bg-pos-fill" : "bg-neg-fill"}`} style={{ width: `${(i.count / max) * 100}%` }} />
                 </div>
               </li>
@@ -521,7 +521,7 @@ function Agents({ stats }: { stats: StatsResponse | null }) {
                   <span className="font-semibold text-ink">{a.satisfactionPct}%</span> of {a.total}
                 </span>
               </div>
-              <div className="mt-1 h-2 overflow-hidden rounded-full bg-[#eceef2]" aria-hidden>
+              <div className="mt-1 h-2 overflow-hidden rounded-full bg-[#f1f5f9]" aria-hidden>
                 <div className="h-full rounded-full bg-pos-fill" style={{ width: `${a.satisfactionPct}%` }} />
               </div>
             </li>
@@ -568,7 +568,7 @@ function Branches({ rows, days, onPick }: { rows: BranchStat[]; days: number; on
                       <span className="text-muted">No ratings</span>
                     ) : (
                       <span className="flex items-center gap-2">
-                        <span className="h-2 flex-1 overflow-hidden rounded-full bg-[#eceef2]" aria-hidden>
+                        <span className="h-2 flex-1 overflow-hidden rounded-full bg-[#f1f5f9]" aria-hidden>
                           <span className="block h-full rounded-full bg-pos-fill" style={{ width: `${b.satisfactionPct}%` }} />
                         </span>
                         <span className="tabular w-12 text-right font-semibold">{b.satisfactionPct}%</span>

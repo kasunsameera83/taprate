@@ -9,7 +9,7 @@ import { processQueue } from "@/lib/sending/server";
 const params = z.object({ id: uuidSchema }).strict();
 export const dynamic = "force-dynamic";
 
-// POST /api/v1/surveys/{id}/send — TapRate emails this survey to ONE customer now. Use it from Zapier,
+// POST /api/v1/surveys/{id}/send — TapTruly emails this survey to ONE customer now. Use it from Zapier,
 // Make, Shopify Flow or your helpdesk when an order is delivered or a ticket is solved.
 // Unsubscribes, bounces, the "recently emailed" rule (30 days unless skip_recent_days says otherwise),
 // and your daily limit all apply. The same address twice on the same day gets one email.

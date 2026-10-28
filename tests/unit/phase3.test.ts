@@ -29,7 +29,7 @@ test("integration URLs: only https public hosts, and the right provider", () => 
   assert.equal(checkIntegrationUrl("teams", "https://acme.webhook.office.com/webhookb2/abc").ok, true);
   assert.equal(checkIntegrationUrl("teams", "https://prod-12.westus.logic.azure.com:443/workflows/abc").ok, true);
   assert.equal(checkIntegrationUrl("teams", "https://example.com/hook").ok, false);
-  assert.equal(checkIntegrationUrl("webhook", "https://api.example.com/hooks/taprate").ok, true);
+  assert.equal(checkIntegrationUrl("webhook", "https://api.example.com/hooks/taptruly").ok, true);
   for (const bad of [
     "http://api.example.com/hook",
     "https://127.0.0.1/hook",

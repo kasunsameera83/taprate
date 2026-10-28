@@ -58,8 +58,8 @@ test("email: everything typed is escaped, placeholders filled, footer has unsubs
     intro: "Hi {name},\n\n<img src=x onerror=alert(1)> thanks from {business}",
     recipientName: "Amaya Perera",
     buttonsHtml: "<table>buttons</table>",
-    buttonLinks: [{ label: "Excellent", url: "https://app.taprate.lk/r/x" }],
-    unsubscribeUrl: "https://app.taprate.lk/unsubscribe?r=1&t=2",
+    buttonLinks: [{ label: "Excellent", url: "https://app.taptruly.com/r/x" }],
+    unsubscribeUrl: "https://app.taptruly.com/unsubscribe?r=1&t=2",
     reminder: true,
   });
   assert.equal(mail.subject, "Reminder: How did we do?");
@@ -68,21 +68,21 @@ test("email: everything typed is escaped, placeholders filled, footer has unsubs
   assert.match(mail.html, /&lt;img src=x/);
   assert.doesNotMatch(mail.html, /evil\.example/); // only our own storage logos
   assert.match(mail.html, /unsubscribe\?r=1&amp;t=2/);
-  assert.match(mail.text, /Excellent: https:\/\/app\.taprate\.lk\/r\/x/);
+  assert.match(mail.text, /Excellent: https:\/\/app\.taptruly\.com\/r\/x/);
   assert.equal(fillPlaceholders("Hi {name}", null, "Kova"), "Hi there");
   assert.equal(safeFromName('Kova "Café" <x@y>\r\nBcc: z'), "Kova Café x y Bcc z");
 });
 
 test("snippet: per-recipient links are used when given", () => {
   const html = buildSnippetHtml({
-    appUrl: "https://app.taprate.lk",
+    appUrl: "https://app.taptruly.com",
     surveyId: "5a000000-0000-4000-8000-000000000001",
     iconSet: "thumbs",
     question: "Q",
     brandColor: "#2f3bf5",
     mergeTags: { email: "", agent: "", ticket: "" },
     signToken: () => "unused",
-    urlFor: (r) => `https://app.taprate.lk/r/tok${r}?e=a%40x.lk&s=sig`,
+    urlFor: (r) => `https://app.taptruly.com/r/tok${r}?e=a%40x.lk&s=sig`,
   });
   assert.match(html, /tok1\?e=a%40x\.lk&amp;s=sig/);
   assert.doesNotMatch(html, /unused/);
@@ -142,7 +142,7 @@ test("own sending domain: real business domains only; provider records cleaned",
   assert.equal(sendingDomainSchema.parse({ domain: "https://Mail.Kova.lk/" }).domain, "mail.kova.lk");
   assert.equal(sendingDomainSchema.safeParse({ domain: "gmail.com" }).success, false);
   assert.equal(sendingDomainSchema.safeParse({ domain: "localhost" }).success, false);
-  assert.equal(sendingDomainSchema.safeParse({ domain: "x.taprate.lk" }).success, false);
+  assert.equal(sendingDomainSchema.safeParse({ domain: "x.taptruly.com" }).success, false);
   assert.equal(sendingDomainSchema.safeParse({ domain: "kova.lk", fromLocal: "a b" }).success, false);
   const recs = cleanRecords([{ record: "DKIM", type: "TXT", name: "resend._domainkey", value: "p=abc", status: "not_started" }, { type: "A", name: "x", value: "1.2.3.4" }, { type: "TXT", name: "<script>", value: "x" }]);
   assert.equal(recs.length, 1);

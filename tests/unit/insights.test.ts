@@ -96,7 +96,7 @@ import { buildWinsEmail } from "../../src/lib/insights/winsEmail.ts";
 test("wins email: numbers, kind words escaped, stop link", () => {
   const m = buildWinsEmail({
     agentName: "Nimal Perera", businessName: "Kova & Co", periodLabel: "21–27 Oct 2026", total: 10, positive: 8, satisfactionPct: 80, previousPct: 70,
-    kindWords: ["<b>Great</b> help", "Fast"], appOrigin: "https://app.taprate.lk", unsubscribeUrl: "https://app.taprate.lk/reports/unsubscribe?w=1&t=2",
+    kindWords: ["<b>Great</b> help", "Fast"], appOrigin: "https://app.taptruly.com", unsubscribeUrl: "https://app.taptruly.com/reports/unsubscribe?w=1&t=2",
   });
   assert.equal(m.subject, "Your week at Kova & Co: 8 happy customers");
   assert.match(m.html, /Nice work this week, Nimal/);
@@ -115,6 +115,6 @@ test("drop alerts: only real, sizeable drops with enough ratings", () => {
   const d = detectDrops(rows, new Map([["k", "Kandy"], ["c", "Colombo"]]), now);
   assert.deepEqual(d.map((x) => x.scope).sort(), ["all", "k"]);
   assert.equal(detectDrops(mk(10, 0.1, 2).concat(mk(10, 0.9, 9)), new Map(), now).length, 0, "too few ratings");
-  const mail = buildDropEmail("Kova <b>", d, "https://app.taprate.lk");
+  const mail = buildDropEmail("Kova <b>", d, "https://app.taptruly.com");
   assert.match(mail.html, /Kova &lt;b&gt;/);
 });

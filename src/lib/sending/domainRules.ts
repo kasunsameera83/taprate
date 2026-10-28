@@ -16,7 +16,7 @@ export const sendingDomainSchema = z
       .transform((v) => v.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/\.$/, ""))
       .pipe(z.string().regex(DOMAIN_RE, "Enter a domain like mail.yourbusiness.lk"))
       .refine((v) => !FREE.has(v) && ![...FREE].some((f) => v.endsWith(`.${f}`)), "Use a domain your business owns, not a free email provider")
-      .refine((v) => !/(^|\.)taprate\./.test(v), "Use your own business's domain"),
+      .refine((v) => !/(^|\.)taptruly\./.test(v), "Use your own business's domain"),
     fromLocal: z
       .string()
       .trim()

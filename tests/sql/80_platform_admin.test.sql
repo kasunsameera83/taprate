@@ -23,7 +23,7 @@ grant execute on function pg_temp.eq(bigint, bigint, text) to authenticated, ser
 grant execute on function pg_temp.as_user(text, text) to authenticated, service_role;
 
 -- The platform admin is a separate person with no business of their own.
-insert into auth.users (id, email) values ('eeeeeeee-0000-0000-0000-000000000001', 'owner@taprate.test');
+insert into auth.users (id, email) values ('eeeeeeee-0000-0000-0000-000000000001', 'owner@taptruly.test');
 insert into auth.mfa_factors (user_id, status) values ('eeeeeeee-0000-0000-0000-000000000001', 'verified');
 insert into public.platform_admins (user_id) values ('eeeeeeee-0000-0000-0000-000000000001');
 create temp table d8 as select account_id as acc from public.memberships where user_id = 'dddddddd-0000-0000-0000-000000000001' and role = 'owner';

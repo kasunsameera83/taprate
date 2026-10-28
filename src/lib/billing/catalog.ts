@@ -70,14 +70,14 @@ export function quote(catalog: Catalog, item: string, interval: BillingInterval 
       credits,
       amountMinor: p.price[currency][interval],
       currency,
-      description: `TapRate ${p.name} (${interval === "year" ? "yearly" : "monthly"}, ${credits.toLocaleString("en")} responses)`,
+      description: `TapTruly ${p.name} (${interval === "year" ? "yearly" : "monthly"}, ${credits.toLocaleString("en")} responses)`,
     };
   }
   if (isPackId(item)) {
     if (interval) return null;
     const k = catalog.packs.find((x) => x.id === item && x.active);
     if (!k) return null;
-    return { kind: "topup", item, interval: null, credits: k.responses, amountMinor: k.price[currency], currency, description: `TapRate ${k.responses.toLocaleString("en")} extra responses` };
+    return { kind: "topup", item, interval: null, credits: k.responses, amountMinor: k.price[currency], currency, description: `TapTruly ${k.responses.toLocaleString("en")} extra responses` };
   }
   return null;
 }

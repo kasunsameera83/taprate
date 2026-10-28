@@ -68,7 +68,7 @@ export default function LoginPage() {
       subtitle="Sign in to see how your customers rated you."
       footer={
         <>
-          New to TapRate?{" "}
+          New to TapTruly?{" "}
           <Link href="/signup" className="link">
             Create an account
           </Link>

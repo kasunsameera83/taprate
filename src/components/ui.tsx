@@ -112,7 +112,7 @@ export function Badge({ tone, children }: { tone: "pos" | "neu" | "neg" | "brand
     neu: "bg-neu-soft text-neu-text",
     neg: "bg-neg-soft text-neg-text",
     brand: "bg-brand-soft text-brand",
-    plain: "bg-[#eceef2] text-muted",
+    plain: "bg-[#f1f5f9] text-muted",
   }[tone];
   return <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${styles}`}>{children}</span>;
 }

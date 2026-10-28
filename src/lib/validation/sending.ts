@@ -1,4 +1,4 @@
-// Validation for survey emails sent by TapRate. Same schemas in the browser and on the server; the
+// Validation for survey emails sent by TapTruly. Same schemas in the browser and on the server; the
 // database checks every value a third time.
 import { z } from "zod";
 import { cleanText, emailSchema, TICKET_RE } from "./schemas.ts";

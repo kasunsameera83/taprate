@@ -273,7 +273,7 @@ function ChangeEmail({ current }: { current: string }) {
 function SignOutEverywhere() {
   const [busy, setBusy] = useState(false);
   return (
-    <SettingsSection title="Signed-in devices" description="Lost a phone or used a shared computer? Sign out of TapRate on every device at once.">
+    <SettingsSection title="Signed-in devices" description="Lost a phone or used a shared computer? Sign out of TapTruly on every device at once.">
       <button
         type="button"
         className="btn btn-secondary"

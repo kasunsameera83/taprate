@@ -32,7 +32,7 @@ export default async function WidgetPage({ params }: { params: Promise<{ token: 
         <p className="mt-3 text-[11px] text-muted">
           {pt(survey.lang, "feedbackBy")}{" "}
           <a href={env().appOrigin} target="_blank" rel="noopener noreferrer" className="font-semibold">
-            TapRate
+            TapTruly
           </a>
         </p>
       </div>

@@ -1,4 +1,4 @@
-// The survey email TapRate sends for a business. Pure, unit-tested.
+// The survey email TapTruly sends for a business. Pure, unit-tested.
 // Everything the business or the customer typed is escaped; the buttons come from the same builder
 // as the copy-paste snippet. Inline styles only, no scripts, a plain-text version for every email.
 import { escapeHtml } from "../security/html.ts";
@@ -26,7 +26,7 @@ export function fillPlaceholders(text: string, name: string | null, business: st
 /** A display name that is safe inside an email From header: no quotes, angle brackets or line breaks. */
 export function safeFromName(name: string): string {
   const cleaned = name.replace(/[\r\n"<>\\;,:@]/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
-  return cleaned || "TapRate";
+  return cleaned || "TapTruly";
 }
 
 const LOGO_RE = /^https:\/\/[A-Za-z0-9.-]+(:\d+)?\/storage\/v1\/object\/public\/logos\/accounts\/[0-9a-f-]{36}\/logo-[A-Za-z0-9_-]{8,40}\.(png|jpg|webp)$/;
@@ -46,17 +46,17 @@ export function buildSurveyEmail(i: SurveyEmailInput): { subject: string; html: 
 
   const html =
     `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${e(subject)}</title></head>` +
-    `<body style="margin:0;padding:0;background:#f5f6f8;">` +
-    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f5f6f8" style="background:#f5f6f8;"><tr><td align="center" style="padding:24px 12px;">` +
-    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="max-width:560px;background:#ffffff;border:1px solid #e1e4eb;border-radius:12px;"><tr><td style="padding:28px 28px 20px 28px;font-family:Arial,Helvetica,sans-serif;">` +
+    `<body style="margin:0;padding:0;background:#f8fafc;">` +
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f8fafc" style="background:#f8fafc;"><tr><td align="center" style="padding:24px 12px;">` +
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="max-width:560px;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;"><tr><td style="padding:28px 28px 20px 28px;font-family:Arial,Helvetica,sans-serif;">` +
     logo +
-    (i.reminder ? `<p style="margin:0 0 14px 0;font-size:13px;color:#586074;">${e(pt(L, "reminderNote"))}</p>` : "") +
+    (i.reminder ? `<p style="margin:0 0 14px 0;font-size:13px;color:#475569;">${e(pt(L, "reminderNote"))}</p>` : "") +
     paragraphs +
     i.buttonsHtml +
-    `<p style="margin:16px 0 0 0;font-size:13px;line-height:19px;color:#586074;">${e(pt(L, "tapThatFits"))}</p>` +
+    `<p style="margin:16px 0 0 0;font-size:13px;line-height:19px;color:#475569;">${e(pt(L, "tapThatFits"))}</p>` +
     `</td></tr></table>` +
-    `<p style="max-width:560px;margin:14px auto 0 auto;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#6b7385;text-align:center;">` +
-    `${e(pt(L, "sentBy", { business: i.businessName }))} <a href="${e(i.unsubscribeUrl)}" style="color:#586074;text-decoration:underline;">${e(pt(L, "stopEmails", { business: i.businessName }))}</a></p>` +
+    `<p style="max-width:560px;margin:14px auto 0 auto;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#64748b;text-align:center;">` +
+    `${e(pt(L, "sentBy", { business: i.businessName }))} <a href="${e(i.unsubscribeUrl)}" style="color:#475569;text-decoration:underline;">${e(pt(L, "stopEmails", { business: i.businessName }))}</a></p>` +
     `</td></tr></table></body></html>`;
 
   const text =

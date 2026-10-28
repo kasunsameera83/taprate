@@ -53,8 +53,8 @@ export function buildReportEmail(r: ReportEmailInput): { subject: string; html: 
   const e = escapeHtml;
   const scope = r.surveyName ? ` · ${e(r.surveyName)}` : "";
   const subject = `${r.frequency === "weekly" ? "Weekly" : "Monthly"} feedback report: ${r.businessName}${s.satisfactionPct !== null ? ` (${s.satisfactionPct}% satisfied)` : ""}`;
-  const row = (label: string, value: string, color = "#151a2d") =>
-    `<td style="padding:12px;border:1px solid #e1e4eb;border-radius:8px;width:25%"><div style="font-size:12px;color:#586074">${label}</div><div style="font-size:22px;font-weight:700;color:${color}">${value}</div></td>`;
+  const row = (label: string, value: string, color = "#0f172a") =>
+    `<td style="padding:12px;border:1px solid #e2e8f0;border-radius:8px;width:25%"><div style="font-size:12px;color:#475569">${label}</div><div style="font-size:22px;font-weight:700;color:${color}">${value}</div></td>`;
   const list = (items: string[]) => (items.length ? `<ul style="margin:6px 0 0;padding-left:18px">${items.map((i) => `<li style="margin:2px 0">${i}</li>`).join("")}</ul>` : "");
 
   const ai = r.insight
@@ -69,7 +69,7 @@ export function buildReportEmail(r: ReportEmailInput): { subject: string; html: 
        ${r.negativeComments
          .map(
            (c) =>
-             `<div style="border-left:3px solid #dc2626;padding:6px 10px;margin:8px 0;background:#fdecec"><div style="font-size:12px;color:#586074">${e(c.rating)}${c.agent ? ` · ${e(c.agent)}` : ""}</div><div style="white-space:pre-line">${e(c.text)}</div></div>`,
+             `<div style="border-left:3px solid #dc2626;padding:6px 10px;margin:8px 0;background:#fdecec"><div style="font-size:12px;color:#475569">${e(c.rating)}${c.agent ? ` · ${e(c.agent)}` : ""}</div><div style="white-space:pre-line">${e(c.text)}</div></div>`,
          )
          .join("")}`
     : "";
@@ -81,29 +81,29 @@ export function buildReportEmail(r: ReportEmailInput): { subject: string; html: 
          ${s.drivers.negative.length ? `<p style="margin:4px 0 0"><strong>Could be better:</strong> ${s.drivers.negative.slice(0, 5).map((d) => `${e(d.label)} (${d.count})`).join(", ")}</p>` : ""}`
       : "";
 
-  const html = `<!doctype html><html><body style="margin:0;background:#f5f6f8;font-family:Arial,Helvetica,sans-serif;color:#151a2d">
+  const html = `<!doctype html><html><body style="margin:0;background:#f8fafc;font-family:Arial,Helvetica,sans-serif;color:#0f172a">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;padding:24px">
 <tr><td>
-  <div style="font-size:13px;color:#586074">TapRate · ${e(r.businessName)}${scope}</div>
+  <div style="font-size:13px;color:#475569">TapTruly · ${e(r.businessName)}${scope}</div>
   <h1 style="font-size:22px;margin:4px 0 2px">Your ${r.frequency === "weekly" ? "weekly" : "monthly"} feedback report</h1>
-  <div style="font-size:13px;color:#586074">${e(r.periodLabel)}</div>
+  <div style="font-size:13px;color:#475569">${e(r.periodLabel)}</div>
   ${
     s.total === 0
       ? `<p style="margin:20px 0 0">No ratings in this period. Make sure your rating buttons are in your emails, signature or helpdesk replies.</p>`
       : `<table role="presentation" width="100%" cellpadding="0" cellspacing="6" style="margin-top:16px"><tr>
-          ${row("Satisfied", pct(s.satisfactionPct), "#2f3bf5")}
+          ${row("Satisfied", pct(s.satisfactionPct), "#4f46e5")}
           ${row("Ratings", String(s.total))}
-          ${row("Unhappy", String(s.negative), s.negative ? "#b91c1c" : "#151a2d")}
-          ${row("Follow-ups overdue", String(r.overdueFollowups), r.overdueFollowups ? "#b91c1c" : "#151a2d")}
+          ${row("Unhappy", String(s.negative), s.negative ? "#b91c1c" : "#0f172a")}
+          ${row("Follow-ups overdue", String(r.overdueFollowups), r.overdueFollowups ? "#b91c1c" : "#0f172a")}
         </tr></table>
-        <p style="margin:8px 0 0;font-size:13px;color:#586074">Compared with the period before: ${e(delta(s.satisfactionPct, s.previous.satisfactionPct) || "no earlier data")}${s.nps ? ` · NPS ${s.nps.score}` : ""}</p>`
+        <p style="margin:8px 0 0;font-size:13px;color:#475569">Compared with the period before: ${e(delta(s.satisfactionPct, s.previous.satisfactionPct) || "no earlier data")}${s.nps ? ` · NPS ${s.nps.score}` : ""}</p>`
   }
   ${ai}
   ${reasons}
   ${neg}
-  <p style="margin:28px 0 0"><a href="${e(r.appOrigin)}/app" style="background:#2f3bf5;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700;display:inline-block">Open your dashboard</a></p>
-  <p style="margin:24px 0 0;font-size:12px;color:#6b7385">You get this because you asked for ${r.frequency} reports in TapRate. <a href="${e(r.unsubscribeUrl)}" style="color:#6b7385">Stop these emails</a></p>
+  <p style="margin:28px 0 0"><a href="${e(r.appOrigin)}/app" style="background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700;display:inline-block">Open your dashboard</a></p>
+  <p style="margin:24px 0 0;font-size:12px;color:#64748b">You get this because you asked for ${r.frequency} reports in TapTruly. <a href="${e(r.unsubscribeUrl)}" style="color:#64748b">Stop these emails</a></p>
 </td></tr></table></td></tr></table></body></html>`;
   return { subject, html };
 }

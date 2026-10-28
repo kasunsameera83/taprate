@@ -45,7 +45,7 @@ export const GET = secureRoute(
       status: 200,
       headers: {
         "Content-Type": "application/json; charset=utf-8",
-        "Content-Disposition": `attachment; filename="taprate-export-${new Date().toISOString().slice(0, 10)}.json"`,
+        "Content-Disposition": `attachment; filename="taptruly-export-${new Date().toISOString().slice(0, 10)}.json"`,
         "Cache-Control": "no-store",
         "X-Content-Type-Options": "nosniff",
       },

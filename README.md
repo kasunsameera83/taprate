@@ -1,4 +1,4 @@
-# TapRate
+# TapTruly
 
 One-click customer feedback inside the emails you already send. Add rating buttons to an email
 signature or helpdesk template; customers click once; you see who is happy and who needs a call back.
@@ -59,7 +59,7 @@ npm run typecheck # after a build (needs next-env.d.ts)
 
 `test:db` needs `TEST_DATABASE_URL`, e.g. a local Docker Postgres:
 ```bash
-docker run --rm -d -p 5432:5432 -e POSTGRES_PASSWORD=postgres --name taprate-test postgres:16
+docker run --rm -d -p 5432:5432 -e POSTGRES_PASSWORD=postgres --name taptruly-test postgres:16
 TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres npm run test:db
 ```
 It refuses to run against a `supabase.co` URL. GitHub Actions (`.github/workflows/ci.yml`) runs all of
@@ -132,7 +132,7 @@ rate limiter fails closed.
 - Tablet kiosk mode: secret link per kiosk (only a hash stored), revocable, rate limited
 - Every rating records its channel; filter responses by channel
 - Integrations: Slack, Microsoft Teams (Workflows webhook), and signed webhooks
-  (`X-TapRate-Signature: t=…,v1=HMAC-SHA256`). URLs are stored encrypted (AES-256-GCM) and
+  (`X-TapTruly-Signature: t=…,v1=HMAC-SHA256`). URLs are stored encrypted (AES-256-GCM) and
   re-checked against private networks before every delivery
 
 ## Integrations & API

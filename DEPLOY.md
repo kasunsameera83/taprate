@@ -1,4 +1,4 @@
-# Going live with TapRate
+# Going live with TapTruly
 
 Do these in order. Each step says where to click. Keep every key and secret private: never paste them
 into chats, screenshots or code.
@@ -7,7 +7,7 @@ into chats, screenshots or code.
 
 ## 0. Before you start
 
-- A domain name (e.g. `taprate.lk` or `taprate.app`). The app will live at e.g. `https://app.yourdomain.com`
+- A domain name (e.g. `taptruly.com` or `taptruly.com`). The app will live at e.g. `https://app.yourdomain.com`
   or the root domain.
 - Fill in your business details in `src/lib/site/company.ts` (company name, registration number,
   address, support/privacy/security emails). The Terms and Privacy pages show a red warning until you do.
@@ -42,7 +42,7 @@ Use a **separate project** for production (keep your current one for testing).
 > Vercel's free **Hobby** plan is for personal, non-commercial use. A paid product needs **Pro**
 > (check Vercel's current terms and pricing).
 
-1. vercel.com → Add New → Project → import the GitHub repo `kasunsameera83/taprate`.
+1. vercel.com → Add New → Project → import the GitHub repo `kasunsameera83/taptruly`.
 2. Settings → Environment Variables (Production). Generate each secret with:
    `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`
 
@@ -100,7 +100,7 @@ Use a **separate project** for production (keep your current one for testing).
    one for this domain into Vercel.
 3. The notify URL is sent automatically with each payment: `https://YOUR-DOMAIN/api/webhooks/payhere`.
 4. Recurring payments must be enabled on your PayHere account (ask PayHere support).
-5. Cancelling PayHere plans from inside TapRate uses PayHere's Subscription Manager API, which in live
+5. Cancelling PayHere plans from inside TapTruly uses PayHere's Subscription Manager API, which in live
    mode only accepts whitelisted server IP addresses. Vercel doesn't give fixed IPs on normal plans, so
    until that's solved, cancel PayHere subscriptions in the PayHere merchant portal when a customer asks.
    Stripe cancellations work from inside the app.

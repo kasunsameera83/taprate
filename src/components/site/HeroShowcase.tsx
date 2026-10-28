@@ -51,7 +51,7 @@ export function HeroShowcase() {
   return (
     <div ref={box} className="relative" onPointerDown={() => (touched.current = true)}>
       <div className="overflow-hidden rounded-[18px] border border-line bg-white shadow-[0_30px_60px_-36px_rgba(16,21,61,0.45)]">
-        <div className="flex items-center justify-between gap-3 border-b border-line bg-[#fafbfc] px-5 py-3">
+        <div className="flex items-center justify-between gap-3 border-b border-line bg-[#f8fafc] px-5 py-3">
           <div className="min-w-0">
             <p className="truncate text-[13px] font-semibold">Re: Your delivery to Kandy</p>
             <p className="text-[12px] text-muted">Nimal from Kova Support</p>
@@ -118,7 +118,7 @@ export function HeroShowcase() {
           style={{ transform: `translate(${pointer.x - 6}px, ${pointer.y - 4}px) scale(${pointer.tap ? 0.85 : 1})`, opacity: pointer.visible ? 1 : 0 }}
         >
           <svg width="26" height="30" viewBox="0 0 26 30">
-            <path d="M3 2l19 13-8.5 1.6L18 26l-3.8 1.7-4.4-9.4L3 23.5z" fill="#151a2d" stroke="#fff" strokeWidth="2" strokeLinejoin="round" />
+            <path d="M3 2l19 13-8.5 1.6L18 26l-3.8 1.7-4.4-9.4L3 23.5z" fill="#0f172a" stroke="#fff" strokeWidth="2" strokeLinejoin="round" />
           </svg>
           {pointer.tap && <span className="absolute -left-3 -top-3 h-8 w-8 animate-ping rounded-full bg-brand/30" />}
         </span>

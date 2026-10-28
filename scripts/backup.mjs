@@ -14,7 +14,7 @@ if (!url || !/^postgres(ql)?:\/\//.test(url)) {
 }
 mkdirSync("backups", { recursive: true });
 const stamp = new Date().toISOString().replace(/[:T]/g, "-").slice(0, 16);
-const file = join("backups", `taprate-${stamp}.dump`);
+const file = join("backups", `taptruly-${stamp}.dump`);
 // Custom format (compressed, restorable table by table). The password is passed via the URL in the
 // environment, never printed.
 const r = spawnSync("pg_dump", ["--format=custom", "--no-owner", "--no-privileges", "--schema=public", "--schema=private", "--schema=storage", "--file", file, url], { stdio: ["ignore", "inherit", "inherit"] });

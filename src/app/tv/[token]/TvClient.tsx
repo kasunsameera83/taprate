@@ -51,7 +51,7 @@ export function TvClient({ token }: { token: string }) {
 
   if (!data) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#0f1326] p-10 text-2xl text-[#c9cdf0]">
+      <main className="flex min-h-screen items-center justify-center bg-[#0f1326] p-10 text-2xl text-[#c7d2fe]">
         {error || "Loading…"}
       </main>
     );
@@ -79,15 +79,15 @@ export function TvClient({ token }: { token: string }) {
                 {data.today.pct ?? "–"}
                 {data.today.pct !== null && <span className="text-[56px] text-[#9aa1c7]">%</span>}
               </p>
-              <p className="mt-2 text-xl text-[#c9cdf0]">{data.today.total} ratings today</p>
+              <p className="mt-2 text-xl text-[#c7d2fe]">{data.today.total} ratings today</p>
             </div>
             <div>
               <p className="text-xl text-[#9aa1c7]">Last 7 days</p>
-              <p className="font-display tabular text-[120px] font-bold leading-none text-[#c9cdf0] lg:text-[160px]">
+              <p className="font-display tabular text-[120px] font-bold leading-none text-[#c7d2fe] lg:text-[160px]">
                 {data.week.pct ?? "–"}
                 {data.week.pct !== null && <span className="text-[56px] text-[#9aa1c7]">%</span>}
               </p>
-              <p className="mt-2 text-xl text-[#c9cdf0]">{data.week.total} ratings</p>
+              <p className="mt-2 text-xl text-[#c7d2fe]">{data.week.total} ratings</p>
             </div>
           </div>
           <div>
@@ -117,7 +117,7 @@ export function TvClient({ token }: { token: string }) {
 
           {kudo ? (
             <figure className="flex flex-1 flex-col justify-center rounded-[28px] bg-[#1f2a5c] p-8 lg:p-10" aria-live="polite">
-              <p className="text-xl text-[#9aa1ff]">What customers said</p>
+              <p className="text-xl text-[#a5b4fc]">What customers said</p>
               <blockquote key={i} className="mt-4 text-3xl font-semibold leading-snug motion-safe:animate-[kt-fade_0.8s_ease-out_both] lg:text-4xl">
                 &ldquo;{kudo.text}&rdquo;
               </blockquote>

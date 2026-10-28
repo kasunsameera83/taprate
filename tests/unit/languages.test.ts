@@ -29,7 +29,7 @@ test("own labels win over translated ones; placeholders are filled", () => {
 
 test("email buttons and survey email use the survey's language, escaped", () => {
   const html = buildSnippetHtml({
-    appUrl: "https://app.taprate.lk",
+    appUrl: "https://app.taptruly.com",
     surveyId: "5a000000-0000-4000-8000-000000000001",
     iconSet: "nps",
     question: "Q",

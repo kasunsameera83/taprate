@@ -12,12 +12,12 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
   }, [error]);
   return (
     <html lang="en">
-      <body style={{ fontFamily: "Arial, Helvetica, sans-serif", background: "#f5f6f8", color: "#151a2d", margin: 0 }}>
+      <body style={{ fontFamily: "Arial, Helvetica, sans-serif", background: "#f8fafc", color: "#0f172a", margin: 0 }}>
         <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-          <div style={{ background: "#fff", border: "1px solid #e1e4eb", borderRadius: 14, padding: 24, maxWidth: 420, textAlign: "center" }}>
+          <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14, padding: 24, maxWidth: 420, textAlign: "center" }}>
             <h1 style={{ fontSize: 20, margin: "0 0 8px" }}>Something went wrong</h1>
-            <p style={{ fontSize: 14, color: "#586074", margin: "0 0 16px" }}>Sorry about that. Please try again.</p>
-            <button type="button" onClick={() => reset()} style={{ minHeight: 44, padding: "0 18px", borderRadius: 10, border: 0, background: "#2f3bf5", color: "#fff", fontWeight: 700, cursor: "pointer" }}>
+            <p style={{ fontSize: 14, color: "#475569", margin: "0 0 16px" }}>Sorry about that. Please try again.</p>
+            <button type="button" onClick={() => reset()} style={{ minHeight: 44, padding: "0 18px", borderRadius: 10, border: 0, background: "#4f46e5", color: "#fff", fontWeight: 700, cursor: "pointer" }}>
               Try again
             </button>
           </div>

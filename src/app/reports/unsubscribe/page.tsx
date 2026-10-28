@@ -18,7 +18,7 @@ export default async function UnsubscribePage({ searchParams }: { searchParams: 
         </div>
         <h1 className="text-xl font-bold">{wins ? "Stop your weekly wins email?" : "Stop report emails?"}</h1>
         <p className="text-sm text-muted">
-          {wins ? "You won't get the Monday email with your ratings and kind words any more. You can still see them in TapRate." : "You'll stop getting these feedback reports. You can turn them back on any time in TapRate."}
+          {wins ? "You won't get the Monday email with your ratings and kind words any more. You can still see them in TapTruly." : "You'll stop getting these feedback reports. You can turn them back on any time in TapTruly."}
         </p>
         <UnsubscribeButton target={wins ? { w } : { s }} t={t} />
       </div>

@@ -1,5 +1,5 @@
 // Runs the database security tests against a THROWAWAY Postgres database.
-//   TEST_DATABASE_URL=postgres://postgres@localhost:5432/taprate_test node scripts/test-db.mjs
+//   TEST_DATABASE_URL=postgres://postgres@localhost:5432/taptruly_test node scripts/test-db.mjs
 // It installs a small Supabase stand-in, applies the migrations, then runs tests/sql/*.test.sql.
 // Never point this at your real Supabase project.
 import { execFileSync } from "node:child_process";

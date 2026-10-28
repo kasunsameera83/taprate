@@ -34,7 +34,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
       <article className="print-area panel space-y-6 p-6 sm:p-8 print:border-0 print:p-0">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-2xl font-bold">TapRate</p>
+            <p className="text-2xl font-bold">TapTruly</p>
             <p className="text-sm text-muted">Receipt</p>
           </div>
           <dl className="text-right text-sm">

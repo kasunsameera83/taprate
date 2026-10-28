@@ -123,7 +123,7 @@ export default async function ThanksPage({
           </a>
         )}
         <p className="mt-10 text-center text-[12px] text-muted">
-          {pt(lang, "feedbackBy")} <span className="font-semibold">TapRate</span> ·{" "}
+          {pt(lang, "feedbackBy")} <span className="font-semibold">TapTruly</span> ·{" "}
           <a href="/privacy" className="underline underline-offset-2">
             {pt(lang, "privacy")}
           </a>

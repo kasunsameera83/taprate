@@ -9,7 +9,7 @@ export const POST = secureRoute(
   async ({ membership, user, requestId }) => {
     if (!pushConfigured()) return fail("unavailable", "Phone alerts aren't set up on this server yet.", undefined, requestId);
     const sent = await pushToUsers(adminClient(), membership.accountId, [user.id], {
-      title: "TapRate alerts are on",
+      title: "TapTruly alerts are on",
       body: `You'll hear about unhappy customers of ${membership.accountName} straight away.`,
       url: "/app",
       tag: "test",

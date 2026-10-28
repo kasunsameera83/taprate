@@ -66,7 +66,7 @@ export async function reportError(err: unknown, ctx: ErrorContext): Promise<void
     const envelope = `${JSON.stringify({ event_id: event.event_id, sent_at: new Date().toISOString() })}\n${JSON.stringify({ type: "event" })}\n${JSON.stringify(event)}\n`;
     await fetch(dsn.endpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/x-sentry-envelope", "X-Sentry-Auth": `Sentry sentry_version=7, sentry_key=${dsn.key}, sentry_client=taprate/1.0` },
+      headers: { "Content-Type": "application/x-sentry-envelope", "X-Sentry-Auth": `Sentry sentry_version=7, sentry_key=${dsn.key}, sentry_client=taptruly/1.0` },
       body: envelope,
       signal: AbortSignal.timeout(3000),
     });

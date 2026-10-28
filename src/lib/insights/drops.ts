@@ -32,16 +32,16 @@ export function buildDropEmail(businessName: string, drops: Drop[], appOrigin: s
   const first = drops[0]!;
   const subject = `Satisfaction dropped ${Math.round(first.previousPct - first.currentPct)} points${first.scope === "all" ? "" : ` at ${first.name}`} this week`.replace(/[\r\n]+/g, " ").slice(0, 150);
   const rows = drops
-    .map((d) => `<tr><td style="padding:8px;border-bottom:1px solid #e1e4eb;">${e(d.scope === "all" ? "Whole business" : d.name)}</td><td style="padding:8px;border-bottom:1px solid #e1e4eb;text-align:right;"><strong>${d.currentPct}%</strong> <span style="color:#586074;">(was ${d.previousPct}%)</span></td><td style="padding:8px;border-bottom:1px solid #e1e4eb;text-align:right;color:#b91c1c;">▼ ${Math.round((d.previousPct - d.currentPct) * 10) / 10} pts</td></tr>`)
+    .map((d) => `<tr><td style="padding:8px;border-bottom:1px solid #e2e8f0;">${e(d.scope === "all" ? "Whole business" : d.name)}</td><td style="padding:8px;border-bottom:1px solid #e2e8f0;text-align:right;"><strong>${d.currentPct}%</strong> <span style="color:#475569;">(was ${d.previousPct}%)</span></td><td style="padding:8px;border-bottom:1px solid #e2e8f0;text-align:right;color:#b91c1c;">▼ ${Math.round((d.previousPct - d.currentPct) * 10) / 10} pts</td></tr>`)
     .join("");
   const html =
-    `<!doctype html><html><head><meta charset="utf-8"><title>${e(subject)}</title></head><body style="margin:0;background:#f5f6f8;">` +
-    `<div style="max-width:560px;margin:0 auto;padding:24px 16px;font-family:Arial,Helvetica,sans-serif;color:#151a2d;"><div style="background:#fff;border:1px solid #e1e4eb;border-radius:12px;padding:24px;">` +
-    `<p style="margin:0 0 4px 0;font-size:13px;color:#586074;">${e(businessName)}</p><h1 style="margin:0 0 12px 0;font-size:20px;">Customers are less happy this week</h1>` +
+    `<!doctype html><html><head><meta charset="utf-8"><title>${e(subject)}</title></head><body style="margin:0;background:#f8fafc;">` +
+    `<div style="max-width:560px;margin:0 auto;padding:24px 16px;font-family:Arial,Helvetica,sans-serif;color:#0f172a;"><div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:24px;">` +
+    `<p style="margin:0 0 4px 0;font-size:13px;color:#475569;">${e(businessName)}</p><h1 style="margin:0 0 12px 0;font-size:20px;">Customers are less happy this week</h1>` +
     `<p style="margin:0 0 12px 0;font-size:14px;color:#374151;">Compared with the week before:</p>` +
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">${rows}</table>` +
-    `<p style="margin:18px 0 0 0;"><a href="${e(appOrigin)}/app/responses?sentiment=negative" style="display:inline-block;background:#2f3bf5;color:#fff;text-decoration:none;font-weight:bold;padding:10px 16px;border-radius:8px;">See what customers said</a></p>` +
-    `</div><p style="font-size:12px;color:#6b7385;text-align:center;margin:14px 0 0 0;">You get this because you're an owner or admin. An owner can switch drop alerts off in Settings → Business.</p></div></body></html>`;
+    `<p style="margin:18px 0 0 0;"><a href="${e(appOrigin)}/app/responses?sentiment=negative" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;font-weight:bold;padding:10px 16px;border-radius:8px;">See what customers said</a></p>` +
+    `</div><p style="font-size:12px;color:#64748b;text-align:center;margin:14px 0 0 0;">You get this because you're an owner or admin. An owner can switch drop alerts off in Settings → Business.</p></div></body></html>`;
   const text =
     `${businessName}: customers are less happy this week.\n\n` +
     drops.map((d) => `${d.scope === "all" ? "Whole business" : d.name}: ${d.currentPct}% (was ${d.previousPct}%)`).join("\n") +

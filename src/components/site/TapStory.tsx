@@ -18,7 +18,7 @@ const items = (extra: Sentiment[] = []) => [...extra, ...BASE].map((sentiment) =
 function Frame({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="overflow-hidden rounded-[16px] border border-line bg-surface shadow-[0_30px_60px_-36px_rgba(16,21,61,0.45)]">
-      <div className="flex items-center gap-2 border-b border-line bg-[#fafbfc] px-4 py-2.5">
+      <div className="flex items-center gap-2 border-b border-line bg-[#f8fafc] px-4 py-2.5">
         <span className="h-2.5 w-2.5 rounded-full bg-[#e3e5ec]" />
         <span className="h-2.5 w-2.5 rounded-full bg-[#e3e5ec]" />
         <span className="h-2.5 w-2.5 rounded-full bg-[#e3e5ec]" />
@@ -43,7 +43,7 @@ function Buttons({ size = "md", pop = false, pressed = false }: { size?: "sm" | 
           {pressed && o.value === 5 && (
             <span className="st-pointer pointer-events-none absolute left-1/2 top-1/2 z-10">
               <svg width="24" height="28" viewBox="0 0 26 30">
-                <path d="M3 2l19 13-8.5 1.6L18 26l-3.8 1.7-4.4-9.4L3 23.5z" fill="#151a2d" stroke="#fff" strokeWidth="2" strokeLinejoin="round" />
+                <path d="M3 2l19 13-8.5 1.6L18 26l-3.8 1.7-4.4-9.4L3 23.5z" fill="#0f172a" stroke="#fff" strokeWidth="2" strokeLinejoin="round" />
               </svg>
             </span>
           )}

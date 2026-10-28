@@ -101,8 +101,8 @@ test("leaderboard: ranks fairly, merges name case, sets aside small samples", ()
 
 test("brand colour buttons stay readable", () => {
   assert.equal(readableTextOn("#2f3bf5"), "#ffffff");
-  assert.equal(readableTextOn("#facc15"), "#151a2d", "dark text on yellow");
-  assert.equal(readableTextOn("#ffffff"), "#151a2d");
+  assert.equal(readableTextOn("#facc15"), "#0f172a", "dark text on yellow");
+  assert.equal(readableTextOn("#ffffff"), "#0f172a");
   assert.equal(readableTextOn("#000000"), "#ffffff");
 });
 

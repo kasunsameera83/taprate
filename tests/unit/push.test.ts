@@ -34,12 +34,12 @@ test("push: a browser can decrypt what we send (RFC 8291 round trip)", () => {
 test("push: VAPID token is a valid ES256 signature for the push service", () => {
   const keys = generateVapidKeys();
   const key = vapidKey(keys.publicKey, keys.privateKey);
-  const h = vapidAuthorization("https://fcm.googleapis.com/fcm/send/abc", "mailto:hello@taprate.lk", keys.publicKey, key, 1_800_000_000);
+  const h = vapidAuthorization("https://fcm.googleapis.com/fcm/send/abc", "mailto:hello@taptruly.com", keys.publicKey, key, 1_800_000_000);
   const m = /^vapid t=([^.]+)\.([^.]+)\.([^,]+), k=(.+)$/.exec(h);
   assert.ok(m);
   const claims = JSON.parse(Buffer.from(m![2]!, "base64url").toString());
   assert.equal(claims.aud, "https://fcm.googleapis.com");
-  assert.equal(claims.sub, "mailto:hello@taprate.lk");
+  assert.equal(claims.sub, "mailto:hello@taptruly.com");
   const pub = Buffer.from(keys.publicKey, "base64url");
   const jwk = { kty: "EC", crv: "P-256", x: pub.subarray(1, 33).toString("base64url"), y: pub.subarray(33).toString("base64url") };
   const ok = verify("sha256", Buffer.from(`${m![1]}.${m![2]}`), { key: createPublicKey({ key: jwk, format: "jwk" }), dsaEncoding: "ieee-p1363" }, Buffer.from(m![3]!, "base64url"));

@@ -66,10 +66,10 @@ export type NoteEvent = {
 
 /** "ticket": the rating was given for this ticket. "customer": matched by email (Intercom), so it may be about something else. */
 export function noteText(e: NoteEvent, kind: "rating" | "comment", scope: "ticket" | "customer" = "ticket"): string {
-  if (kind === "comment") return `TapRate: the customer added a comment:\n\n${e.comment ?? ""}\n\n${e.link}`;
+  if (kind === "comment") return `TapTruly: the customer added a comment:\n\n${e.comment ?? ""}\n\n${e.link}`;
   const face = e.sentiment === "negative" ? "🔴" : e.sentiment === "neutral" ? "🟡" : "🟢";
   const what = scope === "ticket" ? "the customer rated this ticket" : "this customer rated you";
-  return `${face} TapRate: ${what} ${e.ratingLabel} (${e.rating}) on "${e.surveyName}"${e.agent ? ` for ${e.agent}` : ""}.\n\n${e.link}`;
+  return `${face} TapTruly: ${what} ${e.ratingLabel} (${e.rating}) on "${e.surveyName}"${e.agent ? ` for ${e.agent}` : ""}.\n\n${e.link}`;
 }
 
 /** Customer text as safe HTML (for helpdesks whose notes are HTML). */

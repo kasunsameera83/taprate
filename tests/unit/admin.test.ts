@@ -16,7 +16,7 @@ test("landing content: defaults valid, limits enforced, bad data falls back", ()
 });
 
 test("promotion links: https or our own paths only", () => {
-  for (const ok of ["https://taprate.lk/offer", "/#pricing", "/signup?ref=avurudu"]) assert.equal(isSafeCtaUrl(ok), true, ok);
+  for (const ok of ["https://taptruly.com/offer", "/#pricing", "/signup?ref=avurudu"]) assert.equal(isSafeCtaUrl(ok), true, ok);
   for (const bad of ["javascript:alert(1)", "//evil.com", "http://evil.com", "data:text/html,x", "https://user:pw@evil.com", "/a b", " /x", "https://localhost"]) assert.equal(isSafeCtaUrl(bad), false, bad);
 });
 

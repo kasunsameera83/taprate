@@ -39,7 +39,7 @@ const SHOWCASE: Showcase[] = [
   },
   {
     title: "Win unhappy customers back",
-    body: "When your team marks a follow-up resolved, TapRate emails the customer to ask how you're doing now. Turn a bad day into a happy customer, and see how many you won back.",
+    body: "When your team marks a follow-up resolved, TapTruly emails the customer to ask how you're doing now. Turn a bad day into a happy customer, and see how many you won back.",
     points: ["Sent for you once the problem is fixed", "The new rating is linked to the old one", "\u201cWon back\u201d count on your dashboard"],
     Screen: RecoveryScreen,
   },
@@ -57,7 +57,7 @@ const SHOWCASE: Showcase[] = [
   },
   {
     title: "We'll send the survey for you",
-    body: "No helpdesk or email signature? Upload your customer list and TapRate emails them from your business name, with one gentle reminder for anyone who hasn't answered.",
+    body: "No helpdesk or email signature? Upload your customer list and TapTruly emails them from your business name, with one gentle reminder for anyone who hasn't answered.",
     points: ["Up to 1,000 people per send, from a CSV or pasted list", "Never asks the same person twice in a month", "Unsubscribes and bounces handled for you"],
     Screen: SendScreen,
   },
@@ -247,10 +247,10 @@ export function LandingView({
         {/* Trust */}
         <section className="px-5 pb-20">
           <div className="mx-auto grid max-w-6xl gap-8 rounded-[var(--radius-hero)] bg-ink p-8 text-white sm:p-12 lg:grid-cols-[auto_minmax(0,1fr)]">
-            <IconShield className="h-12 w-12 text-[#9aa1ff]" />
+            <IconShield className="h-12 w-12 text-[#a5b4fc]" />
             <div>
               <h2 className="text-[28px] font-bold leading-tight sm:text-[34px]">{c.trust.title}</h2>
-              <p className="mt-3 max-w-[70ch] whitespace-pre-line text-[17px] leading-relaxed text-[#c9cdf0]">{c.trust.body}</p>
+              <p className="mt-3 max-w-[70ch] whitespace-pre-line text-[17px] leading-relaxed text-[#c7d2fe]">{c.trust.body}</p>
             </div>
           </div>
         </section>
@@ -293,7 +293,7 @@ export function LandingView({
           <div className="mx-auto flex max-w-6xl flex-col items-start gap-8 px-5 py-20 md:flex-row md:items-end md:justify-between">
             <h2 className="max-w-[18ch] text-[34px] font-bold leading-[1.05] sm:text-[48px]">{c.finalCta.title}</h2>
             <div className="flex flex-col gap-2">
-              <Link href="/signup" className="btn min-h-12 bg-white px-6 text-base text-brand hover:bg-[#eceeff]">
+              <Link href="/signup" className="btn min-h-12 bg-white px-6 text-base text-brand hover:bg-[#eef2ff]">
                 {c.finalCta.button}
               </Link>
               {c.hero.note && <p className="text-sm text-[#dfe2ff]">{c.hero.note}</p>}

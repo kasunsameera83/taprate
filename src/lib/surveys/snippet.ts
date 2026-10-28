@@ -36,7 +36,7 @@ export type SnippetInput = {
   signToken: (surveyId: string, rating: number) => string; // returns "<id>.<rating>.<sig>"
   /** The business's own labels and pictures (optional). */
   options?: ResolvedOption[];
-  /** Full link for each rating, when the server signs per-recipient links itself (emails TapRate sends). */
+  /** Full link for each rating, when the server signs per-recipient links itself (emails TapTruly sends). */
   urlFor?: (rating: number) => string;
   /** Language of the standard labels and the 0–10 / 1–7 legend (default English). */
   lang?: Lang;

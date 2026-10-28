@@ -1,7 +1,7 @@
 // Your business details for the Terms and Privacy pages, receipts and emails.
 // >>> Fill these in before going live (anything in [square brackets] is a placeholder). <<<
 export const COMPANY = {
-  productName: "TapRate",
+  productName: "TapTruly",
   legalName: "[Your company name (Pvt) Ltd]",
   registrationNo: "[Company registration number]",
   address: "[Registered address], Sri Lanka",

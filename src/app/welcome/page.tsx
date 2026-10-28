@@ -16,7 +16,7 @@ export default async function WelcomePage() {
   if (!data.user) {
     return (
       <Shell>
-        <h1 className="text-[28px] font-bold leading-tight">You&rsquo;ve been invited to TapRate</h1>
+        <h1 className="text-[28px] font-bold leading-tight">You&rsquo;ve been invited to TapTruly</h1>
         <p className="mt-2 text-muted">
           Sign in, or create an account, using the <strong className="text-ink">same email address the invite was sent to</strong>. Your invite will be
           waiting.
@@ -46,7 +46,7 @@ export default async function WelcomePage() {
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen px-5 py-8">
-      <Link href="/" aria-label="TapRate home">
+      <Link href="/" aria-label="TapTruly home">
         <Logo />
       </Link>
       <main className="mx-auto mt-12 max-w-lg">{children}</main>

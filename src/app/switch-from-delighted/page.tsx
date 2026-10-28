@@ -4,8 +4,8 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Switching from Delighted | TapRate",
-  description: "Delighted closed on 30 June 2026. Move your NPS and CSAT surveys to TapRate in an afternoon: import your history, keep one-click email ratings, and follow up on every unhappy customer.",
+  title: "Switching from Delighted | TapTruly",
+  description: "Delighted closed on 30 June 2026. Move your NPS and CSAT surveys to TapTruly in an afternoon: import your history, keep one-click email ratings, and follow up on every unhappy customer.",
   alternates: { canonical: "/switch-from-delighted" },
 };
 
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 // (We don't use Delighted's name in a way that suggests a connection, and show no logos.)
 const CARRY = [
   { from: "NPS, CSAT and effort surveys", to: "0–10, stars, faces, thumbs and 1–7 effort scales, with the same one-tap buttons in emails." },
-  { from: "Emailing customers", to: "Send by email from TapRate with one reminder, or paste the buttons into Gmail, Outlook, Zendesk, Freshdesk or HubSpot." },
+  { from: "Emailing customers", to: "Send by email from TapTruly with one reminder, or paste the buttons into Gmail, Outlook, Zendesk, Freshdesk or HubSpot." },
   { from: "Web, link and SMS surveys", to: "Share links, QR codes, WhatsApp messages, a website widget and tablet kiosks." },
   { from: "Following up on detractors", to: "Every unhappy rating opens a follow-up with an owner and a due date, plus alerts in email, Slack or Teams." },
   { from: "Comment themes", to: "AI reads every comment and gives you the themes, real quotes and next steps." },
@@ -22,7 +22,7 @@ const CARRY = [
 
 const STEPS = [
   { title: "Bring your history", body: "Download your responses as CSV, create a matching survey (0–10 for NPS), and import. Repeated rows are skipped, so it's safe to run twice." },
-  { title: "Switch your emails", body: "Upload your customer list and send the survey from TapRate, or trigger one email per customer from Zapier, Make, Shopify or your helpdesk with our API." },
+  { title: "Switch your emails", body: "Upload your customer list and send the survey from TapTruly, or trigger one email per customer from Zapier, Make, Shopify or your helpdesk with our API." },
   { title: "Close the loop", body: "Turn on follow-ups and alerts, invite your team, and get a weekly report with what customers are saying." },
 ];
 
@@ -35,7 +35,7 @@ export default function SwitchFromDelighted() {
           <p className="text-sm font-semibold text-muted">For teams moving after Delighted closed on 30 June 2026</p>
           <h1 className="mt-3 max-w-[18ch] text-[40px] font-bold leading-[1.05] tracking-[-0.02em] sm:text-[56px]">A simple new home for your customer feedback</h1>
           <p className="mt-6 max-w-[58ch] text-lg leading-relaxed text-muted">
-            TapRate keeps what made one-click surveys work: customers tap once, right in the email, and you see it straight away. Move your surveys and your history in an afternoon.
+            TapTruly keeps what made one-click surveys work: customers tap once, right in the email, and you see it straight away. Move your surveys and your history in an afternoon.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/signup" className="btn btn-primary min-h-12 px-6 text-base">
@@ -84,7 +84,7 @@ export default function SwitchFromDelighted() {
         <section className="bg-brand text-white">
           <div className="mx-auto flex max-w-4xl flex-col items-start gap-6 px-5 py-16 md:flex-row md:items-end md:justify-between">
             <h2 className="max-w-[18ch] text-[30px] font-bold leading-[1.1] sm:text-[40px]">Get your first rating today</h2>
-            <Link href="/signup" className="btn min-h-12 bg-white px-6 text-base text-brand hover:bg-[#eceeff]">
+            <Link href="/signup" className="btn min-h-12 bg-white px-6 text-base text-brand hover:bg-[#eef2ff]">
               Create a free account
             </Link>
           </div>

@@ -64,7 +64,7 @@ export default function ApiKeysPage() {
           <p>
             Ratings from these links are marked <strong className="text-ink">verified</strong>: the customer can&rsquo;t change the email, agent or ticket.
           </p>
-          <p className="font-semibold text-ink">Have TapRate email the survey to one customer (read &amp; write key)</p>
+          <p className="font-semibold text-ink">Have TapTruly email the survey to one customer (read &amp; write key)</p>
           <pre className="overflow-x-auto rounded-[10px] bg-canvas p-3 text-[12px] text-ink">{`curl -X POST ${origin}/api/v1/surveys/<survey id>/send \\
   -H "Authorization: Bearer tr_…" \\
   -H "Content-Type: application/json" \\

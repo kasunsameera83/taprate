@@ -101,7 +101,7 @@ export default function LeaderboardPage() {
                         <span className="truncate font-semibold">{r.agent}</span>
                         <span className="font-display tabular shrink-0 text-xl font-bold">{r.satisfactionPct}%</span>
                       </div>
-                      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-[#eceef2]" aria-hidden>
+                      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-[#f1f5f9]" aria-hidden>
                         <div className="h-full rounded-full bg-pos-fill" style={{ width: `${r.satisfactionPct}%` }} />
                       </div>
                       <p className="mt-1 text-[12px] text-muted">

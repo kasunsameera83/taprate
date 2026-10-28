@@ -1,4 +1,4 @@
-// A simple load test for a STAGING copy of TapRate (or localhost). Don't point it at the live site
+// A simple load test for a STAGING copy of TapTruly (or localhost). Don't point it at the live site
 // during business hours. It only uses public, read-only pages.
 //   BASE_URL=https://staging.example.com CONCURRENCY=20 SECONDS=30 node scripts/load-test.mjs
 const base = (process.env.BASE_URL ?? "http://localhost:3000").replace(/\/+$/, "");
@@ -17,7 +17,7 @@ async function worker(i) {
     const path = paths[n++ % paths.length];
     const t = performance.now();
     try {
-      const res = await fetch(base + path, { redirect: "manual", headers: { "User-Agent": "TapRate-LoadTest/1.0" } });
+      const res = await fetch(base + path, { redirect: "manual", headers: { "User-Agent": "TapTruly-LoadTest/1.0" } });
       await res.arrayBuffer();
       statuses.set(res.status, (statuses.get(res.status) ?? 0) + 1);
       latencies.push(performance.now() - t);

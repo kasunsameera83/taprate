@@ -29,7 +29,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           {account?.suspended_at && (
             <div role="alert" className="mb-6 rounded-[var(--radius-panel)] border border-[#f0c5c5] bg-neg-soft p-4 text-sm text-neg-text">
               <strong>This business is suspended</strong>, so it isn&rsquo;t collecting ratings right now. You can still see and export your data. Please contact
-              TapRate support.
+              TapTruly support.
             </div>
           )}
           {children}

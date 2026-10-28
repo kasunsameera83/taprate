@@ -62,7 +62,7 @@ export function parseCsv(input: string, maxRows = IMPORT_MAX_ROWS + 1): { rows: 
   return { rows, truncated: false };
 }
 
-// Header names used by TapRate's own sample and by common tools' exports (Delighted, Customer Thermometer,
+// Header names used by TapTruly's own sample and by common tools' exports (Delighted, Customer Thermometer,
 // Nicereply, Simplesat, SurveyMonkey, spreadsheets). Matching ignores case, spaces/underscores and "(UTC)"-style notes.
 const SYNONYMS: Record<ImportField, string[]> = {
   date: ["date", "created", "created at", "timestamp", "submitted", "submitted at", "time", "date time", "datetime", "response timestamp", "response date", "responded at", "survey date", "response created at", "rated at"],

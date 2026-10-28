@@ -35,7 +35,7 @@ test("front: internal comment, bearer token, text kept as text", () => {
   assert.throws(() => frontCommentRequest(cred, "cnv_1/../../teammates", "x"));
   assert.throws(() => frontCommentRequest(cred, "123", "x"));
   assert.equal(buildCheckRequest("front", FRONT_BASE, cred).url, "https://api2.frontapp.com/me");
-  assert.equal(checkResponseOk("front", 200, { name: "TapRate" }), true);
+  assert.equal(checkResponseOk("front", 200, { name: "TapTruly" }), true);
   assert.equal(checkResponseOk("front", 401, {}), false);
 });
 

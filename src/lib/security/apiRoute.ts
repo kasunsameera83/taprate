@@ -50,7 +50,7 @@ type RouteContext = { params: Promise<Record<string, string | string[]>> };
 
 function unauthorized(requestId: string, message = "Missing or invalid API key. Send it as: Authorization: Bearer tr_…") {
   const res = fail("unauthorized", message, undefined, requestId);
-  res.headers.set("WWW-Authenticate", 'Bearer realm="TapRate API"');
+  res.headers.set("WWW-Authenticate", 'Bearer realm="TapTruly API"');
   return res;
 }
 

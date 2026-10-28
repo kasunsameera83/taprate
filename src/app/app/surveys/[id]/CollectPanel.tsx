@@ -74,7 +74,7 @@ export function CollectPanel({ surveyId, canEdit, surveyName }: { surveyId: stri
   // Our own server-generated SVG, shown as an image (never inserted as HTML).
   const qrDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(share.qr.svg)}`;
   const slug = (v: string) => v.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
-  const fileName = `taprate-qr-${slug(surveyName) || "survey"}${share.location ? `-${slug(share.location.name)}` : ""}.svg`;
+  const fileName = `taptruly-qr-${slug(surveyName) || "survey"}${share.location ? `-${slug(share.location.name)}` : ""}.svg`;
 
   return (
     <div className="space-y-6">

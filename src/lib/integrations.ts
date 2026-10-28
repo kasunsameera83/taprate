@@ -75,7 +75,7 @@ export function buildPayload(kind: IntegrationKind, e: RatingEvent, appOrigin: s
   const link = `${appOrigin}/app/responses?surveyId=${encodeURIComponent(e.survey.id)}`;
   const icon = e.sentiment === "negative" ? "🔴" : e.sentiment === "neutral" ? "🟡" : "🟢";
   if (kind === "slack") {
-    return { text: `${icon} ${slackEscape(summary(e))} <${link}|Open TapRate>` };
+    return { text: `${icon} ${slackEscape(summary(e))} <${link}|Open TapTruly>` };
   }
   if (kind === "teams") {
     return {
@@ -88,7 +88,7 @@ export function buildPayload(kind: IntegrationKind, e: RatingEvent, appOrigin: s
             version: "1.4",
             $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
             body: [{ type: "TextBlock", text: `${icon} ${summary(e)}`, wrap: true }],
-            actions: [{ type: "Action.OpenUrl", title: "Open TapRate", url: link }],
+            actions: [{ type: "Action.OpenUrl", title: "Open TapTruly", url: link }],
           },
         },
       ],
@@ -125,7 +125,7 @@ async function sendSafely(
   try {
     const res = await fetch(check.url, {
       method: init.method,
-      headers: { ...(init.body !== undefined ? { "Content-Type": "application/json" } : {}), Accept: "application/json", "User-Agent": "TapRate-Webhooks/1.0", ...init.headers },
+      headers: { ...(init.body !== undefined ? { "Content-Type": "application/json" } : {}), Accept: "application/json", "User-Agent": "TapTruly-Webhooks/1.0", ...init.headers },
       body: init.body,
       redirect: "manual", // never follow redirects to somewhere we didn't check
       signal: AbortSignal.timeout(5000),
@@ -225,8 +225,8 @@ export async function deliverTo(row: IntegrationRow, e: RatingEvent): Promise<"o
   if (row.kind === "webhook") {
     const secret = row.secret_encrypted ? open(ev.RESPONSE_TOKEN_SECRET, row.secret_encrypted) : null;
     if (!secret) return "failed";
-    headers["X-TapRate-Event"] = "rating.created";
-    headers["X-TapRate-Signature"] = signWebhook(secret, body);
+    headers["X-TapTruly-Event"] = "rating.created";
+    headers["X-TapTruly-Signature"] = signWebhook(secret, body);
   }
   const result = await sendSafely(row.kind, url, { method: "POST", body, headers });
   await logDelivery(row, e.accountId, "rating.created", result);

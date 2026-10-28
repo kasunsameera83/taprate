@@ -97,7 +97,7 @@ export default function ImportPage() {
     const url = URL.createObjectURL(new Blob([SAMPLE_CSV], { type: "text/csv" }));
     const a = document.createElement("a");
     a.href = url;
-    a.download = "taprate-import-sample.csv";
+    a.download = "taptruly-import-sample.csv";
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }

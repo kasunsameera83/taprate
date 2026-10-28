@@ -59,7 +59,7 @@ export function BrandMorph() {
       onBlur={() => setHovering(false)}
       className="overflow-hidden rounded-[16px] border border-line bg-surface shadow-[0_30px_60px_-36px_rgba(16,21,61,0.45)]"
     >
-      <div className="flex items-center justify-between gap-3 border-b border-line bg-[#fafbfc] px-4 py-2.5">
+      <div className="flex items-center justify-between gap-3 border-b border-line bg-[#f8fafc] px-4 py-2.5">
         <span className="text-[12px] font-semibold text-muted">Survey settings · Your own pictures</span>
         {!reduced && (
           <button type="button" className="text-[12px] font-semibold text-brand underline-offset-2 hover:underline" onClick={() => setPaused((p) => !p)} aria-pressed={paused}>

@@ -53,7 +53,7 @@ export default async function SharePage({
           )}
         </div>
         <p className="mt-10 text-center text-[12px] text-muted">
-          {pt(survey.lang, "feedbackBy")} <span className="font-semibold">TapRate</span> ·{" "}
+          {pt(survey.lang, "feedbackBy")} <span className="font-semibold">TapTruly</span> ·{" "}
           <a href="/privacy" className="underline underline-offset-2">
             {pt(survey.lang, "privacy")}
           </a>

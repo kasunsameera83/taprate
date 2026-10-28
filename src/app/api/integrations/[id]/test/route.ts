@@ -30,14 +30,14 @@ export const POST = secureRoute<z.infer<typeof params>>(
     if (isHelpdesk(integration.kind)) {
       const r = await checkHelpdesk(integration as IntegrationRow & { kind: HelpdeskKind });
       if (r === "ok") return ok({ delivered: true });
-      if (r === "blocked") return fail("validation_failed", "That address points to a private network, so TapRate won't send to it.", undefined, requestId);
+      if (r === "blocked") return fail("validation_failed", "That address points to a private network, so TapTruly won't send to it.", undefined, requestId);
       return fail("unavailable", "Couldn't sign in to your helpdesk. Check the address, email and API token/key.", undefined, requestId);
     }
 
     const sample: RatingEvent = {
       id: "00000000-0000-4000-8000-000000000000",
       accountId: membership.accountId,
-      survey: { id: "00000000-0000-4000-8000-000000000000", name: "Test from TapRate" },
+      survey: { id: "00000000-0000-4000-8000-000000000000", name: "Test from TapTruly" },
       rating: 1,
       ratingLabel: "Very poor (test)",
       sentiment: "negative",
@@ -49,7 +49,7 @@ export const POST = secureRoute<z.infer<typeof params>>(
     };
     const result = await deliverTo(integration, sample);
     if (result === "ok") return ok({ delivered: true });
-    if (result === "blocked") return fail("validation_failed", "That address points to a private network, so TapRate won't send to it.", undefined, requestId);
+    if (result === "blocked") return fail("validation_failed", "That address points to a private network, so TapTruly won't send to it.", undefined, requestId);
     return fail("unavailable", "The test didn't go through. Check the URL is still valid in Slack/Teams/your app.", undefined, requestId);
   },
 );

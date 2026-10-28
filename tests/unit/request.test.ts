@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { getClientIp, hashIp, buildDedupeKey, isSameOriginRequest, isJsonRequest } from "../../src/lib/security/request.ts";
 
 const h = (o: Record<string, string>) => ({ get: (k: string) => o[k.toLowerCase()] ?? null });
-const APP = "https://app.taprate.example";
+const APP = "https://app.taptruly.example";
 
 test("client IP comes from platform headers and is validated", () => {
   assert.equal(getClientIp(h({ "x-real-ip": "203.0.113.7" })), "203.0.113.7");
@@ -41,7 +41,7 @@ test("dedupe key without recipient uses device + 30 minute window", () => {
 test("same-origin check blocks cross-site writes", () => {
   assert.equal(isSameOriginRequest("POST", h({ origin: APP }), APP), true);
   assert.equal(isSameOriginRequest("POST", h({ origin: "https://evil.example" }), APP), false);
-  assert.equal(isSameOriginRequest("POST", h({ origin: "https://app.taprate.example.evil.com" }), APP), false);
+  assert.equal(isSameOriginRequest("POST", h({ origin: "https://app.taptruly.example.evil.com" }), APP), false);
   assert.equal(isSameOriginRequest("POST", h({ origin: "null" }), APP), false);
   assert.equal(isSameOriginRequest("DELETE", h({}), APP), false, "no origin and no referer");
   assert.equal(isSameOriginRequest("PATCH", h({ referer: `${APP}/app/surveys` }), APP), true);

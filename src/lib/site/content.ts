@@ -44,7 +44,7 @@ export const landingSchema = z
 export type Landing = z.infer<typeof landingSchema>;
 
 export const DEFAULT_LANDING: Landing = {
-  seo: { title: "TapRate: one-click customer feedback", description: "Add rating buttons to the emails you already send. Customers tap once; you see who's happy and who needs a call back." },
+  seo: { title: "TapTruly: one-click customer feedback", description: "Add rating buttons to the emails you already send. Customers tap once; you see who's happy and who needs a call back." },
   hero: {
     title: "Know how every customer feels, the moment they tap.",
     subtitle: "One-tap ratings in your emails, on QR codes, WhatsApp, your website and a tablet at the counter. See who's happy and who needs a call back, right away.",
@@ -64,7 +64,7 @@ export const DEFAULT_LANDING: Landing = {
     { title: "QR, WhatsApp and kiosk", body: "Collect ratings at the counter, on receipts, in chats and on your website, not just email." },
     { title: "Team leaderboard", body: "See which agents customers love, and who needs coaching." },
     { title: "Slack, Teams and helpdesks", body: "Alerts where your team works, and ratings added to Zendesk, Freshdesk, Gorgias, Intercom and Front." },
-    { title: "Survey emails sent for you", body: "Upload a customer list and TapRate emails them, with one reminder. Or connect Shopify and every customer gets one after their order." },
+    { title: "Survey emails sent for you", body: "Upload a customer list and TapTruly emails them, with one reminder. Or connect Shopify and every customer gets one after their order." },
     { title: "Branches", body: "A QR code and kiosk for each shop or counter, and every branch compared on your dashboard." },
     { title: "Testimonials and TV screen", body: "Happy customers' comments on your website (with their permission), and a live screen for the office." },
     { title: "AI reply drafts", body: "A thoughtful first draft of your reply to every unhappy customer. You check it and send it." },
@@ -72,14 +72,14 @@ export const DEFAULT_LANDING: Landing = {
   ],
   trust: {
     title: "Only real customers are counted",
-    body: "Corporate email scanners open every link in an email, which fills other tools with fake ratings. TapRate holds each click until a real browser confirms it, so scanners are never counted and never use up your responses. Every link is signed, and your data is kept separate from every other business.",
+    body: "Corporate email scanners open every link in an email, which fills other tools with fake ratings. TapTruly holds each click until a real browser confirms it, so scanners are never counted and never use up your responses. Every link is signed, and your data is kept separate from every other business.",
   },
   pricing: { show: true, title: "Simple pricing", subtitle: "Start free with 50 responses. Unused responses roll over, and you can cancel any time." },
   faqTitle: "Questions",
   faq: [
     { q: "Do customers need to log in or fill a form?", a: "No. They tap a face or a number in your email and that's the answer. They can add a comment if they want." },
     { q: "What counts as a response?", a: "One confirmed rating. Clicks by email security scanners are never counted." },
-    { q: "Can TapRate send the survey emails for us?", a: "Yes. Upload a list of up to 1,000 customers (or connect Zapier, Make or Shopify) and we email them from your business name, with one reminder. People who unsubscribe are never emailed again." },
+    { q: "Can TapTruly send the survey emails for us?", a: "Yes. Upload a list of up to 1,000 customers (or connect Zapier, Make or Shopify) and we email them from your business name, with one reminder. People who unsubscribe are never emailed again." },
     { q: "We used Delighted. Can we bring our history?", a: "Yes. Download your responses as a CSV and import them. Common column names are matched for you. See the Switching from Delighted page for the steps." },
     { q: "Can survey emails come from our own email address?", a: "Yes, on the Scale plan. Add your domain in Settings, copy the DNS records we show you to your domain provider, and we check them for you. After that, emails come from feedback@yourbusiness.com." },
     { q: "We run several businesses. Can we see them together?", a: "Yes. Join each business with one sign-in and open All businesses to see ratings, open follow-ups and responses left for every one, then jump into any of them." },
@@ -100,7 +100,7 @@ export function landingOrDefault(raw: unknown): Landing {
 // ---------------------------------------------------------------------------
 
 export const THEMES = {
-  generic: { label: "Simple", emoji: "✨", from: "#2f3bf5", to: "#5b63f7" },
+  generic: { label: "Simple", emoji: "✨", from: "#4f46e5", to: "#553cf7" },
   sale: { label: "Sale / offer", emoji: "🏷️", from: "#b91c1c", to: "#ea580c" },
   avurudu: { label: "Sinhala & Tamil New Year", emoji: "🌞", from: "#b45309", to: "#dc2626" },
   vesak: { label: "Vesak", emoji: "🏮", from: "#1d4ed8", to: "#ca8a04" },

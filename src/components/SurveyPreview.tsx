@@ -41,7 +41,7 @@ export function EmailButtonsPreview({ iconSet, question, options, lang = "en" }:
 export function EmailFrame({ children, from = "You", subject = "Re: Your support request" }: { children: React.ReactNode; from?: string; subject?: string }) {
   return (
     <div className="overflow-hidden rounded-[14px] border border-line bg-white shadow-[0_1px_0_rgba(21,26,45,0.04)]">
-      <div className="border-b border-line bg-[#fafbfc] px-4 py-3">
+      <div className="border-b border-line bg-[#f8fafc] px-4 py-3">
         <p className="text-[13px] font-semibold text-ink">{subject}</p>
         <p className="text-[12px] text-muted">From {from}</p>
       </div>

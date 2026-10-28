@@ -19,7 +19,7 @@ function deviceName(): string {
   return `${br} on ${os}`;
 }
 
-/** Alerts on this phone or computer the moment a customer is unhappy, and installing TapRate as an app. */
+/** Alerts on this phone or computer the moment a customer is unhappy, and installing TapTruly as an app. */
 export function PhoneAlerts() {
   const [info, setInfo] = useState<Info | null>(null);
   const [supported, setSupported] = useState(true);
@@ -55,7 +55,7 @@ export function PhoneAlerts() {
     try {
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
-        setMsg({ kind: "error", text: "Notifications are blocked for TapRate in this browser. Allow them in the browser's site settings, then try again." });
+        setMsg({ kind: "error", text: "Notifications are blocked for TapTruly in this browser. Allow them in the browser's site settings, then try again." });
         return;
       }
       const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
@@ -72,7 +72,7 @@ export function PhoneAlerts() {
       setMsg({ kind: "success", text: "Alerts are on for this device. Send a test to check." });
       load();
     } catch {
-      setMsg({ kind: "error", text: "This browser couldn't turn on alerts. Try Chrome, Edge or Firefox, or install TapRate first on iPhone." });
+      setMsg({ kind: "error", text: "This browser couldn't turn on alerts. Try Chrome, Edge or Firefox, or install TapTruly first on iPhone." });
     } finally {
       setBusy(false);
     }
@@ -108,7 +108,7 @@ export function PhoneAlerts() {
           {msg && <Notice kind={msg.kind}>{msg.text}</Notice>}
           {ios && !standalone ? (
             <Notice kind="info">
-              On iPhone, first add TapRate to your Home Screen: tap the Share button, then &ldquo;Add to Home Screen&rdquo;. Open TapRate from there and turn alerts on.
+              On iPhone, first add TapTruly to your Home Screen: tap the Share button, then &ldquo;Add to Home Screen&rdquo;. Open TapTruly from there and turn alerts on.
             </Notice>
           ) : !supported ? (
             <Notice kind="info">This browser doesn&rsquo;t support alerts. Try Chrome, Edge or Firefox.</Notice>
@@ -137,7 +137,7 @@ export function PhoneAlerts() {
                     setInstall(null);
                   }}
                 >
-                  Install TapRate as an app
+                  Install TapTruly as an app
                 </button>
               )}
             </div>

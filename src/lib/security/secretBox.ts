@@ -4,6 +4,7 @@ import { createCipheriv, createDecipheriv, hkdfSync, randomBytes } from "node:cr
 
 function key(masterSecret: string): Buffer {
   if (!masterSecret || masterSecret.length < 32) throw new Error("encryption secret missing or too short");
+  // "taprate" is the product's original name. Keep it: changing it would make every saved integration secret unreadable.
   return Buffer.from(hkdfSync("sha256", masterSecret, "taprate", "integrations:v1", 32));
 }
 

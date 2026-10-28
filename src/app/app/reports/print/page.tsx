@@ -60,7 +60,7 @@ export default async function PrintReport({ searchParams }: { searchParams: Prom
       <article className="print-area panel space-y-6 p-6 sm:p-8 print:border-0 print:p-0">
         <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-4">
           <div>
-            <p className="text-[13px] text-muted">TapRate feedback report</p>
+            <p className="text-[13px] text-muted">TapTruly feedback report</p>
             <h1 className="text-2xl font-bold">{account?.name}</h1>
             <p className="text-sm text-muted">
               {survey?.name ?? "All surveys"} · last {q.days} days ({periodLabel(q.days, now)})

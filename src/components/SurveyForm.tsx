@@ -170,7 +170,7 @@ export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, su
   const [langAvailable, setLangAvailable] = useState(false);
   const [reasonsQPos, setReasonsQPos] = useState(initial?.reasonsQuestionPositive ?? "");
   const [reasonsQNeg, setReasonsQNeg] = useState(initial?.reasonsQuestionNegative ?? "");
-  const [brandColor, setBrandColor] = useState(initial?.brandColor ?? "#2f3bf5");
+  const [brandColor, setBrandColor] = useState(initial?.brandColor ?? "#4f46e5");
   const [allowComment, setAllowComment] = useState(initial?.allowComment ?? true);
   // New surveys default to alerting on negative ratings; existing surveys keep their setting.
   const [threshold, setThreshold] = useState<string>(

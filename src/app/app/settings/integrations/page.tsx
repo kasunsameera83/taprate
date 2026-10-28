@@ -35,8 +35,8 @@ const KIND: Record<Integration["kind"], { label: string; help: string; placehold
   },
   webhook: {
     label: "Webhook (your own system)",
-    help: "We POST a JSON event to your https URL, signed with a secret so you can check it came from TapRate.",
-    placeholder: "https://example.com/taprate-webhook",
+    help: "We POST a JSON event to your https URL, signed with a secret so you can check it came from TapTruly.",
+    placeholder: "https://example.com/taptruly-webhook",
   },
   zendesk: {
     label: "Zendesk",
@@ -100,7 +100,7 @@ export default function IntegrationsPage() {
       <SettingsSection title="For developers: webhook format">
         <div className="space-y-2 text-sm text-muted">
           <p>
-            Each event is a JSON <code className="rounded bg-canvas px-1">POST</code> with header <code className="rounded bg-canvas px-1">X-TapRate-Signature: t=…,v1=…</code>.
+            Each event is a JSON <code className="rounded bg-canvas px-1">POST</code> with header <code className="rounded bg-canvas px-1">X-TapTruly-Signature: t=…,v1=…</code>.
             Compute HMAC-SHA256 of <code className="rounded bg-canvas px-1">{"{t}.{raw body}"}</code> with your signing secret and compare it to <code className="rounded bg-canvas px-1">v1</code>.
             Reject events whose <code className="rounded bg-canvas px-1">t</code> is more than 5 minutes old.
           </p>
@@ -322,7 +322,7 @@ function AddIntegration({ onAdded }: { onAdded: () => void }) {
           </p>
         )}
         {kind === "intercom" && (
-          <p className="text-[13px] text-muted">Only ratings with the customer&rsquo;s email can be matched, for example from survey emails TapRate sends or links with the email filled in.</p>
+          <p className="text-[13px] text-muted">Only ratings with the customer&rsquo;s email can be matched, for example from survey emails TapTruly sends or links with the email filled in.</p>
         )}
         {kind === "shopify" && (
           <p className="text-[13px] text-muted">
@@ -389,7 +389,7 @@ function Row({ item, onChanged }: { item: Integration; onChanged: () => void }) 
         </div>
         <div className="flex flex-wrap gap-2">
           {item.kind !== "shopify" && (
-            <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => run(() => api(`/api/integrations/${item.id}/test`, { method: "POST" }), isHelpdeskKind(item.kind) ? "Connected: TapRate can sign in to your helpdesk." : "Test sent. Check your channel.")}>
+            <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => run(() => api(`/api/integrations/${item.id}/test`, { method: "POST" }), isHelpdeskKind(item.kind) ? "Connected: TapTruly can sign in to your helpdesk." : "Test sent. Check your channel.")}>
               {isHelpdeskKind(item.kind) ? "Check connection" : "Send test"}
             </button>
           )}
@@ -406,7 +406,7 @@ function Row({ item, onChanged }: { item: Integration; onChanged: () => void }) 
             className="btn btn-danger btn-sm"
             disabled={busy}
             onClick={async () => {
-              if (await confirmDialog({ title: `Disconnect ${item.name}?`, body: "TapRate will stop sending ratings there.", confirmLabel: "Disconnect", danger: true }))
+              if (await confirmDialog({ title: `Disconnect ${item.name}?`, body: "TapTruly will stop sending ratings there.", confirmLabel: "Disconnect", danger: true }))
                 run(() => api(`/api/integrations/${item.id}`, { method: "DELETE" }));
             }}
           >

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { COMPANY } from "@/lib/site/company";
+import { Logo } from "@/components/icons";
 
 // Site footer: what you can do, who we are, and the legal pages.
 export function SiteFooter({ tagline }: { tagline?: string }) {
@@ -32,10 +33,10 @@ export function SiteFooter({ tagline }: { tagline?: string }) {
     },
   ];
   return (
-    <footer className="bg-[#10153d] text-[#c9cdf0]">
+    <footer className="bg-ink text-[#cbd5e1]">
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))]">
         <div className="max-w-xs">
-          <p className="font-display text-2xl font-bold text-white">TapRate</p>
+          <Logo variant="white" height={30} />
           <p className="mt-2 text-sm leading-relaxed">{tagline || "One-click customer feedback inside the emails you already send."}</p>
           <a href={`mailto:${email}`} className="mt-4 inline-block text-sm font-semibold text-white underline-offset-4 hover:underline">
             {email}

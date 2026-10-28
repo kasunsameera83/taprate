@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
-// Linked from the footer of every survey email TapRate sends for a business.
+// Linked from the footer of every survey email TapTruly sends for a business.
 export default async function StopSurveyEmailsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const sp = await searchParams;
   const r = typeof sp.r === "string" && UUID.test(sp.r) ? sp.r : "";
@@ -31,7 +31,7 @@ export default async function StopSurveyEmailsPage({ searchParams }: { searchPar
         {business ? (
           <>
             <h1 className="text-xl font-bold">Stop survey emails from {business}?</h1>
-            <p className="text-sm text-muted">You won&rsquo;t get any more feedback emails from {business} through TapRate. Other emails from them aren&rsquo;t affected.</p>
+            <p className="text-sm text-muted">You won&rsquo;t get any more feedback emails from {business} through TapTruly. Other emails from them aren&rsquo;t affected.</p>
             <StopEmailsButton r={r} t={t} business={business} />
           </>
         ) : (

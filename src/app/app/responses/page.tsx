@@ -395,7 +395,7 @@ function Customer({ r }: { r: ResponseItem }) {
       <span className="break-all">{r.email ? <CustomerTimelineButton email={r.email} /> : <span className="text-muted">Not provided</span>}</span>
       {r.ticket && <span className="block text-[12px] text-muted">Ticket {r.ticket}</span>}
       {(r.email || r.agent || r.ticket) && !r.verified && (
-        <span className="block text-[12px] text-muted" title="Filled in by your email tool. TapRate can't confirm it.">
+        <span className="block text-[12px] text-muted" title="Filled in by your email tool. TapTruly can't confirm it.">
           Details from your email tool
         </span>
       )}

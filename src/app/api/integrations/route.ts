@@ -45,7 +45,7 @@ export const GET = secureRoute(
 );
 
 // Add Slack / Teams / webhook. The URL is checked (https, public host, right provider) and stored encrypted.
-// Webhooks get a signing secret, shown once, so the receiver can verify requests really come from TapRate.
+// Webhooks get a signing secret, shown once, so the receiver can verify requests really come from TapTruly.
 export const POST = secureRoute<undefined, undefined, IntegrationCreateInput>(
   { auth: "user", action: "integrations:write", ipLimit: LIMITS.userWrite, userLimit: LIMITS.userWrite, body: integrationCreateSchema, maxBodyBytes: 2048 },
   async ({ membership, user, body, ipHash, requestId }) => {

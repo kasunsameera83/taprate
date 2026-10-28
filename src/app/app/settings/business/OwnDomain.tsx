@@ -39,7 +39,7 @@ function CopyCell({ text }: { text: string }) {
   );
 }
 
-// Survey emails from feedback@your-domain instead of TapRate's address (Scale plan).
+// Survey emails from feedback@your-domain instead of TapTruly's address (Scale plan).
 export function OwnDomain({ canChange }: { canChange: boolean }) {
   const [info, setInfo] = useState<Info | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -76,13 +76,13 @@ export function OwnDomain({ canChange }: { canChange: boolean }) {
   }
 
   async function remove() {
-    if (!(await confirmDialog({ title: "Stop using your domain?", body: "Survey emails will go out from TapRate's address again.", confirmLabel: "Remove domain", danger: true }))) return;
+    if (!(await confirmDialog({ title: "Stop using your domain?", body: "Survey emails will go out from TapTruly's address again.", confirmLabel: "Remove domain", danger: true }))) return;
     await api("/api/sending-domain", { method: "DELETE" });
     load();
   }
 
   return (
-    <SettingsSection title="Send from your own domain" description="Survey emails come from an address like feedback@mail.yourbusiness.lk instead of TapRate's. Customers trust it more, and more emails reach the inbox.">
+    <SettingsSection title="Send from your own domain" description="Survey emails come from an address like feedback@mail.yourbusiness.lk instead of TapTruly's. Customers trust it more, and more emails reach the inbox.">
       {!info ? (
         <Skeleton className="h-20 w-full" />
       ) : !info.allowed && !info.domain ? (
@@ -106,7 +106,7 @@ export function OwnDomain({ canChange }: { canChange: boolean }) {
               <p className="text-sm text-muted">Add these records where you manage your domain&rsquo;s DNS (for example your registrar, Cloudflare or cPanel):</p>
               <div className="overflow-x-auto rounded-[10px] border border-line">
                 <table className="w-full min-w-[34rem] text-left text-[13px]">
-                  <thead className="bg-[#fafbfc] text-muted">
+                  <thead className="bg-[#f8fafc] text-muted">
                     <tr>
                       <th scope="col" className="px-3 py-2 font-semibold">Type</th>
                       <th scope="col" className="px-3 py-2 font-semibold">Name</th>

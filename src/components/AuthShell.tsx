@@ -11,7 +11,7 @@ export function AuthShell({ title, subtitle, children, footer }: { title: string
   return (
     <div className="grid min-h-screen lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
       <main className="flex flex-col px-5 py-8 sm:px-10">
-        <Link href="/" className="self-start" aria-label="TapRate home">
+        <Link href="/" className="self-start" aria-label="TapTruly home">
           <Logo />
         </Link>
         <div className="mx-auto my-auto w-full max-w-sm py-10">

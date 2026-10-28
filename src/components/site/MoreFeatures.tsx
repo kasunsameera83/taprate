@@ -12,7 +12,7 @@ const CARDS: Card[] = [
     title: "Emails from your own domain",
     body: "On the Scale plan, survey emails come from feedback@yourbusiness.com instead of ours. Add a few DNS records and we check them for you.",
     visual: (
-      <p className="truncate rounded-[8px] border border-line bg-[#fafbfc] px-2.5 py-1.5 font-mono text-[12px]">
+      <p className="truncate rounded-[8px] border border-line bg-[#f8fafc] px-2.5 py-1.5 font-mono text-[12px]">
         From: Lanka Bakes &lt;feedback@lankabakes.lk&gt; <span className="ml-1 text-pos-text">✓ Verified</span>
       </p>
     ),
@@ -58,7 +58,7 @@ const CARDS: Card[] = [
           ["Galle Clinic", "88%"],
           ["Kandy Motors", "74%"],
         ].map(([n, p]) => (
-          <p key={n} className="flex justify-between rounded-[6px] bg-[#fafbfc] px-2 py-1">
+          <p key={n} className="flex justify-between rounded-[6px] bg-[#f8fafc] px-2 py-1">
             <span className="font-semibold">{n}</span>
             <span className="tabular text-muted">{p}</span>
           </p>

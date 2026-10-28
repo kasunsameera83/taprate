@@ -9,7 +9,7 @@ export function RecoveryScreen() {
   return (
     <AppWindow
       title="Follow-ups"
-      label="A customer rated Very poor because their parcel arrived damaged. The team sent a refund and resolved it, TapRate emailed the customer to ask again, and they rated Excellent: won back."
+      label="A customer rated Very poor because their parcel arrived damaged. The team sent a refund and resolved it, TapTruly emailed the customer to ask again, and they rated Excellent: won back."
     >
       <div className="space-y-2.5 p-5">
         <div className="lp-seq flex items-center gap-3 rounded-[10px] border border-line px-3 py-2.5" style={seq(0)}>
@@ -25,7 +25,7 @@ export function RecoveryScreen() {
           <p className="min-w-0 flex-1 truncate text-[13px]">Called back, new parcel sent</p>
           <span className="shrink-0 rounded-full bg-pos-soft px-2.5 py-1 text-[11px] font-bold text-pos-text">Resolved</span>
         </div>
-        <div className="lp-seq rounded-[10px] border border-dashed border-line bg-[#fafbfc] px-3 py-2.5" style={seq(2)}>
+        <div className="lp-seq rounded-[10px] border border-dashed border-line bg-[#f8fafc] px-3 py-2.5" style={seq(2)}>
           <p className="text-[12px] text-muted">Email sent for you</p>
           <p className="text-[13px] font-semibold">Did we put it right?</p>
           <div className="mt-1.5 flex gap-1" aria-hidden>
@@ -60,8 +60,8 @@ export function AlertsScreen() {
   return (
     <div
       role="img"
-      aria-label="Phone alerts from TapRate: an unhappy rating at the Kandy branch, a warning that satisfaction dropped at the Galle branch this week, and a customer won back."
-      className="mx-auto w-full max-w-[300px] rounded-[38px] border-[6px] border-ink bg-[linear-gradient(160deg,#2f3bf5,#10153d)] p-3 shadow-[0_30px_60px_-30px_rgba(16,21,61,0.6)]"
+      aria-label="Phone alerts from TapTruly: an unhappy rating at the Kandy branch, a warning that satisfaction dropped at the Galle branch this week, and a customer won back."
+      className="mx-auto w-full max-w-[300px] rounded-[38px] border-[6px] border-ink bg-[linear-gradient(160deg,#4f46e5,#1e1b4b)] p-3 shadow-[0_30px_60px_-30px_rgba(16,21,61,0.6)]"
     >
       <div aria-hidden>
         <div className="mx-auto mb-5 mt-1 h-5 w-24 rounded-full bg-ink" />
@@ -71,7 +71,7 @@ export function AlertsScreen() {
           {alerts.map((a, i) => (
             <div key={a.title} className="lp-seq lp-drop rounded-[16px] bg-white/90 px-3 py-2.5 backdrop-blur" style={seq(i)}>
               <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-muted">
-                <span>TapRate</span>
+                <span>TapTruly</span>
                 <span className="normal-case">{a.time}</span>
               </div>
               <p className="mt-0.5 text-[13px] font-semibold text-ink">
@@ -87,13 +87,13 @@ export function AlertsScreen() {
   );
 }
 
-/** A helpdesk ticket with TapRate's private note, and the tools it connects to. */
+/** A helpdesk ticket with TapTruly's private note, and the tools it connects to. */
 export function HelpdeskScreen() {
   const tools = ["Zendesk", "Freshdesk", "Gorgias", "Intercom", "Front", "Help Scout", "HubSpot", "Shopify", "Slack", "Teams"];
   return (
     <AppWindow
       title="Ticket #1087 · Your helpdesk"
-      label="A helpdesk ticket where TapRate has added a private note: the customer rated this ticket Poor and added a comment. Below, the tools TapRate connects to: Zendesk, Freshdesk, Gorgias, Intercom, Front, Help Scout, HubSpot, Shopify, Slack and Teams."
+      label="A helpdesk ticket where TapTruly has added a private note: the customer rated this ticket Poor and added a comment. Below, the tools TapTruly connects to: Zendesk, Freshdesk, Gorgias, Intercom, Front, Help Scout, HubSpot, Shopify, Slack and Teams."
     >
       <div className="space-y-2.5 p-5">
         <div className="rounded-[10px] border border-line px-3 py-2.5">
@@ -102,7 +102,7 @@ export function HelpdeskScreen() {
         </div>
         <div className="lp-seq rounded-[10px] border border-[#f3d27a] bg-[#fff8e6] px-3 py-2.5" style={{ animationDelay: "0.4s" }}>
           <p className="flex items-center justify-between text-[12px] font-semibold text-[#8a6100]">
-            <span>Private note · TapRate</span>
+            <span>Private note · TapTruly</span>
             <span className="rounded-full bg-white/70 px-2 py-0.5 text-[10px]">Only your team sees this</span>
           </p>
           <p className="mt-1 text-[13px]">🔴 The customer rated this ticket <strong>Poor (2)</strong> for Nimal.</p>

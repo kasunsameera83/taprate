@@ -12,7 +12,7 @@ import { EmailButtonsPreview } from "@/components/SurveyPreview";
 import { IconUpload } from "@/components/icons";
 import { confirmDialog } from "@/components/ConfirmDialog";
 
-// "Send by email": TapRate emails the survey to a list of customers, with an optional reminder.
+// "Send by email": TapTruly emails the survey to a list of customers, with an optional reminder.
 
 type SendItem = {
   id: string;
@@ -229,7 +229,7 @@ function Composer({ survey, credits, onSent }: { survey: Survey; credits: number
             <h2 id="send-title" className="text-lg font-semibold">
               Send this survey by email
             </h2>
-            <p className="mt-1 text-sm text-muted">TapRate emails your customers for you, from your business name. No helpdesk or signature needed.</p>
+            <p className="mt-1 text-sm text-muted">TapTruly emails your customers for you, from your business name. No helpdesk or signature needed.</p>
           </div>
           <div ref={noticeRef} tabIndex={-1} aria-live="polite" className="outline-none">
             {notice && <Notice kind={notice.kind}>{notice.text}</Notice>}
@@ -408,7 +408,7 @@ function Composer({ survey, credits, onSent }: { survey: Survey; credits: number
         <aside aria-label="Email preview" className="border-t border-line bg-canvas p-5 sm:p-7 lg:border-l lg:border-t-0">
           <p className="mb-3 text-sm font-semibold text-muted">What {sample.split(" ")[0]} will see</p>
           <div className="overflow-hidden rounded-[14px] border border-line bg-white">
-            <div className="border-b border-line bg-[#fafbfc] px-4 py-3">
+            <div className="border-b border-line bg-[#f8fafc] px-4 py-3">
               <p className="truncate text-[13px] font-semibold">{subject || "Subject line"}</p>
               <p className="text-[12px] text-muted">From your business name</p>
             </div>
@@ -574,7 +574,7 @@ function SendRow({ s, canSend, onChanged }: { s: SendItem; canSend: boolean; onC
             <Skeleton className="h-24 w-full" />
           ) : (
             <table className="w-full text-left text-[13px]">
-              <thead className="sticky top-0 bg-[#fafbfc] text-muted">
+              <thead className="sticky top-0 bg-[#f8fafc] text-muted">
                 <tr>
                   <th scope="col" className="px-3 py-2 font-semibold">Customer</th>
                   <th scope="col" className="px-3 py-2 font-semibold">Email</th>

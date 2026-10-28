@@ -101,7 +101,7 @@ export function AppNav({ isPlatformAdmin = false, email, accountId, accountName,
 
       {/* Desktop sidebar */}
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-line bg-surface px-4 py-6 lg:flex">
-        <Link href="/app" className="px-2" aria-label="TapRate dashboard">
+        <Link href="/app" className="px-2" aria-label="TapTruly dashboard">
           <Logo />
         </Link>
         <nav aria-label="Main" className="mt-8 flex flex-col gap-1">
@@ -132,7 +132,7 @@ export function AppNav({ isPlatformAdmin = false, email, accountId, accountName,
                   <span className="capitalize text-muted">{plan} plan</span>
                   <span className={`tabular font-semibold ${low ? "text-neg-text" : "text-ink"}`}>{credits} left</span>
                 </div>
-                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#eceef2]" aria-hidden>
+                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#f1f5f9]" aria-hidden>
                   <div className={`h-full rounded-full ${low ? "bg-neg-fill" : "bg-brand"}`} style={{ width: `${Math.min(100, (credits / TRIAL_CREDITS) * 100)}%` }} />
                 </div>
                 {role === "owner" && (
@@ -162,7 +162,7 @@ export function AppNav({ isPlatformAdmin = false, email, accountId, accountName,
       {/* Phones and tablets: slim top bar + bottom tab bar (thumb-reachable), "More" opens a sheet. */}
       <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur lg:hidden">
         <div className="flex min-h-14 items-center justify-between gap-3 px-4">
-          <Link href="/app" aria-label="TapRate dashboard" className="shrink-0">
+          <Link href="/app" aria-label="TapTruly dashboard" className="shrink-0">
             <Logo />
           </Link>
           <div className="flex min-w-0 items-center gap-2">

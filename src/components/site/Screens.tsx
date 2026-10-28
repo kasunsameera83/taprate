@@ -11,7 +11,7 @@ const NEG = "var(--color-neg-fill)";
 export function AppWindow({ title, label, children, className = "" }: { title: string; label: string; children: React.ReactNode; className?: string }) {
   return (
     <div role="img" aria-label={label} className={`overflow-hidden rounded-[16px] border border-line bg-surface shadow-[0_30px_60px_-36px_rgba(16,21,61,0.45)] ${className}`}>
-      <div className="flex items-center gap-2 border-b border-line bg-[#fafbfc] px-4 py-2.5" aria-hidden>
+      <div className="flex items-center gap-2 border-b border-line bg-[#f8fafc] px-4 py-2.5" aria-hidden>
         <span className="h-2.5 w-2.5 rounded-full bg-[#e3e5ec]" />
         <span className="h-2.5 w-2.5 rounded-full bg-[#e3e5ec]" />
         <span className="h-2.5 w-2.5 rounded-full bg-[#e3e5ec]" />
@@ -49,7 +49,7 @@ export function MiniStripe({ n = 40, seed = 7, height = 44 }: { n?: number; seed
 export function DashboardScreen() {
   const days = [62, 70, 55, 80, 74, 90, 66, 85, 78, 92, 70, 88, 95, 81];
   return (
-    <AppWindow title="Dashboard" label="TapRate dashboard: 94% of customers satisfied this month, up 3 points, with a bar of recent ratings and the most-picked reasons.">
+    <AppWindow title="Dashboard" label="TapTruly dashboard: 94% of customers satisfied this month, up 3 points, with a bar of recent ratings and the most-picked reasons.">
       <div className="grid gap-4 p-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
         <div>
           <p className="text-[12px] font-semibold text-muted">Customer satisfaction</p>
@@ -121,7 +121,7 @@ function Qr({ text, size = 132 }: { text: string; size?: number }) {
   return (
     <svg viewBox={`0 0 ${n} ${n}`} width={size} height={size} shapeRendering="crispEdges" aria-hidden>
       <rect width={n} height={n} fill="#fff" />
-      {m.flatMap((row, y) => row.map((on, x) => (on ? <rect key={`${x}-${y}`} x={x + 4} y={y + 4} width={1} height={1} fill="#151a2d" /> : null)))}
+      {m.flatMap((row, y) => row.map((on, x) => (on ? <rect key={`${x}-${y}`} x={x + 4} y={y + 4} width={1} height={1} fill="#0f172a" /> : null)))}
     </svg>
   );
 }
@@ -132,9 +132,9 @@ export function ChannelsScreen() {
       <div aria-hidden className="rounded-[16px] border border-line bg-surface p-5 text-center shadow-[0_30px_60px_-36px_rgba(16,21,61,0.45)]">
         <p className="font-display text-lg font-bold">How did we do?</p>
         <p className="mb-3 text-[12px] text-muted">Scan to rate your visit</p>
-        <Qr text="https://taprate.app" />
+        <Qr text="https://taptruly.com" />
       </div>
-      <div aria-hidden className="w-[190px] rounded-[30px] border-[6px] border-[#10153d] bg-surface p-4 shadow-[0_30px_60px_-30px_rgba(16,21,61,0.6)]">
+      <div aria-hidden className="w-[190px] rounded-[30px] border-[6px] border-[#1e1b4b] bg-surface p-4 shadow-[0_30px_60px_-30px_rgba(16,21,61,0.6)]">
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#e3e5ec]" />
         <p className="text-center text-[12px] text-muted">Kova Café</p>
         <p className="mt-1 text-center font-display text-[15px] font-bold leading-snug">How was your visit today?</p>
@@ -191,7 +191,7 @@ export function LeaderboardScreen() {
           <div key={name} className="flex items-center gap-3">
             <span className="w-5 text-right text-[13px] font-bold text-muted">{i + 1}</span>
             <span className="w-24 truncate text-[13px] font-semibold">{name}</span>
-            <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-[#eceef2]">
+            <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-[#f1f5f9]">
               <span className="block h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
             </span>
             <span className="w-10 text-right text-[13px] font-bold tabular">{pct}%</span>
@@ -203,7 +203,7 @@ export function LeaderboardScreen() {
   );
 }
 
-/** TapRate sends the survey: a send's results, with the reminder. */
+/** TapTruly sends the survey: a send's results, with the reminder. */
 export function SendScreen() {
   const stats = [
     ["Sent", "412", ""],
@@ -214,7 +214,7 @@ export function SendScreen() {
   return (
     <AppWindow title="Send by email" label="A survey email sent to 412 customers: 168 rated, a reminder went to 97 people after 3 days, and 23 were skipped because they were emailed recently.">
       <div className="space-y-4 p-5">
-        <div className="rounded-[10px] border border-line bg-[#fafbfc] p-3">
+        <div className="rounded-[10px] border border-line bg-[#f8fafc] p-3">
           <p className="text-[12px] text-muted">To: 412 customers from orders-october.csv</p>
           <p className="mt-1 text-[13px] font-semibold">How was your delivery, {"{name}"}?</p>
           <div className="mt-2 flex gap-1">
@@ -256,7 +256,7 @@ export function BranchesScreen() {
         {rows.map(([name, pct, diff, n]) => (
           <div key={name} className="flex items-center gap-3">
             <span className="w-28 truncate text-[13px] font-semibold">{name}</span>
-            <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-[#eceef2]">
+            <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-[#f1f5f9]">
               <span className={`block h-full rounded-full ${pct < 80 ? "bg-neu-fill" : "bg-pos-fill"}`} style={{ width: `${pct}%` }} />
             </span>
             <span className="w-10 text-right text-[13px] font-bold tabular">{pct}%</span>
@@ -267,7 +267,7 @@ export function BranchesScreen() {
           </div>
         ))}
         <div className="mt-2 flex items-center gap-3 rounded-[10px] border border-dashed border-line-strong p-3">
-          <Qr text="https://taprate.app/s/kandy" size={56} />
+          <Qr text="https://taptruly.com/s/kandy" size={56} />
           <p className="text-[12px] text-muted">
             <span className="block font-semibold text-ink">Kandy counter QR</span>
             Each branch gets its own QR code, links and kiosks.
@@ -316,7 +316,7 @@ export function WallScreen() {
   return (
     <div role="img" aria-label="Happy customers' comments shown on a business's website, and a TV screen in the office showing 94% happy customers today." className="relative pb-10">
       <div aria-hidden className="overflow-hidden rounded-[16px] border border-line bg-surface shadow-[0_30px_60px_-36px_rgba(16,21,61,0.45)]">
-        <div className="border-b border-line bg-[#fafbfc] px-4 py-2.5 text-[12px] font-semibold text-muted">kovacafe.lk · What our customers say</div>
+        <div className="border-b border-line bg-[#f8fafc] px-4 py-2.5 text-[12px] font-semibold text-muted">kovacafe.lk · What our customers say</div>
         <div className="grid gap-2 p-4 sm:grid-cols-3">
           {quotes.map(([q, who]) => (
             <div key={q} className="rounded-[10px] border border-line p-3">
@@ -328,7 +328,7 @@ export function WallScreen() {
           ))}
         </div>
       </div>
-      <div aria-hidden className="absolute -bottom-2 right-4 w-[210px] rounded-[12px] border-[5px] border-[#10153d] bg-[#0f1326] p-3 text-white shadow-[0_30px_60px_-30px_rgba(16,21,61,0.6)] sm:right-8">
+      <div aria-hidden className="absolute -bottom-2 right-4 w-[210px] rounded-[12px] border-[5px] border-[#1e1b4b] bg-[#0f1326] p-3 text-white shadow-[0_30px_60px_-30px_rgba(16,21,61,0.6)] sm:right-8">
         <p className="text-[10px] text-[#9aa1c7]">Office TV · happy today</p>
         <p className="font-display text-[34px] font-bold leading-none">
           94<span className="text-[16px] text-[#9aa1c7]">%</span>

@@ -19,7 +19,7 @@ export function HeroDemo() {
   return (
     <div className="space-y-4">
       <div className="overflow-hidden rounded-[18px] border border-line bg-white shadow-[0_24px_48px_-28px_rgba(21,26,45,0.35)]">
-        <div className="border-b border-line bg-[#fafbfc] px-5 py-3">
+        <div className="border-b border-line bg-[#f8fafc] px-5 py-3">
           <p className="text-[13px] font-semibold">Re: Delivery to Kandy</p>
           <p className="text-[12px] text-muted">From Nimal, Kova Support</p>
         </div>
