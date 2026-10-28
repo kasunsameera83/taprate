@@ -7,7 +7,12 @@ import { GreetingBar, PromoPopup } from "./Promotions";
 import { SiteHeader } from "./SiteHeader";
 import { SiteFooter } from "./SiteFooter";
 import { HeroShowcase } from "./HeroShowcase";
-import { ChannelsScreen, DashboardScreen, FollowUpScreen, InsightsScreen, LeaderboardScreen, StripeBand } from "./Screens";
+import { BrandMorph } from "./BrandMorph";
+import { ChannelsScreen, DashboardScreen, FollowUpScreen, InsightsScreen, LeaderboardScreen } from "./Screens";
+import { KineticTitle, Reveal } from "./KineticTitle";
+import { ScrollStatement } from "./ScrollStatement";
+import { TapStory } from "./TapStory";
+import { TiltCard } from "./TiltCard";
 
 // The public landing page. Text marked "c." comes from /admin → Landing page; the product pictures and
 // their captions below are part of the design. Everything is rendered as text (React escapes it).
@@ -32,6 +37,12 @@ const SHOWCASE = [
     body: "Not just email. Print a QR code for the counter or receipts, share a link on WhatsApp, add a widget to your website, or put a tablet at reception.",
     points: ["QR codes that print sharp at any size", "WhatsApp and SMS links", "Kiosk mode that resets for the next person"],
     Screen: ChannelsScreen,
+  },
+  {
+    title: "Make the buttons yours",
+    body: "Use the ready-made faces, thumbs or stars, or upload your own pictures and change the words under each button. Your mascot, your product, your way of speaking.",
+    points: ["Your own pictures for every rating", "Your own words, like \u201cPerfect brew\u201d", "Every upload checked and cleaned for safety"],
+    Screen: BrandMorph,
   },
   {
     title: "Know what to fix, in plain words",
@@ -79,19 +90,27 @@ export function LandingView({
         {/* Hero */}
         <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 pb-16 pt-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.92fr)] lg:gap-16 lg:pb-24 lg:pt-16">
           <div>
-            <h1 className="max-w-[14ch] text-[42px] font-bold leading-[1.02] tracking-[-0.03em] sm:text-[64px]">{c.hero.title}</h1>
-            <p className="mt-6 max-w-[52ch] whitespace-pre-line text-lg leading-relaxed text-muted">{c.hero.subtitle}</p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <KineticTitle text={c.hero.title} className="max-w-[14ch] text-[42px] font-bold leading-[1.02] tracking-[-0.03em] sm:text-[64px]" />
+            <Reveal delay={550}>
+              <p className="mt-6 max-w-[52ch] whitespace-pre-line text-lg leading-relaxed text-muted">{c.hero.subtitle}</p>
+            </Reveal>
+            <Reveal delay={700} className="mt-8 flex flex-wrap gap-3">
               <Link href="/signup" className="btn btn-primary min-h-12 px-6 text-base">
                 {c.hero.primaryCta}
               </Link>
               <a href="#how" className="btn btn-secondary min-h-12 px-6 text-base">
                 See how it works
               </a>
-            </div>
-            {c.hero.note && <p className="mt-4 text-sm text-muted">{c.hero.note}</p>}
+            </Reveal>
+            {c.hero.note && (
+              <Reveal delay={800}>
+                <p className="mt-4 text-sm text-muted">{c.hero.note}</p>
+              </Reveal>
+            )}
           </div>
-          <HeroShowcase />
+          <Reveal delay={350}>
+            <HeroShowcase />
+          </Reveal>
         </section>
 
         {/* Where ratings come from */}
@@ -110,11 +129,8 @@ export function LandingView({
 
         {/* Signature band */}
         <section className="relative mx-auto max-w-6xl px-5 pt-20">
-          <p className="font-display max-w-[20ch] text-[34px] font-bold leading-[1.08] tracking-[-0.02em] sm:text-[48px]">
-            Every tick is one customer, one tap, one honest answer.
-          </p>
-          <div className="mt-10">
-            <StripeBand />
+          <ScrollStatement text="Every tick is one customer, one tap, one honest answer." />
+          <div>
             <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-[13px] text-muted">
               <span className="flex items-center gap-2">
                 <span className="h-3 w-3 rounded-[2px] bg-pos-fill" aria-hidden /> Happy (tall)
@@ -129,21 +145,8 @@ export function LandingView({
           </div>
         </section>
 
-        {/* How it works */}
-        <section id="how" className="scroll-mt-20">
-          <div className="mx-auto max-w-6xl px-5 py-20">
-            <h2 className="text-[32px] font-bold leading-tight sm:text-[40px]">{c.stepsTitle}</h2>
-            <ol className="mt-10 grid gap-10 md:grid-cols-3 md:gap-8">
-              {c.steps.map((s, i) => (
-                <li key={i} className="border-t-2 border-ink pt-5">
-                  <span className="font-display text-[44px] font-bold leading-none text-brand">{i + 1}</span>
-                  <h3 className="mt-3 font-sans text-lg font-semibold tracking-normal">{s.title}</h3>
-                  <p className="mt-1.5 whitespace-pre-line text-muted">{s.body}</p>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
+        {/* How it works: scroll story */}
+        <TapStory title={c.stepsTitle} steps={c.steps} />
 
         {/* Product showcase */}
         <section id="features" className="scroll-mt-20 bg-surface">
@@ -163,7 +166,9 @@ export function LandingView({
                   </ul>
                 </div>
                 <div className={`min-w-0 ${i % 2 ? "lg:order-1" : ""}`}>
-                  <Screen />
+                  <TiltCard>
+                    <Screen />
+                  </TiltCard>
                 </div>
               </div>
             ))}

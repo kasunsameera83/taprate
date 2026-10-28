@@ -20,10 +20,25 @@ export default function NewSurveyPage() {
       </header>
       <SurveyForm
         submitLabel="Create survey"
-        onSubmit={async (values) => {
+        onSubmit={async (values, { icons }) => {
           const res = await api<Survey>("/api/surveys", { method: "POST", body: values });
           if (res.ok) {
-            router.push(`/app/surveys/${res.data.id}?created=1`);
+            // Upload any pictures chosen in the form now that the survey exists (the server checks each one again).
+            let failed = 0;
+            for (const icon of icons) {
+              try {
+                const up = await fetch(`/api/surveys/${encodeURIComponent(res.data.id)}/icons/${icon.value}`, {
+                  method: "POST",
+                  credentials: "same-origin",
+                  headers: { "Content-Type": icon.mime },
+                  body: new Blob([icon.bytes as Uint8Array<ArrayBuffer>], { type: icon.mime }),
+                });
+                if (!up.ok) failed++;
+              } catch {
+                failed++;
+              }
+            }
+            router.push(`/app/surveys/${res.data.id}?created=1${failed ? `&iconsFailed=${failed}&tab=settings` : ""}`);
             return { ok: true };
           }
           return { ok: false, message: res.message, fields: res.fields };

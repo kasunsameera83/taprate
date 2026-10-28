@@ -255,3 +255,213 @@ textarea.input {
 .legal li + li {
   margin-top: 0.25rem;
 }
+
+/* ---------- Landing page motion ----------
+   One opening moment (the headline), two scroll-driven moments (the statement + stripe, and the
+   "How it works" story), and a gentle tilt on product screens. All of it is off with reduced motion. */
+
+/* Headline: words rise out of their own line. */
+.kt-word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-bottom: 0.1em;
+  margin-bottom: -0.1em;
+}
+.kt-inner {
+  display: inline-block;
+  animation: kt-rise 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes kt-rise {
+  from {
+    transform: translateY(108%);
+  }
+}
+.kt-fade {
+  animation: kt-fade 0.7s ease-out both;
+}
+@keyframes kt-fade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* Statement + stripe, scrubbed by --p (0..1) as you scroll. */
+.ss-word {
+  opacity: clamp(0.14, calc(var(--p, 1) * (var(--n) + 3) - var(--i)), 1);
+}
+.ss-tick {
+  transform-origin: bottom;
+  transform: scaleY(clamp(0.04, calc((var(--p, 1) * (var(--t) + 30) - var(--i)) / 30), 1));
+}
+
+/* Tilt card */
+.tilt-card {
+  perspective: 1400px;
+}
+.tilt-inner {
+  position: relative;
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.tilt-card[data-tilt="on"] .tilt-inner {
+  transition-duration: 0.12s;
+}
+.tilt-sheen {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: radial-gradient(480px circle at var(--mx, 50%) var(--my, 50%), rgba(47, 59, 245, 0.08), transparent 55%);
+}
+.tilt-card[data-tilt="on"] .tilt-sheen {
+  opacity: 1;
+}
+
+/* "How it works" story. Each element's normal style is its finished state; keyframes start from the beginning. */
+.st-stage {
+  animation: st-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes st-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+}
+.st-type {
+  overflow: hidden;
+  vertical-align: bottom;
+  animation: st-type 1.5s steps(30) 0.4s both;
+}
+@keyframes st-type {
+  from {
+    max-width: 0;
+  }
+  to {
+    max-width: 100%;
+  }
+}
+.st-caret {
+  animation: st-blink 0.9s steps(1) 5;
+}
+@keyframes st-blink {
+  50% {
+    opacity: 0;
+  }
+}
+.st-select {
+  animation: st-select 0.4s ease-out 2.1s both;
+}
+@keyframes st-select {
+  from {
+    border-color: var(--color-line);
+    background: transparent;
+  }
+}
+.st-pop {
+  animation: st-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes st-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6) translateY(6px);
+  }
+}
+.st-chip {
+  animation: st-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 1.3s both;
+}
+.st-pointer {
+  transform: translate(-25%, -15%);
+  animation: st-pointer 1.3s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
+}
+@keyframes st-pointer {
+  0% {
+    opacity: 0;
+    transform: translate(130px, 90px);
+  }
+  20% {
+    opacity: 1;
+  }
+  72% {
+    transform: translate(-25%, -15%) scale(1);
+  }
+  84% {
+    transform: translate(-25%, -15%) scale(0.82);
+  }
+}
+.st-press {
+  animation: st-press 0.3s ease-out 1.3s both;
+}
+@keyframes st-press {
+  50% {
+    transform: scale(0.88);
+  }
+}
+.st-newest .tick:last-child {
+  transform-origin: bottom;
+  animation: st-drop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) var(--d, 1.6s) both;
+}
+@keyframes st-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-44px);
+  }
+}
+.st-out {
+  opacity: 0;
+  animation: st-out 0.3s ease-in 1.8s both;
+}
+@keyframes st-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+.st-in {
+  animation: st-in 0.4s ease-out 1.9s both;
+}
+@keyframes st-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.st-slide {
+  animation: st-slide 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.9s both;
+}
+@keyframes st-slide {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+}
+.st-note {
+  animation: st-in 0.4s ease-out 1.9s both;
+}
+.st-resolved {
+  animation: st-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 2.4s both;
+}
+.st-still,
+.st-still * {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kt-inner,
+  .kt-fade,
+  .st-stage,
+  .st-stage * {
+    animation: none !important;
+  }
+  .tilt-inner {
+    transition: none;
+    transform: none;
+  }
+}

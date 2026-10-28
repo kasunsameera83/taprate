@@ -14,13 +14,29 @@ const LINKS = [
 export function SiteHeader({ cta = "Start free", showPricing = true }: { cta?: string; showPricing?: boolean }) {
   const [scrolled, setScrolled] = useState(false);
   const menu = useRef<HTMLDialogElement>(null);
+  const progress = useRef<HTMLSpanElement>(null);
   const links = LINKS.filter((l) => showPricing || l.href !== "/#pricing");
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      setScrolled(window.scrollY > 8);
+      // Reading progress: a thin line under the header that fills as you scroll down the page.
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      progress.current?.style.setProperty("transform", `scaleX(${max > 0 ? Math.min(1, window.scrollY / max).toFixed(4) : 0})`);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("resize", onScroll);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
   }, []);
 
   return (
@@ -50,6 +66,7 @@ export function SiteHeader({ cta = "Start free", showPricing = true }: { cta?: s
           </button>
         </div>
       </div>
+      <span ref={progress} aria-hidden className="pointer-events-none absolute inset-x-0 bottom-[-1px] h-[2px] origin-left scale-x-0 bg-brand" />
       <dialog
         ref={menu}
         aria-label="Menu"

@@ -56,6 +56,7 @@ export const DEFAULT_LANDING: Landing = {
     { title: "Write one question", body: "“How did we do?” Pick faces, stars, thumbs or a 0–10 score." },
     { title: "Paste the buttons", body: "Into your Gmail or Outlook signature, or your Zendesk, Freshdesk or HubSpot replies." },
     { title: "Customers tap once", body: "No survey link, no form. The tap is the answer, and it shows up on your dashboard." },
+    { title: "Fix what went wrong", body: "An unhappy rating opens a follow-up with an owner and a due date. Call back, put it right, mark it resolved." },
   ],
   featuresTitle: "Everything you need to act on feedback",
   features: [

@@ -18,6 +18,7 @@ function SurveyDetail({ id }: { id: string }) {
   const router = useRouter();
   const search = useSearchParams();
   const created = search.get("created") === "1";
+  const iconsFailed = Math.min(11, Math.max(0, Number(search.get("iconsFailed") ?? 0) || 0));
   const initialTab = search.get("tab");
   const [tab, setTab] = useState<Tab>(initialTab === "settings" || initialTab === "collect" ? initialTab : "buttons");
   const [survey, setSurvey] = useState<Survey | null>(null);
@@ -94,6 +95,11 @@ function SurveyDetail({ id }: { id: string }) {
         </div>
         {archiveError && <Notice kind="error">{archiveError}</Notice>}
         {created && <Notice kind="success">Survey created. Now add the buttons to your emails.</Notice>}
+        {iconsFailed > 0 && (
+          <Notice kind="error">
+            {iconsFailed === 1 ? "One picture" : `${iconsFailed} pictures`} couldn&rsquo;t be uploaded. Add {iconsFailed === 1 ? "it" : "them"} again below in &ldquo;Your own pictures and labels&rdquo;.
+          </Notice>
+        )}
       </header>
 
       <div role="tablist" aria-label="Survey sections" className="flex gap-1 overflow-x-auto border-b border-line">

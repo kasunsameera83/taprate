@@ -1,16 +1,18 @@
 // Live previews used in the survey editor. Built from React elements (never HTML strings),
 // mirroring the real email markup in src/lib/surveys/snippet.ts. Links are inert.
 import { ICON_SETS, type IconSetId } from "@/lib/surveys/iconSets";
+import type { ResolvedOption } from "@/lib/surveys/customIcons";
 
-export function EmailButtonsPreview({ iconSet, question }: { iconSet: IconSetId; question: string }) {
+export function EmailButtonsPreview({ iconSet, question, options }: { iconSet: IconSetId; question: string; options?: ResolvedOption[] }) {
   const set = ICON_SETS[iconSet];
+  const opts = options ?? set.options.map((o) => ({ ...o, imageUrl: null as string | null }));
   const compact = set.id === "nps" || set.id === "ces";
   const showLabels = set.id === "thumbs" || set.id === "faces3" || set.id === "faces5";
   return (
     <div style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
       <p className="mb-2 text-[15px] font-bold leading-5 text-[#111827]">{question || "Your question"}</p>
       <div className={`flex flex-wrap ${compact ? "gap-1" : "gap-1.5"}`}>
-        {set.options.map((o) => (
+        {opts.map((o) => (
           <span
             key={o.value}
             className={`flex flex-col items-center justify-center rounded-[8px] border-2 bg-white text-center font-bold ${
@@ -19,8 +21,8 @@ export function EmailButtonsPreview({ iconSet, question }: { iconSet: IconSetId;
             style={{ borderColor: o.color, color: compact ? "#111827" : o.color }}
             title={o.label}
           >
-            {set.id === "stars5" ? `${o.value}★` : o.symbol}
-            {showLabels && <span className="text-[11px] leading-[14px] text-[#374151]">{o.label}</span>}
+            {o.imageUrl ? <img src={o.imageUrl} alt="" className="mx-auto mb-0.5 h-9 w-9 object-contain" /> : set.id === "stars5" ? `${o.value}★` : o.symbol}
+            {(showLabels || o.imageUrl) && <span className="text-[11px] leading-[14px] text-[#374151]">{o.label}</span>}
           </span>
         ))}
       </div>
