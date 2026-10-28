@@ -1,6 +1,8 @@
 "use client";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { api } from "@/lib/client/api";
+import Link from "next/link";
+import { api, qs } from "@/lib/client/api";
+import type { Location } from "@/lib/client/types";
 import { kioskCreateSchema, fieldErrors } from "@/lib/validation/schemas";
 import { Field, LoadError, Notice, Skeleton, TextInput } from "@/components/ui";
 import { IconCheck, IconCopy, IconDownload } from "@/components/icons";
@@ -8,12 +10,13 @@ import { confirmDialog } from "@/components/ConfirmDialog";
 
 type Share = {
   active: boolean;
+  location: { id: string; name: string } | null;
   link: string;
   qr: { link: string; svg: string };
   whatsapp: { text: string; url: string };
   sms: { text: string; url: string };
   widget: { url: string; code: string };
-  kiosks: Array<{ id: string; name: string; createdAt: string; lastUsedAt: string | null }>;
+  kiosks: Array<{ id: string; name: string; createdAt: string; lastUsedAt: string | null; location: string | null }>;
 };
 
 function CopyButton({ text, label, primary = false }: { text: string; label: string; primary?: boolean }) {
@@ -54,10 +57,15 @@ function Card({ title, description, children }: { title: string; description: st
 export function CollectPanel({ surveyId, canEdit, surveyName }: { surveyId: string; canEdit: boolean; surveyName: string }) {
   const [share, setShare] = useState<Share | null>(null);
   const [error, setError] = useState("");
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [locationId, setLocationId] = useState("");
   const load = useCallback(() => {
     setError("");
-    api<Share>(`/api/surveys/${encodeURIComponent(surveyId)}/share`).then((r) => (r.ok ? setShare(r.data) : setError(r.message)));
-  }, [surveyId]);
+    api<Share>(`/api/surveys/${encodeURIComponent(surveyId)}/share${qs({ locationId: locationId || undefined })}`).then((r) => (r.ok ? setShare(r.data) : setError(r.message)));
+  }, [surveyId, locationId]);
+  useEffect(() => {
+    api<Location[]>("/api/locations").then((r) => r.ok && setLocations(r.data.filter((l) => !l.archived)));
+  }, []);
   useEffect(load, [load]);
 
   if (error) return <LoadError message={error} onRetry={load} />;
@@ -65,14 +73,41 @@ export function CollectPanel({ surveyId, canEdit, surveyName }: { surveyId: stri
 
   // Our own server-generated SVG, shown as an image (never inserted as HTML).
   const qrDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(share.qr.svg)}`;
-  const fileName = `taprate-qr-${surveyName.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40) || "survey"}.svg`;
+  const slug = (v: string) => v.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+  const fileName = `taprate-qr-${slug(surveyName) || "survey"}${share.location ? `-${slug(share.location.name)}` : ""}.svg`;
 
   return (
     <div className="space-y-6">
+      <section aria-label="Branch" className="panel flex flex-wrap items-center gap-3 p-4 sm:p-5">
+        <div className="min-w-0 flex-1">
+          <label htmlFor="branch" className="block text-sm font-semibold">
+            Which branch are these for?
+          </label>
+          <p className="text-[13px] text-muted">
+            {locations.length === 0 ? (
+              <>
+                One business, many places? <Link href="/app/settings/locations" className="font-semibold text-brand hover:underline">Add your branches</Link> to get a QR code for each and compare them on the dashboard.
+              </>
+            ) : (
+              "Each branch gets its own QR code and links, so ratings show where they came from."
+            )}
+          </p>
+        </div>
+        {locations.length > 0 && (
+          <select id="branch" className="input w-auto min-w-48" value={locationId} onChange={(e) => setLocationId(e.target.value)}>
+            <option value="">All branches (no branch)</option>
+            {locations.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.name}
+              </option>
+            ))}
+          </select>
+        )}
+      </section>
       {!share.active && <Notice kind="error">This survey is paused, so these links show &ldquo;not collecting ratings&rdquo;. Turn it on in Settings.</Notice>}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card title="QR code" description="Print it on receipts, tables, counters or packaging. Customers scan and tap a rating.">
+        <Card title={share.location ? `QR code for ${share.location.name}` : "QR code"} description="Print it on receipts, tables, counters or packaging. Customers scan and tap a rating.">
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
             <img src={qrDataUrl} alt={`QR code that opens the rating page for ${surveyName}`} width={180} height={180} className="rounded-[10px] border border-line" />
             <div className="flex flex-col gap-2">
@@ -122,12 +157,14 @@ export function CollectPanel({ surveyId, canEdit, surveyName }: { surveyId: stri
         </div>
       </Card>
 
-      <Kiosks surveyId={surveyId} kiosks={share.kiosks} canEdit={canEdit} onChanged={load} />
+      <Kiosks surveyId={surveyId} kiosks={share.kiosks} canEdit={canEdit} onChanged={load} locations={locations} />
+
+      <TestimonialWall />
     </div>
   );
 }
 
-function Kiosks({ surveyId, kiosks, canEdit, onChanged }: { surveyId: string; kiosks: Share["kiosks"]; canEdit: boolean; onChanged: () => void }) {
+function Kiosks({ surveyId, kiosks, canEdit, onChanged, locations }: { surveyId: string; kiosks: Share["kiosks"]; canEdit: boolean; onChanged: () => void; locations: Location[] }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [created, setCreated] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -136,7 +173,9 @@ function Kiosks({ surveyId, kiosks, canEdit, onChanged }: { surveyId: string; ki
   async function create(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formEl = e.currentTarget;
-    const parsed = kioskCreateSchema.safeParse({ name: String(new FormData(formEl).get("kioskName") ?? "") });
+    const fd = new FormData(formEl);
+    const loc = String(fd.get("kioskLocation") ?? "");
+    const parsed = kioskCreateSchema.safeParse({ name: String(fd.get("kioskName") ?? ""), locationId: loc || null });
     if (!parsed.success) return setErrors({ kioskName: fieldErrors(parsed.error).name ?? "" });
     setErrors({});
     setBusy(true);
@@ -178,7 +217,10 @@ function Kiosks({ surveyId, kiosks, canEdit, onChanged }: { surveyId: string; ki
               <li key={k.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
                 <span>
                   <span className="font-semibold">{k.name}</span>
-                  <span className="block text-[12px] text-muted">{k.lastUsedAt ? `Last rating ${new Date(k.lastUsedAt).toLocaleString()}` : "Not used yet"}</span>
+                  <span className="block text-[12px] text-muted">
+                    {k.location ? `${k.location} · ` : ""}
+                    {k.lastUsedAt ? `Last rating ${new Date(k.lastUsedAt).toLocaleString()}` : "Not used yet"}
+                  </span>
                 </span>
                 {canEdit && (
                   <button type="button" className="btn btn-danger btn-sm" onClick={() => revoke(k.id, k.name)}>
@@ -196,6 +238,20 @@ function Kiosks({ surveyId, kiosks, canEdit, onChanged }: { surveyId: string; ki
                 <TextInput name="kioskName" placeholder="e.g. Front desk, Kandy branch" maxLength={60} error={errors.kioskName || undefined} />
               </Field>
             </div>
+            {locations.length > 0 && (
+              <div className="sm:w-48">
+                <Field label="Branch" name="kioskLocation" optional>
+                  <select id="kioskLocation" name="kioskLocation" className="input" defaultValue="">
+                    <option value="">No branch</option>
+                    {locations.map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+            )}
             <button className="btn btn-primary" disabled={busy}>
               {busy ? "Creating…" : "Create kiosk link"}
             </button>
@@ -205,6 +261,51 @@ function Kiosks({ surveyId, kiosks, canEdit, onChanged }: { surveyId: string; ki
         )}
         <p className="text-[13px] text-muted">Each tap counts as one rating. Taps are limited to one every 2 seconds per kiosk, so nobody can flood your results.</p>
       </div>
+    </Card>
+  );
+}
+
+/** Happy customers' comments (shared with their permission) on the business's own website. */
+function TestimonialWall() {
+  const [wall, setWall] = useState<{ featured: number; url: string; code: string } | null>(null);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    api<{ featured: number; url: string; code: string }>("/api/testimonials").then((r) => (r.ok ? setWall(r.data) : setError(r.message)));
+  }, []);
+  return (
+    <Card
+      title="Testimonials on your website"
+      description="Happy customers can agree, on the thank-you page, to their comment being shown. You choose which ones appear. This wall is for your whole business, not just this survey."
+    >
+      {error ? (
+        <Notice kind="error">{error}</Notice>
+      ) : !wall ? (
+        <Skeleton className="h-24 w-full" />
+      ) : (
+        <div className="space-y-4">
+          <p className="text-sm">
+            <span className="font-semibold">{wall.featured === 1 ? "1 comment is" : `${wall.featured} comments are`} shown.</span>{" "}
+            <Link href="/app/responses?shareable=yes" className="font-semibold text-brand hover:underline">
+              Choose comments to show
+            </Link>
+          </p>
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+            <div className="space-y-2">
+              <textarea readOnly aria-label="Testimonial wall code" className="input h-28 font-mono text-xs" value={wall.code} />
+              <div className="flex flex-wrap gap-2">
+                <CopyButton text={wall.code} label="Copy code" primary />
+                <a className="btn btn-secondary" href={wall.url} target="_blank" rel="noopener noreferrer">
+                  Open the wall
+                </a>
+              </div>
+              <p className="text-[13px] text-muted">Add <code className="rounded bg-canvas px-1">?lang=si</code> or <code className="rounded bg-canvas px-1">?lang=ta</code> to the link for Sinhala or Tamil headings.</p>
+            </div>
+            <div className="rounded-[12px] border border-dashed border-line-strong bg-canvas p-2">
+              <iframe src={wall.url} title="Testimonial wall preview" className="h-[260px] w-full rounded-[10px]" loading="lazy" />
+            </div>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }

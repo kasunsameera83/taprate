@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { api, qs } from "@/lib/client/api";
-import type { ResponseItem, ResponsesPage, StatsResponse, Survey } from "@/lib/client/types";
+import type { BranchStat, Location, ResponseItem, ResponsesPage, StatsResponse, Survey } from "@/lib/client/types";
 import { isIconSetId, ratingOption } from "@/lib/surveys/iconSets";
 import { FeedbackStripe } from "@/components/FeedbackStripe";
 import { LoadError, Segmented, SentimentDot, Skeleton, Notice } from "@/components/ui";
@@ -18,6 +18,8 @@ const PERIODS: ReadonlyArray<{ value: Days; label: string }> = [
 export default function Dashboard() {
   const [days, setDays] = useState<Days>(30);
   const [surveyId, setSurveyId] = useState("");
+  const [locationId, setLocationId] = useState("");
+  const [locations, setLocations] = useState<Location[]>([]);
   const [surveys, setSurveys] = useState<Survey[] | null>(null);
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [followUps, setFollowUps] = useState<ResponseItem[] | null>(null);
@@ -26,6 +28,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     api<Survey[]>("/api/surveys").then((r) => setSurveys(r.ok ? r.data : []));
+    api<Location[]>("/api/locations").then((r) => r.ok && setLocations(r.data));
   }, []);
 
   const load = useCallback(() => setReload((n) => n + 1), []);
@@ -34,7 +37,7 @@ export default function Dashboard() {
     let live = true;
     setStats(null);
     setError("");
-    const filter = { surveyId: surveyId || undefined };
+    const filter = { surveyId: surveyId || undefined, locationId: locationId || undefined };
     Promise.all([
       api<StatsResponse>(`/api/stats${qs({ days, ...filter })}`),
       api<ResponsesPage>(`/api/responses${qs({ ...filter, sentiment: "negative", limit: 5 })}`),
@@ -47,7 +50,7 @@ export default function Dashboard() {
     return () => {
       live = false;
     };
-  }, [days, surveyId, reload]);
+  }, [days, surveyId, locationId, reload]);
 
   const noSurveys = surveys !== null && surveys.length === 0;
 
@@ -71,6 +74,22 @@ export default function Dashboard() {
                 </option>
               ))}
             </select>
+            {locations.length > 0 && (
+              <>
+                <label className="sr-only" htmlFor="location-filter">
+                  Branch
+                </label>
+                <select id="location-filter" className="input w-auto min-w-40" value={locationId} onChange={(e) => setLocationId(e.target.value)}>
+                  <option value="">All branches</option>
+                  {locations.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name}
+                      {l.archived ? " (archived)" : ""}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
             <Segmented label="Period" value={days} options={PERIODS} onChange={setDays} />
           </div>
         )}
@@ -95,6 +114,7 @@ export default function Dashboard() {
             <FollowUps items={followUps} surveyId={surveyId} />
             <Agents stats={stats} />
           </div>
+          {!locationId && stats && stats.byLocation.length > 0 && <Branches rows={stats.byLocation} days={days} onPick={setLocationId} />}
         </>
       )}
     </div>
@@ -455,6 +475,65 @@ function Agents({ stats }: { stats: StatsResponse | null }) {
           ))}
         </ul>
       )}
+    </section>
+  );
+}
+
+/** Branch comparison: satisfaction per branch, change on the previous period, and unhappy ratings. */
+function Branches({ rows, days, onPick }: { rows: BranchStat[]; days: number; onPick: (id: string) => void }) {
+  return (
+    <section className="panel p-5 sm:p-6" aria-labelledby="branches-title">
+      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="branches-title" className="text-lg font-semibold">
+          By branch
+        </h2>
+        <p className="text-[13px] text-muted">Last {days} days. Choose a branch to see only its ratings.</p>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[34rem] text-left text-sm">
+          <thead className="text-[13px] text-muted">
+            <tr>
+              <th scope="col" className="pb-2 font-semibold">Branch</th>
+              <th scope="col" className="pb-2 font-semibold">Satisfaction</th>
+              <th scope="col" className="pb-2 text-right font-semibold">Change</th>
+              <th scope="col" className="pb-2 text-right font-semibold">Ratings</th>
+              <th scope="col" className="pb-2 text-right font-semibold">Unhappy</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-line">
+            {rows.map((b) => {
+              const diff = b.satisfactionPct !== null && b.previousPct !== null ? Math.round((b.satisfactionPct - b.previousPct) * 10) / 10 : null;
+              return (
+                <tr key={b.id}>
+                  <td className="py-2.5 pr-3">
+                    <button type="button" className="text-left font-semibold hover:text-brand hover:underline" onClick={() => onPick(b.id)}>
+                      {b.name}
+                    </button>
+                  </td>
+                  <td className="w-[40%] py-2.5 pr-3">
+                    {b.satisfactionPct === null ? (
+                      <span className="text-muted">No ratings</span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <span className="h-2 flex-1 overflow-hidden rounded-full bg-[#eceef2]" aria-hidden>
+                          <span className="block h-full rounded-full bg-pos-fill" style={{ width: `${b.satisfactionPct}%` }} />
+                        </span>
+                        <span className="tabular w-12 text-right font-semibold">{b.satisfactionPct}%</span>
+                      </span>
+                    )}
+                  </td>
+                  <td className={`tabular py-2.5 text-right ${diff === null || diff === 0 ? "text-muted" : diff > 0 ? "font-semibold text-pos-text" : "font-semibold text-neg-text"}`}>
+                    {diff === null ? "–" : diff === 0 ? "0" : `${diff > 0 ? "▲" : "▼"} ${Math.abs(diff)}`}
+                    {diff !== null && diff !== 0 && <span className="sr-only"> points</span>}
+                  </td>
+                  <td className="tabular py-2.5 text-right">{b.total}</td>
+                  <td className={`tabular py-2.5 text-right ${b.negative ? "font-semibold text-neg-text" : "text-muted"}`}>{b.negative}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }

@@ -38,7 +38,12 @@ export const LIMITS = {
   promoPerAccount: { name: "promo:account", limit: 10, windowSec: 3600 },
   aiPerAccount: { name: "ai:account", limit: 20, windowSec: 86400 },
   aiPerUser: { name: "ai:user", limit: 5, windowSec: 600 },
+  aiDraftPerAccount: { name: "ai:draft:account", limit: 100, windowSec: 86400 },
   webhookPerIp: { name: "webhook:ip", limit: 300, windowSec: 60 },
+  sendCreate: { name: "send:create", limit: 20, windowSec: 3600 },
+  sendProcess: { name: "send:process", limit: 60, windowSec: 600 },
+  apiSend: { name: "api:send", limit: 120, windowSec: 60 },
+  unsubscribePerIp: { name: "unsub:ip", limit: 30, windowSec: 600 },
 } as const satisfies Record<string, RateLimitRule>;
 
 /**

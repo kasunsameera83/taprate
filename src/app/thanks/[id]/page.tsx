@@ -7,8 +7,12 @@ import { isIconSetId, ratingOption, sentimentOf } from "@/lib/surveys/iconSets";
 import { ThanksClient } from "./ThanksClient";
 import { logoUrl } from "@/lib/branding";
 import { iconUrlMap, labelsFor, resolveOptions } from "@/lib/surveys/customIcons";
+import { HTML_LANG, isLang, pt, type Lang, type PublicKey } from "@/lib/i18n/public";
 
 export const metadata: Metadata = { title: "Thank you", robots: { index: false, follow: false } };
+
+// Words the thank-you page's interactive part needs, in the survey's language.
+const THANKS_KEYS = ["shareName", "shareHint", "notCollecting", "saveFailed", "savingRating", "ratingSaved", "tapAny", "saving", "saved", "couldntSave", "commentThanks", "yourComment", "editComment", "tellMore", "optional", "commentPlaceholder", "sendComment", "sending"] as const satisfies readonly PublicKey[];
 
 const SENTIMENT_TEXT = { positive: "text-pos-text", neutral: "text-neu-text", negative: "text-neg-text" } as const;
 
@@ -27,7 +31,7 @@ export default async function ThanksPage({
   // Service role, scoped to this one response id (proven by the signed token above).
   const { data } = await adminClient()
     .from("responses")
-    .select("id, rating, pending_rating, comment, drivers, surveys(question, icon_set, brand_color, thank_you_message, allow_comment, website_url, status, drivers_positive, drivers_negative, review_cta_label, review_cta_url, icon_images, option_labels, accounts(name, logo_path))")
+    .select("id, rating, pending_rating, comment, drivers, share_consent, display_name, surveys(question, icon_set, brand_color, thank_you_message, allow_comment, website_url, status, drivers_positive, drivers_negative, review_cta_label, review_cta_url, icon_images, option_labels, language, reasons_question_positive, reasons_question_negative, accounts(name, logo_path))")
     .eq("id", id)
     .maybeSingle();
   const survey = (data?.surveys ?? null) as unknown as {
@@ -44,14 +48,18 @@ export default async function ThanksPage({
     review_cta_url: string | null;
     icon_images: Record<string, string> | null;
     option_labels: Record<string, string> | null;
+    language: string;
+    reasons_question_positive: string | null;
+    reasons_question_negative: string | null;
     accounts: { name: string; logo_path: string | null } | null;
   } | null;
   if (!data || !survey || !isIconSetId(survey.icon_set)) notFound();
 
+  const lang: Lang = isLang(survey.language) ? survey.language : "en";
   const rating = (data.pending_rating ?? data.rating) as number | null;
   const option =
     rating !== null
-      ? resolveOptions(survey.icon_set, { images: iconUrlMap(survey.icon_set, survey.icon_images), labels: labelsFor(survey.icon_set, survey.option_labels) }).find((o) => o.value === rating)
+      ? resolveOptions(survey.icon_set, { images: iconUrlMap(survey.icon_set, survey.icon_images), labels: labelsFor(survey.icon_set, survey.option_labels) }, lang).find((o) => o.value === rating)
       : undefined;
   const sentiment = rating !== null ? sentimentOf(survey.icon_set, rating) : null;
   const business = survey.accounts?.name;
@@ -66,7 +74,7 @@ export default async function ThanksPage({
   const symbol = survey.icon_set === "stars5" && rating !== null ? "★".repeat(rating) : (survey.icon_set === "nps" || survey.icon_set === "ces") && rating !== null ? String(rating) : option?.symbol;
 
   return (
-    <div className="min-h-screen" style={{ background: `linear-gradient(180deg, ${survey.brand_color}14 0, transparent 260px)` }}>
+    <div lang={HTML_LANG[lang]} className="min-h-screen" style={{ background: `linear-gradient(180deg, ${survey.brand_color}14 0, transparent 260px)` }}>
       <div className="h-1.5" style={{ background: survey.brand_color }} />
       <main className="mx-auto flex max-w-md flex-col px-5 pb-10 pt-10 sm:pt-16">
         {logo ? (
@@ -89,7 +97,7 @@ export default async function ThanksPage({
               </span>
               )}
               <span className={`mt-2 block text-[15px] font-semibold ${sentiment ? SENTIMENT_TEXT[sentiment] : ""}`}>
-                <span className="sr-only">You rated: </span>
+                <span className="sr-only">{pt(lang, "youRated")} </span>
                 {option.label}
               </span>
             </div>
@@ -102,20 +110,22 @@ export default async function ThanksPage({
             existingComment={(data.comment as string | null) ?? ""}
             brandColor={survey.brand_color}
             driverOptions={driverOptions}
-            driverPrompt={sentiment === "positive" ? "What did we do well?" : "What could we do better?"}
+            driverPrompt={sentiment === "positive" ? (survey.reasons_question_positive ?? pt(lang, "wentWell")) : (survey.reasons_question_negative ?? pt(lang, "doBetter"))}
+            share={sentiment === "positive" && survey.allow_comment && active ? { label: pt(lang, "shareConsent", { business: business || "This business" }), consent: Boolean(data.share_consent), name: (data.display_name as string | null) ?? "" } : null}
+            text={Object.fromEntries(THANKS_KEYS.map((k) => [k, pt(lang, k)])) as Record<(typeof THANKS_KEYS)[number], string>}
             existingDrivers={(data.drivers as string[] | null) ?? []}
             review={review}
           />
         </div>
         {survey.website_url && (
           <a href={survey.website_url} rel="noopener noreferrer nofollow" className="link mx-auto mt-6 inline-flex min-h-11 items-center text-sm">
-            Go to {new URL(survey.website_url).hostname}
+            {pt(lang, "goTo", { host: new URL(survey.website_url).hostname })}
           </a>
         )}
         <p className="mt-10 text-center text-[12px] text-muted">
-          Feedback by <span className="font-semibold">TapRate</span> ·{" "}
+          {pt(lang, "feedbackBy")} <span className="font-semibold">TapRate</span> ·{" "}
           <a href="/privacy" className="underline underline-offset-2">
-            Privacy
+            {pt(lang, "privacy")}
           </a>
         </p>
       </main>

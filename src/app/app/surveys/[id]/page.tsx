@@ -10,9 +10,10 @@ import { IconArrowLeft } from "@/components/icons";
 import { SnippetPanel } from "./SnippetPanel";
 import { CollectPanel } from "./CollectPanel";
 import { IconCustomizer } from "./IconCustomizer";
+import { SendPanel } from "./SendPanel";
 import { confirmDialog } from "@/components/ConfirmDialog";
 
-type Tab = "buttons" | "collect" | "settings";
+type Tab = "buttons" | "send" | "collect" | "settings";
 
 function SurveyDetail({ id }: { id: string }) {
   const router = useRouter();
@@ -20,10 +21,11 @@ function SurveyDetail({ id }: { id: string }) {
   const created = search.get("created") === "1";
   const iconsFailed = Math.min(11, Math.max(0, Number(search.get("iconsFailed") ?? 0) || 0));
   const initialTab = search.get("tab");
-  const [tab, setTab] = useState<Tab>(initialTab === "settings" || initialTab === "collect" ? initialTab : "buttons");
+  const [tab, setTab] = useState<Tab>(initialTab === "settings" || initialTab === "collect" || initialTab === "send" ? initialTab : "buttons");
   const [survey, setSurvey] = useState<Survey | null>(null);
   const [hasResponses, setHasResponses] = useState(false);
   const [canEdit, setCanEdit] = useState(true);
+  const [role, setRole] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [archiveError, setArchiveError] = useState("");
 
@@ -31,7 +33,11 @@ function SurveyDetail({ id }: { id: string }) {
     setError("");
     api<Survey>(`/api/surveys/${encodeURIComponent(id)}`).then((r) => (r.ok ? setSurvey(r.data) : setError(r.message)));
     api<ResponsesPage>(`/api/responses${qs({ surveyId: id, limit: 1 })}`).then((r) => r.ok && setHasResponses(r.data.total > 0));
-    api<{ role: string | null }>("/api/account").then((r) => r.ok && setCanEdit(r.data.role === "owner" || r.data.role === "admin"));
+    api<{ role: string | null }>("/api/account").then((r) => {
+      if (!r.ok) return;
+      setRole(r.data.role);
+      setCanEdit(r.data.role === "owner" || r.data.role === "admin");
+    });
   }, [id]);
   useEffect(load, [load]);
 
@@ -61,8 +67,10 @@ function SurveyDetail({ id }: { id: string }) {
     );
   }
 
+  const canSeeSends = role === "owner" || role === "admin" || role === "viewer";
   const tabs: Array<{ value: Tab; label: string }> = [
     { value: "buttons", label: "Add to emails" },
+    ...(canSeeSends ? [{ value: "send" as Tab, label: "Send by email" }] : []),
     { value: "collect", label: "QR, WhatsApp & more" },
     { value: "settings", label: "Settings" },
   ];
@@ -124,6 +132,14 @@ function SurveyDetail({ id }: { id: string }) {
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
         {tab === "buttons" ? (
           <SnippetPanel surveyId={survey.id} key={survey.updatedAt} />
+        ) : tab === "send" ? (
+          canSeeSends ? (
+            <SendPanel survey={survey} canSend={canEdit} />
+          ) : role === null ? (
+            <Skeleton className="h-64 w-full rounded-[var(--radius-panel)]" />
+          ) : (
+            <Notice kind="info">Only owners, admins and viewers can see survey emails.</Notice>
+          )
         ) : tab === "collect" ? (
           <CollectPanel surveyId={survey.id} surveyName={survey.name} canEdit={canEdit} />
         ) : (

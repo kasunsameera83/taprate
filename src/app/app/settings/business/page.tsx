@@ -8,6 +8,8 @@ import { SettingsSection } from "@/components/SettingsSection";
 import { IconDownload } from "@/components/icons";
 import { LOGO_MAX_BYTES, sniffImage } from "@/lib/branding";
 import { confirmDialog } from "@/components/ConfirmDialog";
+import { DoNotEmail } from "./DoNotEmail";
+import { TvScreens } from "./TvScreens";
 
 type Me = { account: { id: string; name: string; plan: string; credits: number; role: string; logoUrl: string | null } | null };
 
@@ -45,6 +47,10 @@ export default function BusinessSettingsPage() {
           </a>
         </SettingsSection>
       )}
+
+      {canPerform(role, "sends:write") && <DoNotEmail />}
+
+      {canPerform(role, "survey:write") && <TvScreens />}
 
       {canPerform(role, "privacy:erase") && <EraseCustomer />}
 

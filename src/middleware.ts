@@ -36,7 +36,7 @@ const NEEDS_SESSION = /^\/(app|admin|login|signup|welcome|forgot-password|reset-
 
 export async function middleware(request: NextRequest) {
   const nonce = btoa(crypto.randomUUID()); // Edge runtime: no Buffer
-  const csp = buildCsp(nonce, request.nextUrl.pathname.startsWith("/w/"));
+  const csp = buildCsp(nonce, request.nextUrl.pathname.startsWith("/w/") || request.nextUrl.pathname.startsWith("/wall/"));
 
   const withSecurityHeaders = () => {
     const h = new Headers(request.headers);

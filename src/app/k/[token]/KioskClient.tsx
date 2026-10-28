@@ -5,6 +5,7 @@ import { kioskRateSchema, publicCommentSchema } from "@/lib/validation/schemas";
 import { sentimentOf, type IconSetId } from "@/lib/surveys/iconSets";
 import type { ResolvedOption } from "@/lib/surveys/customIcons";
 import { readableTextOn } from "@/lib/surveys/color";
+import { HTML_LANG, pt, type Lang } from "@/lib/i18n/public";
 
 type Props = {
   token: string;
@@ -18,6 +19,9 @@ type Props = {
   thankYou: string;
   driversPositive: string[];
   driversNegative: string[];
+  lang: Lang;
+  questionPositive: string | null;
+  questionNegative: string | null;
 };
 
 const RESET_AFTER_MS = 8000;
@@ -52,7 +56,7 @@ export function KioskClient(p: Props) {
     const r = await api<{ responseId: string; responseToken: string }>("/api/public/kiosk", { method: "POST", body: parsed.data });
     setBusy(false);
     if (!r.ok) {
-      setError(r.status === 429 ? "One moment please, then tap again." : r.message);
+      setError(r.status === 429 ? pt(p.lang, "oneMoment") : r.message);
       return;
     }
     setLast({ ...r.data, rating });
@@ -72,14 +76,14 @@ export function KioskClient(p: Props) {
   const drivers = last ? (sentimentOf(p.iconSet, last.rating) === "positive" ? p.driversPositive : p.driversNegative) : [];
 
   return (
-    <main className="flex min-h-screen select-none flex-col bg-surface" style={{ borderTop: `8px solid ${p.brandColor}` }}>
+    <main lang={HTML_LANG[p.lang]} className="flex min-h-screen select-none flex-col bg-surface" style={{ borderTop: `8px solid ${p.brandColor}` }}>
       <header className="flex justify-center px-6 pt-8">
         {p.logo ? <img src={p.logo} alt={p.business} className="max-h-16 max-w-[260px] object-contain" /> : <p className="text-lg font-semibold text-muted">{p.business}</p>}
       </header>
 
       <div className="flex flex-1 flex-col items-center justify-center px-6 pb-16 text-center">
         {!p.active ? (
-          <p className="text-2xl text-muted">This kiosk isn&rsquo;t collecting ratings right now.</p>
+          <p className="text-2xl text-muted">{pt(p.lang, "kioskNotCollecting")}</p>
         ) : stage === "ask" ? (
           <>
             <h1 className="max-w-3xl text-[34px] font-bold leading-tight sm:text-[44px]">{p.question}</h1>
@@ -90,7 +94,7 @@ export function KioskClient(p: Props) {
                     type="button"
                     disabled={busy}
                     onClick={() => rate(o.value)}
-                    aria-label={`Rate: ${o.label}`}
+                    aria-label={`${pt(p.lang, "rate")}: ${o.label}`}
                     className={`flex flex-col items-center justify-center rounded-[20px] border-[3px] bg-white transition-transform active:scale-95 disabled:opacity-60 ${
                       numeric ? "h-20 w-16 text-3xl font-bold text-ink sm:h-24 sm:w-20" : "h-32 w-32 sm:h-40 sm:w-40"
                     }`}
@@ -119,7 +123,7 @@ export function KioskClient(p: Props) {
             <h1 className="text-[40px] font-bold leading-tight">{p.thankYou}</h1>
             {drivers.length > 0 && (
               <>
-                <p className="mt-8 text-xl text-muted">{sentimentOf(p.iconSet, last!.rating) === "positive" ? "What did we do well?" : "What could we do better?"}</p>
+                <p className="mt-8 text-xl text-muted">{sentimentOf(p.iconSet, last!.rating) === "positive" ? (p.questionPositive ?? pt(p.lang, "wentWell")) : (p.questionNegative ?? pt(p.lang, "doBetter"))}</p>
                 <div className="mt-4 flex max-w-3xl flex-wrap justify-center gap-3">
                   {drivers.map((d) => {
                     const on = picked.includes(d);
@@ -140,7 +144,7 @@ export function KioskClient(p: Props) {
               </>
             )}
             <button type="button" onClick={reset} className="btn btn-secondary mt-10 min-h-12 px-6 text-base">
-              Done
+              {pt(p.lang, "done")}
             </button>
           </div>
         )}

@@ -19,6 +19,7 @@ export function SiteFooter({ tagline }: { tagline?: string }) {
       links: [
         { href: "/signup", label: "Create a free account" },
         { href: "/login", label: "Sign in" },
+        { href: "/switch-from-delighted", label: "Switching from Delighted" },
       ],
     },
     {

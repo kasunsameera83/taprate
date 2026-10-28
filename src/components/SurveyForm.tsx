@@ -8,12 +8,14 @@ import { EmailButtonsPreview, EmailFrame, ThanksPreview } from "@/components/Sur
 import { ChipListInput } from "@/components/ChipListInput";
 import { IconEye } from "@/components/icons";
 import { canCustomizeIcons, checkIconImage, resolveOptions } from "@/lib/surveys/customIcons";
+import { api } from "@/lib/client/api";
+import { LANG_NAME, LANGS, pt, standardLabel, SURVEY_DEFAULTS, type Lang } from "@/lib/i18n/public";
 
 /** A picture chosen while creating a survey: checked here, uploaded (and checked again) right after the survey is created. */
 export type PendingIcon = { value: number; bytes: Uint8Array; mime: string };
 
-const DEFAULT_POSITIVE = ["Fast reply", "Friendly", "Solved my problem", "Easy to understand"];
-const DEFAULT_NEGATIVE = ["Slow reply", "Not solved", "Hard to understand", "Unfriendly"];
+const DEFAULT_POSITIVE = SURVEY_DEFAULTS.en.positive;
+const DEFAULT_NEGATIVE = SURVEY_DEFAULTS.en.negative;
 
 const DUE_OPTIONS = [
   { value: "4", label: "4 hours" },
@@ -45,6 +47,9 @@ type Part = "basics" | "scale" | "thanks" | "unhappy" | "status";
 const PART_OF: Record<string, Part> = {
   name: "basics",
   question: "basics",
+  language: "basics",
+  reasonsQuestionPositive: "thanks",
+  reasonsQuestionNegative: "thanks",
   iconSet: "scale",
   optionLabels: "scale",
   thankYouMessage: "thanks",
@@ -158,8 +163,12 @@ const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? o
 export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, submitLabel }: Props) {
   const creating = !initial;
   const [iconSet, setIconSet] = useState<IconSetId>(initial?.iconSet ?? "faces5");
-  const [question, setQuestion] = useState(initial?.question ?? "How did we do?");
-  const [message, setMessage] = useState(initial?.thankYouMessage ?? "Thanks for your feedback!");
+  const [question, setQuestion] = useState(initial?.question ?? SURVEY_DEFAULTS.en.question);
+  const [message, setMessage] = useState(initial?.thankYouMessage ?? SURVEY_DEFAULTS.en.thanks);
+  const [language, setLanguage] = useState<Lang>(initial?.language ?? "en");
+  const [langAvailable, setLangAvailable] = useState(false);
+  const [reasonsQPos, setReasonsQPos] = useState(initial?.reasonsQuestionPositive ?? "");
+  const [reasonsQNeg, setReasonsQNeg] = useState(initial?.reasonsQuestionNegative ?? "");
   const [brandColor, setBrandColor] = useState(initial?.brandColor ?? "#2f3bf5");
   const [allowComment, setAllowComment] = useState(initial?.allowComment ?? true);
   // New surveys default to alerting on negative ratings; existing surveys keep their setting.
@@ -206,6 +215,24 @@ export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, su
 
   const changed = () => setDirty(true);
 
+  // Sinhala and Tamil are offered to Sri Lankan businesses (or when the product owner switches them on).
+  useEffect(() => {
+    api<{ account: { localLanguages?: boolean } | null }>("/api/account").then((r) => r.ok && setLangAvailable(Boolean(r.data.account?.localLanguages)));
+  }, []);
+
+  /** New survey: swap the starting text to the new language, but never text the person already changed. */
+  function changeLanguage(next: Lang) {
+    const from = SURVEY_DEFAULTS[language];
+    const to = SURVEY_DEFAULTS[next];
+    if (creating) {
+      if (question === from.question) setQuestion(to.question);
+      if (message === from.thanks) setMessage(to.thanks);
+      if (JSON.stringify(driversPositive) === JSON.stringify(from.positive)) setDriversPositive(to.positive);
+      if (JSON.stringify(driversNegative) === JSON.stringify(from.negative)) setDriversNegative(to.negative);
+    }
+    setLanguage(next);
+  }
+
   function clearCustom() {
     Object.values(pending).forEach((p) => URL.revokeObjectURL(p.url));
     setPending({});
@@ -239,8 +266,8 @@ export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, su
 
   const customCount = Object.keys(pending).length + Object.values(labels).filter((v) => v.trim()).length;
   const previewOptions = creating
-    ? resolveOptions(iconSet, { images: Object.fromEntries(Object.entries(pending).map(([k, v]) => [k, v.url])), labels: Object.fromEntries(Object.entries(labels).filter(([, v]) => v.trim())) })
-    : resolveOptions(iconSet, iconSet === initial?.iconSet ? { images: initial.iconImages, labels: initial.optionLabels } : undefined);
+    ? resolveOptions(iconSet, { images: Object.fromEntries(Object.entries(pending).map(([k, v]) => [k, v.url])), labels: Object.fromEntries(Object.entries(labels).filter(([, v]) => v.trim())) }, language)
+    : resolveOptions(iconSet, iconSet === initial?.iconSet ? { images: initial.iconImages, labels: initial.optionLabels } : undefined, language);
 
   // One-line summaries for folded parts.
   const emailCount = alertEmails.split(/[\s,;]+/).filter(Boolean).length;
@@ -280,6 +307,9 @@ export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, su
       reviewCtaUrl: reviewOn ? String(f.get("reviewCtaUrl") ?? "").trim() : null,
       followupsEnabled,
       followupDueHours: Number(dueHours),
+      language,
+      reasonsQuestionPositive: reasonsQPos,
+      reasonsQuestionNegative: reasonsQNeg,
       ...(creating && canCustomizeIcons(iconSet) ? { optionLabels: Object.fromEntries(Object.entries(labels).filter(([, v]) => v.trim())) } : {}),
     };
 
@@ -339,10 +369,20 @@ export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, su
       </div>
       {preview === "email" ? (
         <EmailFrame>
-          <EmailButtonsPreview iconSet={iconSet} question={question} options={previewOptions} />
+          <EmailButtonsPreview iconSet={iconSet} question={question} options={previewOptions} lang={language} />
         </EmailFrame>
       ) : (
-        <ThanksPreview question={question} message={message} brandColor={brandColor} allowComment={allowComment} drivers={driversPositive} reviewLabel={reviewOn ? "Review us" : null} />
+        <ThanksPreview
+          question={question}
+          message={message}
+          brandColor={brandColor}
+          allowComment={allowComment}
+          drivers={driversPositive}
+          reviewLabel={reviewOn ? "Review us" : null}
+          lang={language}
+          reasonsQuestion={reasonsQPos}
+          ratingLabel={previewOptions.at(-1)?.label}
+        />
       )}
       <p className="mt-3 text-[13px] text-muted">
         {previewOptions.some((o) => o.imageUrl)
@@ -377,6 +417,22 @@ export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, su
             <Field label="Question customers see" name="question" error={errors.question} hint={`Short and specific works best. ${question.length}/200`}>
               <TextInput name="question" value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={200} required autoComplete="off" error={errors.question} hasHint />
             </Field>
+            {(langAvailable || language !== "en") && (
+              <Field
+                label="Language customers see"
+                name="language"
+                error={errors.language}
+                hint="Rating labels, the thank-you page, kiosk and survey emails use this language. Write your question and thank-you message in it too."
+              >
+                <select id="language" className="input sm:max-w-xs" value={language} onChange={(e) => changeLanguage(e.target.value as Lang)} aria-describedby="language-hint">
+                  {LANGS.filter((l) => l === "en" || langAvailable || l === language).map((l) => (
+                    <option key={l} value={l}>
+                      {LANG_NAME[l]}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
           </FormPart>
 
           <FormPart
@@ -464,13 +520,13 @@ export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, su
                           </span>
                           <div className="min-w-[9rem] flex-1">
                             <label htmlFor={`new-label-${key}`} className="mb-1 block text-[13px] font-semibold">
-                              Rating {o.value} label <span className="font-normal text-muted">(standard: {o.label})</span>
+                              Rating {o.value} label <span className="font-normal text-muted">(standard: {standardLabel(iconSet, o.value, language)})</span>
                             </label>
                             <input
                               id={`new-label-${key}`}
                               className="input"
                               value={labels[key] ?? ""}
-                              placeholder={o.label}
+                              placeholder={standardLabel(iconSet, o.value, language)}
                               maxLength={24}
                               autoComplete="off"
                               onChange={(e) => setLabels({ ...labels, [key]: e.target.value })}
@@ -562,14 +618,36 @@ export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, su
                 <p className="text-sm font-semibold">Quick reasons</p>
                 <p className="text-[13px] text-muted">One-tap buttons that show why. Leave a list empty to skip it.</p>
               </div>
-              <ChipListInput label="After a good rating: what went well?" name="driversPositive" values={driversPositive} onChange={(v) => {
-                  setDriversPositive(v);
-                  changed();
-                }} error={errors.driversPositive} />
-              <ChipListInput label="After a bad rating: what could be better?" name="driversNegative" values={driversNegative} onChange={(v) => {
-                  setDriversNegative(v);
-                  changed();
-                }} error={errors.driversNegative} />
+              <div className="space-y-3 rounded-[10px] border border-line bg-surface p-3">
+                <Field label="Question after a good rating" name="reasonsQuestionPositive" optional error={errors.reasonsQuestionPositive}>
+                  <TextInput name="reasonsQuestionPositive" value={reasonsQPos} onChange={(e) => setReasonsQPos(e.target.value)} placeholder={pt(language, "wentWell")} maxLength={80} autoComplete="off" error={errors.reasonsQuestionPositive} />
+                </Field>
+                <ChipListInput
+                  label="Reasons to choose from"
+                  name="driversPositive"
+                  values={driversPositive}
+                  onChange={(v) => {
+                    setDriversPositive(v);
+                    changed();
+                  }}
+                  error={errors.driversPositive}
+                />
+              </div>
+              <div className="space-y-3 rounded-[10px] border border-line bg-surface p-3">
+                <Field label="Question after a bad rating" name="reasonsQuestionNegative" optional error={errors.reasonsQuestionNegative}>
+                  <TextInput name="reasonsQuestionNegative" value={reasonsQNeg} onChange={(e) => setReasonsQNeg(e.target.value)} placeholder={pt(language, "doBetter")} maxLength={80} autoComplete="off" error={errors.reasonsQuestionNegative} />
+                </Field>
+                <ChipListInput
+                  label="Reasons to choose from"
+                  name="driversNegative"
+                  values={driversNegative}
+                  onChange={(v) => {
+                    setDriversNegative(v);
+                    changed();
+                  }}
+                  error={errors.driversNegative}
+                />
+              </div>
             </div>
 
             <Toggle checked={reviewOn} onChange={setReviewOn} label="Ask happy customers for a review" hint="Shows a button only after a good rating." />

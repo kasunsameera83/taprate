@@ -20,6 +20,7 @@ export const POST = secureRoute<z.infer<typeof params>, undefined, z.infer<typeo
       p_survey: params.id,
       p_name: body.name,
       p_token_hash: tokenHash,
+      p_location: body.locationId ?? null,
     });
     if (error) throw dbError(error);
     const kioskId = data as string;

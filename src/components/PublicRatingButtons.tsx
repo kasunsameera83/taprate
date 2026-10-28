@@ -1,5 +1,6 @@
-import { ICON_SETS, type IconSetId } from "@/lib/surveys/iconSets";
+import type { IconSetId } from "@/lib/surveys/iconSets";
 import type { ResolvedOption } from "@/lib/surveys/customIcons";
+import { pt, type Lang } from "@/lib/i18n/public";
 
 /** Big, thumb-friendly rating buttons for public pages (share link, QR, widget). Plain links: work without JavaScript. */
 export function PublicRatingButtons({
@@ -7,14 +8,15 @@ export function PublicRatingButtons({
   links,
   newTab = false,
   compact = false,
+  lang = "en",
 }: {
   iconSet: IconSetId;
   links: Array<ResolvedOption & { href: string }>;
   newTab?: boolean;
   compact?: boolean;
+  lang?: Lang;
 }) {
   const numeric = iconSet === "nps" || iconSet === "ces";
-  const set = ICON_SETS[iconSet];
   return (
     <div>
       <ul className={`flex flex-wrap justify-center ${numeric ? "gap-1.5" : "gap-2"}`}>
@@ -24,7 +26,7 @@ export function PublicRatingButtons({
               href={o.href}
               target={newTab ? "_blank" : undefined}
               rel="noopener noreferrer"
-              aria-label={`Rate: ${o.label}`}
+              aria-label={`${pt(lang, "rate")}: ${o.label}`}
               className={`flex flex-col items-center justify-center rounded-[12px] border-2 bg-white text-center font-bold transition-transform active:scale-95 ${
                 numeric ? `${compact ? "h-11 w-9" : "h-12 w-10 sm:h-14 sm:w-12"} text-lg text-ink` : `${compact ? "min-h-14 min-w-14 px-2" : "min-h-20 min-w-20 px-3"}`
               }`}
@@ -44,8 +46,8 @@ export function PublicRatingButtons({
       </ul>
       {numeric && (
         <div className="mx-auto mt-2 flex max-w-md justify-between text-[12px] text-muted">
-          <span>{set.options[0]!.label}</span>
-          <span>{set.options.at(-1)!.label}</span>
+          <span>{iconSet === "nps" ? pt(lang, "npsLow") : links[0]?.label}</span>
+          <span>{iconSet === "nps" ? pt(lang, "npsHigh") : links.at(-1)?.label}</span>
         </div>
       )}
     </div>

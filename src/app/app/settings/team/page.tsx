@@ -52,6 +52,7 @@ export default function TeamPage() {
           </ul>
         </SettingsSection>
       )}
+      <AgentWins canChange={team.myRole === "owner"} agents={team.members.filter((m) => m.role === "agent").length} />
       <SettingsSection title="What each role can do">
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
           {(["owner", "admin", "viewer", "agent"] as const).map((r) => (
@@ -270,5 +271,46 @@ function InviteRow({ invite, myRole, onChanged }: { invite: Invite; myRole: Role
         </button>
       )}
     </li>
+  );
+}
+
+/** Weekly "wins" email to agents: their ratings and kind words from customers. Owner switches it. */
+function AgentWins({ canChange, agents }: { canChange: boolean; agents: number }) {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [msg, setMsg] = useState("");
+  useEffect(() => {
+    api<{ enabled: boolean }>("/api/account/wins").then((r) => r.ok && setEnabled(r.data.enabled));
+  }, []);
+  async function toggle(next: boolean) {
+    setMsg("");
+    const r = await api<{ enabled: boolean }>("/api/account/wins", { method: "PATCH", body: { enabled: next } });
+    if (r.ok) setEnabled(r.data.enabled);
+    else setMsg(r.message);
+  }
+  return (
+    <SettingsSection
+      title="Weekly wins email for agents"
+      description="Every Monday morning, each agent gets their own numbers for the week and up to three kind words from happy customers. Agents can stop it from the email."
+    >
+      {enabled === null ? (
+        <Skeleton className="h-11 w-48" />
+      ) : (
+        <label className={`flex items-start gap-3 ${canChange ? "cursor-pointer" : ""}`}>
+          <input type="checkbox" checked={enabled} disabled={!canChange} onChange={(e) => toggle(e.target.checked)} className="mt-0.5 h-5 w-5 accent-[var(--color-brand)]" />
+          <span className="text-sm">
+            <span className="font-semibold">{enabled ? "On" : "Off"}</span>
+            <span className="block text-[13px] text-muted">
+              {agents === 0 ? "You have no agents yet. Invite teammates with the Agent role and their helpdesk name." : `${agents} ${agents === 1 ? "agent" : "agents"} would get it.`}
+              {!canChange && " Only the owner can change this."}
+            </span>
+          </span>
+        </label>
+      )}
+      {msg && (
+        <div className="mt-3">
+          <Notice kind="error">{msg}</Notice>
+        </div>
+      )}
+    </SettingsSection>
   );
 }

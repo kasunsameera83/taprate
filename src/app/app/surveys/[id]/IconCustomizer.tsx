@@ -5,6 +5,7 @@ import type { Survey } from "@/lib/client/types";
 import { ICON_SETS } from "@/lib/surveys/iconSets";
 import { canCustomizeIcons, checkIconImage, ICON_MAX_PX, ICON_MIN_PX, resolveOptions } from "@/lib/surveys/customIcons";
 import { optionLabelsSchema, fieldErrors } from "@/lib/validation/schemas";
+import { standardLabel } from "@/lib/i18n/public";
 import { Notice } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
@@ -27,7 +28,7 @@ export function IconCustomizer({ survey, canEdit, onChanged }: { survey: Survey;
     );
   }
 
-  const preview = resolveOptions(survey.iconSet, { images: survey.iconImages, labels });
+  const preview = resolveOptions(survey.iconSet, { images: survey.iconImages, labels }, survey.language);
   const dirty = JSON.stringify(labels) !== JSON.stringify(survey.optionLabels ?? {});
 
   async function upload(value: number, file: File) {
@@ -99,13 +100,13 @@ export function IconCustomizer({ survey, canEdit, onChanged }: { survey: Survey;
                 </span>
                 <div className="min-w-[10rem] flex-1 space-y-1">
                   <label htmlFor={`label-${key}`} className="block text-[13px] font-semibold">
-                    Label for rating {o.value} <span className="font-normal text-muted">(standard: {o.label})</span>
+                    Label for rating {o.value} <span className="font-normal text-muted">(standard: {standardLabel(survey.iconSet, o.value, survey.language)})</span>
                   </label>
                   <input
                     id={`label-${key}`}
                     className="input"
                     value={labels[key] ?? ""}
-                    placeholder={o.label}
+                    placeholder={standardLabel(survey.iconSet, o.value, survey.language)}
                     maxLength={24}
                     disabled={!canEdit}
                     onChange={(e) => setLabels({ ...labels, [key]: e.target.value })}

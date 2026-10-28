@@ -20,9 +20,9 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
-      // Everything except the embeddable widget refuses to be framed.
-      { source: "/((?!w/).*)", headers: securityHeaders },
-      { source: "/w/:path*", headers: securityHeaders.filter((h) => h.key !== "X-Frame-Options" && h.key !== "Cross-Origin-Opener-Policy") },
+      // Everything except the embeddable widget and testimonial wall refuses to be framed.
+      { source: "/((?!w/|wall/).*)", headers: securityHeaders },
+      { source: "/(w|wall)/:path*", headers: securityHeaders.filter((h) => h.key !== "X-Frame-Options" && h.key !== "Cross-Origin-Opener-Policy") },
       // Never let browsers or proxies cache API answers or survey clicks.
       { source: "/api/:path*", headers: [{ key: "Cache-Control", value: "no-store" }] },
       {
@@ -35,7 +35,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/(s|w|k)/:path*",
+        source: "/(s|w|k|tv)/:path*",
         headers: [
           { key: "Referrer-Policy", value: "no-referrer" },
           { key: "X-Robots-Tag", value: "noindex, nofollow" },

@@ -266,6 +266,18 @@ const DB_MESSAGES: Array<[RegExp, ErrorCode, string]> = [
   [/invalid import (row|date)/, "validation_failed", "Some rows in the file aren't valid. Check the dates, ratings and emails."],
   [/survey is archived/, "conflict", "This survey is archived."],
   [/too many api keys/, "conflict", "You have 25 active keys. Revoke some first."],
+  [/daily send limit reached/, "rate_limited", "You've reached today's email limit. The rest can go out tomorrow (or upgrade your plan for a higher limit)."],
+  [/survey is not active/, "conflict", "This survey is paused. Turn it back on to send it."],
+  [/business is suspended/, "forbidden", "Sending is turned off for this business. Please contact support."],
+  [/invalid recipients?/, "validation_failed", "Some of those email addresses aren't valid."],
+  [/not shareable/, "conflict", "Only comments a happy customer agreed to share can be shown on your website."],
+  [/too many featured/, "conflict", "You can show up to 50 testimonials. Hide some first."],
+  [/too many screens/, "conflict", "You can have up to 20 TV screens. Switch some off first."],
+  [/language not available/, "forbidden", "Sinhala and Tamil aren't switched on for this business. Contact support to turn them on."],
+  [/invalid location name/, "validation_failed", "Branch names can be up to 60 characters, without < or >."],
+  [/invalid location/, "validation_failed", "Choose one of your branches."],
+  [/too many locations/, "conflict", "You can have up to 200 branches. Archive some first."],
+  [/locations_name_unique/, "conflict", "You already have a branch with that name."],
 ];
 
 export function dbError(error: { code?: string; message?: string } | null): ApiError {

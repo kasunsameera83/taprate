@@ -4,6 +4,7 @@ import { env } from "@/lib/env";
 import { verifyShareToken } from "@/lib/security/signing";
 import { loadPublicSurvey, ratingLinks } from "@/lib/publicSurvey";
 import { PublicRatingButtons } from "@/components/PublicRatingButtons";
+import { HTML_LANG, pt } from "@/lib/i18n/public";
 
 export const metadata: Metadata = { title: "Rate us", robots: { index: false, follow: false } };
 
@@ -18,18 +19,18 @@ export default async function WidgetPage({ params }: { params: Promise<{ token: 
   if (!survey) notFound();
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-transparent p-3">
+    <main lang={HTML_LANG[survey.lang]} className="flex min-h-screen items-center justify-center bg-transparent p-3">
       <div className="w-full rounded-[16px] border border-line bg-surface px-4 py-5 text-center" style={{ borderTop: `3px solid ${survey.brandColor}` }}>
         <p className="font-display text-[17px] font-bold leading-snug">{survey.question}</p>
         {survey.active ? (
           <div className="mt-4">
-            <PublicRatingButtons iconSet={survey.iconSet} links={ratingLinks(survey.id, survey.options, "web")} newTab compact />
+            <PublicRatingButtons iconSet={survey.iconSet} links={ratingLinks(survey.id, survey.options, "web")} newTab compact lang={survey.lang} />
           </div>
         ) : (
-          <p className="mt-2 text-sm text-muted">Not collecting ratings right now.</p>
+          <p className="mt-2 text-sm text-muted">{pt(survey.lang, "notCollectingShort")}</p>
         )}
         <p className="mt-3 text-[11px] text-muted">
-          Feedback by{" "}
+          {pt(survey.lang, "feedbackBy")}{" "}
           <a href={env().appOrigin} target="_blank" rel="noopener noreferrer" className="font-semibold">
             TapRate
           </a>

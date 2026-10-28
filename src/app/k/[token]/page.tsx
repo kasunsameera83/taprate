@@ -23,7 +23,11 @@ export default async function KioskPage({ params }: { params: Promise<{ token: s
   const survey = await loadPublicSurvey(kiosk.survey_id);
   if (!survey) notFound();
 
-  const { data: s } = await adminClient().from("surveys").select("thank_you_message, drivers_positive, drivers_negative").eq("id", survey.id).maybeSingle();
+  const { data: s } = await adminClient()
+    .from("surveys")
+    .select("thank_you_message, drivers_positive, drivers_negative, reasons_question_positive, reasons_question_negative")
+    .eq("id", survey.id)
+    .maybeSingle();
 
   return (
     <KioskClient
@@ -38,6 +42,9 @@ export default async function KioskPage({ params }: { params: Promise<{ token: s
       thankYou={s?.thank_you_message ?? "Thank you!"}
       driversPositive={s?.drivers_positive ?? []}
       driversNegative={s?.drivers_negative ?? []}
+      lang={survey.lang}
+      questionPositive={s?.reasons_question_positive ?? null}
+      questionNegative={s?.reasons_question_negative ?? null}
     />
   );
 }

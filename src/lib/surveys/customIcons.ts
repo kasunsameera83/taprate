@@ -8,6 +8,7 @@
 //   * Hidden data (GPS location, camera details, comments) is removed before storing.
 import { ICON_SETS, type IconSetId, type RatingOption } from "./iconSets.ts";
 import { sniffImage, type LogoType } from "../branding.ts";
+import { standardLabel, type Lang } from "../i18n/public.ts";
 
 export const CUSTOMIZABLE_SETS: readonly IconSetId[] = ["thumbs", "faces3", "faces5", "stars5"];
 export const ICON_MAX_BYTES = 200 * 1024;
@@ -141,11 +142,11 @@ export function labelsFor(iconSet: IconSetId, stored: unknown): Record<string, s
 
 export type ResolvedOption = RatingOption & { imageUrl: string | null };
 
-/** The scale's options with the business's own labels and pictures applied. */
-export function resolveOptions(iconSet: IconSetId, custom?: { images?: Record<string, string>; labels?: Record<string, string> }): ResolvedOption[] {
+/** The scale's options with the business's own labels and pictures applied (standard labels in the survey's language). */
+export function resolveOptions(iconSet: IconSetId, custom?: { images?: Record<string, string>; labels?: Record<string, string> }, lang: Lang = "en"): ResolvedOption[] {
   return ICON_SETS[iconSet].options.map((o) => ({
     ...o,
-    label: custom?.labels?.[String(o.value)] ?? o.label,
+    label: custom?.labels?.[String(o.value)] ?? standardLabel(iconSet, o.value, lang),
     imageUrl: custom?.images?.[String(o.value)] ?? null,
   }));
 }

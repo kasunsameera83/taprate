@@ -2,7 +2,7 @@ import { z } from "zod";
 import { apiRoute } from "@/lib/security/apiRoute";
 import { ok, fail, dbError } from "@/lib/security/route";
 import { apiLinksSchema, uuidSchema, type ApiLinksInput } from "@/lib/validation/schemas";
-import { buildLinkToken, signMetadata } from "@/lib/security/signing";
+import { buildLinkToken, buildLocationTag, signMetadata } from "@/lib/security/signing";
 import { ICON_SETS, isIconSetId } from "@/lib/surveys/iconSets";
 import { env } from "@/lib/env";
 
@@ -25,12 +25,18 @@ export const POST = apiRoute<z.infer<typeof params>, undefined, ApiLinksInput>(
     if (survey.status !== "active") return fail("conflict", "This survey is paused. Turn it back on to collect ratings.", undefined, requestId);
 
     const e = env();
+    // Optional branch: must be one of this business's (active) branches.
+    if (body.location_id) {
+      const { data: loc } = await db.from("locations").select("id").eq("id", body.location_id).eq("account_id", key.accountId).is("archived_at", null).maybeSingle();
+      if (!loc) return fail("validation_failed", "location_id is not one of your branches.", { location_id: "Unknown branch" }, requestId);
+    }
     const meta = { email: body.email ?? null, agent: body.agent ?? null, ticket: body.ticket ?? null };
     const sp = new URLSearchParams();
     if (meta.email) sp.set("e", meta.email);
     if (meta.agent) sp.set("a", meta.agent);
     if (meta.ticket) sp.set("t", meta.ticket);
     if (meta.email || meta.agent || meta.ticket) sp.set("s", signMetadata(e.LINK_SIGNING_SECRET, survey.id, meta));
+    if (body.location_id) sp.set("l", buildLocationTag(e.LINK_SIGNING_SECRET, survey.id, body.location_id));
     const qs = sp.toString();
 
     return ok(

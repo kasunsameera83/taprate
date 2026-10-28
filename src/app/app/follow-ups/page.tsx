@@ -6,7 +6,7 @@ import { followupNoteSchema, fieldErrors } from "@/lib/validation/schemas";
 import { isIconSetId, ratingOption } from "@/lib/surveys/iconSets";
 import type { ResponseItem } from "@/lib/client/types";
 import { Badge, EmptyState, LoadError, Notice, Skeleton } from "@/components/ui";
-import { IconFollowUp } from "@/components/icons";
+import { IconFollowUp, IconSparkle } from "@/components/icons";
 
 type Status = "active" | "overdue" | "open" | "in_progress" | "resolved";
 type Item = ResponseItem & { noteCount: number };
@@ -181,6 +181,7 @@ function FollowUpCard({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [showNotes, setShowNotes] = useState(false);
+  const [showDraft, setShowDraft] = useState(false);
   const assignee = members.find((m) => m.userId === f.assigneeId);
   // Agents may only change status of follow-ups assigned to them (the database enforces this too).
   const canChangeStatus = canManage || (canAct && f.assigneeId !== null && f.assigneeId === myUserId);
@@ -252,6 +253,12 @@ function FollowUpCard({
           <span className="text-sm text-muted">{f.assigneeId ? (f.assigneeId === myUserId ? "Assigned to you" : `Assigned${assignee ? ` to ${assignee.email}` : ""}`) : "Unassigned"}</span>
         )}
         <div className="ml-auto flex flex-wrap gap-2">
+          {f.status !== "resolved" && (
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowDraft((s) => !s)} aria-expanded={showDraft}>
+              <IconSparkle className="h-4 w-4" />
+              Draft a reply
+            </button>
+          )}
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowNotes((s) => !s)} aria-expanded={showNotes}>
             Notes{item.noteCount ? ` (${item.noteCount})` : ""}
           </button>
@@ -277,8 +284,78 @@ function FollowUpCard({
           <Notice kind="error">{error}</Notice>
         </div>
       )}
+      {showDraft && <ReplyDraft responseId={item.id} email={item.email} />}
       {showNotes && <Notes responseId={item.id} canWrite={canAct} onAdded={onChanged} />}
     </li>
+  );
+}
+
+/** AI-written first draft of a reply. Shown only to the team member, who edits and sends it themselves. */
+function ReplyDraft({ responseId, email }: { responseId: string; email: string | null }) {
+  const [draft, setDraft] = useState<{ subject: string; body: string } | null>(null);
+  const [state, setState] = useState<"idle" | "busy" | "copied">("idle");
+  const [error, setError] = useState("");
+
+  const make = useCallback(async () => {
+    setState("busy");
+    setError("");
+    const r = await api<{ subject: string; body: string }>(`/api/followups/${encodeURIComponent(responseId)}/draft`, { method: "POST" });
+    setState("idle");
+    if (r.ok) setDraft(r.data);
+    else setError(r.message);
+  }, [responseId]);
+  useEffect(() => {
+    make();
+  }, [make]);
+
+  const mailto = email && draft ? `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(draft.body)}` : null;
+  return (
+    <div className="mt-4 space-y-3 rounded-[12px] border border-line bg-canvas p-4">
+      <p className="text-[13px] text-muted">A first draft written by AI from the rating, reasons and comment. Check and change it before you send it. Nothing is sent automatically.</p>
+      {error && <Notice kind="error">{error}</Notice>}
+      {!draft && state === "busy" && <Skeleton className="h-32 w-full" />}
+      {draft && (
+        <>
+          <div className="space-y-1.5">
+            <label htmlFor={`subj-${responseId}`} className="block text-[13px] font-semibold">
+              Subject
+            </label>
+            <input id={`subj-${responseId}`} className="input" value={draft.subject} maxLength={150} onChange={(e) => setDraft({ ...draft, subject: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor={`body-${responseId}`} className="block text-[13px] font-semibold">
+              Message
+            </label>
+            <textarea id={`body-${responseId}`} className="input" rows={8} value={draft.body} maxLength={3000} onChange={(e) => setDraft({ ...draft, body: e.target.value })} />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {mailto && (
+              <a className="btn btn-primary btn-sm" href={mailto}>
+                Open in your email app
+              </a>
+            )}
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(`${draft.subject}\n\n${draft.body}`);
+                  setState("copied");
+                  setTimeout(() => setState("idle"), 2000);
+                } catch {
+                  /* clipboard blocked: the text is on screen to copy by hand */
+                }
+              }}
+            >
+              {state === "copied" ? "Copied" : "Copy"}
+            </button>
+            <button type="button" className="btn btn-ghost btn-sm" disabled={state === "busy"} onClick={make}>
+              {state === "busy" ? "Writing…" : "Try another"}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 import { adminClient } from "@/lib/supabase/server";
-import { parseLinkToken, verifyLinkToken, verifyMetadata, createResponseToken } from "@/lib/security/signing";
+import { parseLinkToken, verifyLinkToken, verifyLocationTag, verifyMetadata, createResponseToken } from "@/lib/security/signing";
 import { detectBot } from "@/lib/security/bot";
 import { getClientIp, hashIp, buildDedupeKey } from "@/lib/security/request";
 import { hitRateLimit, LIMITS } from "@/lib/security/rateLimit";
@@ -71,6 +71,10 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ token: stri
       meta.metaSig !== null &&
       verifyMetadata(e.linkSecrets, parsed.surveyId, { email: meta.email, agent: meta.agent, ticket: meta.ticket }, meta.metaSig);
 
+    // Branch (QR code or link made for one branch): only trusted when signed for this survey.
+    const lTags = req.nextUrl.searchParams.getAll("l");
+    const locationId = lTags.length === 1 ? verifyLocationTag(e.linkSecrets, parsed.surveyId, lTags[0]) : null;
+
     // 5. Record as pending
     const dedupeKey = buildDedupeKey({ surveyId: parsed.surveyId, email: meta.email, ticket: meta.ticket, ipHash, userAgent });
     const { data: responseId, error } = await adminClient().rpc("record_click", {
@@ -84,6 +88,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ token: stri
       p_ip_hash: ipHash,
       p_user_agent: userAgent,
       p_channel: meta.channel === "kiosk" ? "email" : meta.channel,
+      p_location: locationId,
     });
 
     if (error) {

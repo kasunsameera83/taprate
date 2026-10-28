@@ -18,6 +18,7 @@ type Detail = {
   created_at: string;
   suspended_at: string | null;
   suspended_reason: string | null;
+  local_languages: boolean;
   members: Array<{ email: string; role: string }>;
   surveys: number;
   responses_total: number;
@@ -132,8 +133,43 @@ export default function AdminBusiness({ params }: { params: Promise<{ id: string
         )}
       </SettingsSection>
 
+      <Languages id={d.id} name={d.name} enabled={d.local_languages} onDone={load} />
+
       <Suspend id={d.id} name={d.name} suspended={Boolean(d.suspended_at)} onDone={load} />
     </div>
+  );
+}
+
+/** Sinhala and Tamil: on automatically for Sri Lankan businesses; switch it here for anyone else who asks. */
+function Languages({ id, name, enabled, onDone }: { id: string; name: string; enabled: boolean; onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+  async function toggle() {
+    setBusy(true);
+    setMsg("");
+    const r = await api(`/api/admin/businesses/${id}/languages`, { method: "POST", body: { enabled: !enabled } });
+    setBusy(false);
+    if (r.ok) onDone();
+    else setMsg(r.message);
+  }
+  return (
+    <SettingsSection
+      title="Sinhala and Tamil"
+      description="Lets this business show rating pages, the thank-you page, kiosks and survey emails in Sinhala or Tamil. On automatically for businesses that sign up or pay from Sri Lanka."
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        {enabled ? <Badge tone="pos">On for {name}</Badge> : <Badge tone="plain">Off</Badge>}
+        <button type="button" className="btn btn-secondary" disabled={busy} onClick={toggle}>
+          {busy ? "Saving…" : enabled ? "Switch off" : "Switch on"}
+        </button>
+        {enabled && <p className="w-full text-[13px] text-muted">Switching off keeps existing Sinhala or Tamil surveys as they are; it only stops new ones.</p>}
+      </div>
+      {msg && (
+        <div className="mt-3">
+          <Notice kind="error">{msg}</Notice>
+        </div>
+      )}
+    </SettingsSection>
   );
 }
 

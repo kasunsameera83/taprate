@@ -2,8 +2,9 @@
 // mirroring the real email markup in src/lib/surveys/snippet.ts. Links are inert.
 import { ICON_SETS, type IconSetId } from "@/lib/surveys/iconSets";
 import type { ResolvedOption } from "@/lib/surveys/customIcons";
+import { pt, type Lang } from "@/lib/i18n/public";
 
-export function EmailButtonsPreview({ iconSet, question, options }: { iconSet: IconSetId; question: string; options?: ResolvedOption[] }) {
+export function EmailButtonsPreview({ iconSet, question, options, lang = "en" }: { iconSet: IconSetId; question: string; options?: ResolvedOption[]; lang?: Lang }) {
   const set = ICON_SETS[iconSet];
   const opts = options ?? set.options.map((o) => ({ ...o, imageUrl: null as string | null }));
   const compact = set.id === "nps" || set.id === "ces";
@@ -28,8 +29,8 @@ export function EmailButtonsPreview({ iconSet, question, options }: { iconSet: I
       </div>
       {compact && (
         <div className="mt-1 flex justify-between text-[11px] text-[#374151]">
-          <span>{set.id === "ces" ? "1 = Very difficult" : "0 = Not likely"}</span>
-          <span>{set.id === "ces" ? "7 = Very easy" : "10 = Very likely"}</span>
+          <span>{pt(lang, set.id === "ces" ? "cesLow" : "npsLow")}</span>
+          <span>{pt(lang, set.id === "ces" ? "cesHigh" : "npsHigh")}</span>
         </div>
       )}
     </div>
@@ -64,6 +65,9 @@ export function ThanksPreview({
   allowComment,
   drivers = [],
   reviewLabel = null,
+  lang = "en",
+  reasonsQuestion = null,
+  ratingLabel,
 }: {
   question: string;
   message: string;
@@ -71,21 +75,24 @@ export function ThanksPreview({
   allowComment: boolean;
   drivers?: string[];
   reviewLabel?: string | null;
+  lang?: Lang;
+  reasonsQuestion?: string | null;
+  ratingLabel?: string;
 }) {
   return (
-    <div className="mx-auto w-full max-w-[280px] overflow-hidden rounded-[22px] border-[6px] border-ink bg-canvas">
+    <div lang={lang} className="mx-auto w-full max-w-[280px] overflow-hidden rounded-[22px] border-[6px] border-ink bg-canvas">
       <div className="h-1.5" style={{ background: brandColor }} />
       <div className="space-y-2 px-4 py-5 text-center">
         <p className="text-[11px] text-muted">{question || "Your question"}</p>
         <p className="text-3xl" aria-hidden>
           😍
         </p>
-        <p className="text-[12px] font-semibold text-pos-text">Excellent</p>
+        <p className="text-[12px] font-semibold text-pos-text">{ratingLabel ?? "Excellent"}</p>
         <p className="font-display text-[15px] font-bold leading-snug">{message || "Thanks for your feedback!"}</p>
         {reviewLabel && <div className="mt-2 rounded-[8px] py-1.5 text-[10px] font-semibold text-white" style={{ background: brandColor }}>{reviewLabel}</div>}
         {drivers.length > 0 && (
           <div className="pt-1 text-left">
-            <p className="text-[10px] font-semibold">What did we do well?</p>
+            <p className="text-[10px] font-semibold">{reasonsQuestion || pt(lang, "wentWell")}</p>
             <div className="mt-1 flex flex-wrap gap-1">
               {drivers.slice(0, 6).map((d) => (
                 <span key={d} className="rounded-full border border-control bg-white px-2 py-0.5 text-[9px]">
@@ -97,7 +104,7 @@ export function ThanksPreview({
         )}
         {allowComment && (
           <div className="pt-1 text-left">
-            <p className="text-[10px] font-semibold">Anything you&rsquo;d like to add?</p>
+            <p className="text-[10px] font-semibold">{pt(lang, "tellMore")}</p>
             <div className="mt-1 h-12 rounded-[8px] border border-control bg-white" />
             <div className="mt-2 h-7 rounded-[8px]" style={{ background: brandColor }} />
           </div>

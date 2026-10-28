@@ -194,3 +194,45 @@ export function parseKioskToken(token: string): { kioskId: string; secret: strin
   if (!m || !m[1] || !m[2] || !isUuid(m[1])) return null;
   return { kioskId: m[1], secret: m[2] };
 }
+
+// ---------------------------------------------------------------------------
+// Branch tags on share links and rating links: "l=<locationId>.<sig>".
+// The signature ties the branch to one survey, so a customer can't move a rating to another branch
+// or reuse a tag on another business's survey. The database also checks the branch belongs to the survey's business.
+// ---------------------------------------------------------------------------
+
+export function buildLocationTag(secret: string, surveyId: string, locationId: string): string {
+  if (!isUuid(surveyId) || !isUuid(locationId)) throw new Error("invalid id");
+  return `${locationId}.${hmac(secret, `loc:v1|${surveyId}|${locationId}`)}`;
+}
+
+export function verifyLocationTag(secrets: readonly string[], surveyId: string, tag: string | null | undefined): string | null {
+  if (typeof tag !== "string" || tag.length > 80 || !isUuid(surveyId)) return null;
+  const m = /^([0-9a-f-]{36})\.([A-Za-z0-9_-]{22})$/.exec(tag);
+  if (!m || !m[1] || !m[2] || !isUuid(m[1])) return null;
+  let ok = false;
+  for (const secret of secrets) {
+    if (secret && safeEqual(hmac(secret, `loc:v1|${surveyId}|${m[1]}`), m[2])) ok = true;
+  }
+  return ok ? m[1] : null;
+}
+
+// ---------------------------------------------------------------------------
+// Testimonial wall: /wall/<accountId>.<sig>. Signed so business ids can't be guessed into pages.
+// ---------------------------------------------------------------------------
+
+export function buildWallToken(secret: string, accountId: string): string {
+  if (!isUuid(accountId)) throw new Error("invalid account id");
+  return `${accountId}.${hmac(secret, `wall:v1|${accountId}`)}`;
+}
+
+export function verifyWallToken(secrets: readonly string[], token: string): string | null {
+  if (typeof token !== "string" || token.length > 80) return null;
+  const m = /^([0-9a-f-]{36})\.([A-Za-z0-9_-]{22})$/.exec(token);
+  if (!m || !m[1] || !m[2] || !isUuid(m[1])) return null;
+  let ok = false;
+  for (const secret of secrets) {
+    if (secret && safeEqual(hmac(secret, `wall:v1|${m[1]}`), m[2])) ok = true;
+  }
+  return ok ? m[1] : null;
+}

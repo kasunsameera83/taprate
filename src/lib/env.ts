@@ -29,6 +29,8 @@ const schema = z.object({
   ANTHROPIC_API_KEY: z.string().regex(/^sk-ant-[A-Za-z0-9_-]+$/, "ANTHROPIC_API_KEY must start with sk-ant-").optional().or(z.literal("")),
   ANTHROPIC_MODEL: z.string().regex(/^claude-[a-z0-9.-]{3,60}$/, "ANTHROPIC_MODEL must be a Claude model id").default("claude-haiku-5-5"),
   STRIPE_WEBHOOK_SECRET: z.string().regex(/^whsec_[A-Za-z0-9]+$/, "STRIPE_WEBHOOK_SECRET must start with whsec_").optional().or(z.literal("")),
+  // Bounce and spam-complaint notices from Resend (optional but recommended when sending surveys).
+  RESEND_WEBHOOK_SECRET: z.string().regex(/^whsec_[A-Za-z0-9+/=]+$/, "RESEND_WEBHOOK_SECRET must start with whsec_").optional().or(z.literal("")),
 });
 
 export type ServerEnv = z.infer<typeof schema> & { linkSecrets: string[]; appOrigin: string };

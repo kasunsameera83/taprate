@@ -63,6 +63,18 @@ export default function ApiKeysPage() {
   -d '{"email":"amaya@example.com","agent":"Nimal","ticket":"T-1042"}'`}</pre>
           <p>
             Ratings from these links are marked <strong className="text-ink">verified</strong>: the customer can&rsquo;t change the email, agent or ticket.
+          </p>
+          <p className="font-semibold text-ink">Have TapRate email the survey to one customer (read &amp; write key)</p>
+          <pre className="overflow-x-auto rounded-[10px] bg-canvas p-3 text-[12px] text-ink">{`curl -X POST ${origin}/api/v1/surveys/<survey id>/send \\
+  -H "Authorization: Bearer tr_…" \\
+  -H "Content-Type: application/json" \\
+  -d '{"email":"amaya@example.com","name":"Amaya","ticket":"T-1042"}'`}</pre>
+          <p>
+            Use it from Zapier, Make, Shopify Flow or your helpdesk when an order is delivered or a ticket is solved. People who unsubscribed,
+            bounced, or were emailed in the last 30 days (change with <code className="rounded bg-canvas px-1">skip_recent_days</code>) are skipped, and the
+            answer&rsquo;s <code className="rounded bg-canvas px-1">status</code> says what happened. Your daily email limit applies.
+          </p>
+          <p>
             Other endpoints: <code className="rounded bg-canvas px-1">GET /api/v1/surveys</code>, <code className="rounded bg-canvas px-1">GET /api/v1/responses/&lt;id&gt;</code>.
             Limits: 120 reads and 60 writes a minute per key.
           </p>

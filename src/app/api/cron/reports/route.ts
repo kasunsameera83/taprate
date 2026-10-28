@@ -10,6 +10,7 @@ import { loadPeriod } from "@/lib/insights/data";
 import { generateInsight } from "@/lib/insights/generate";
 import { buildReportEmail, periodLabel, reportDue, UNSUB_PURPOSE } from "@/lib/insights/reportEmail";
 import type { InsightResult } from "@/lib/insights/ai";
+import { sendAgentWins } from "@/lib/insights/wins";
 
 // Daily job: sends weekly reports on Mondays and monthly reports on the 1st (Sri Lanka time).
 // Needs "Authorization: Bearer <CRON_SECRET>". Before each email it re-checks that the person is still
@@ -104,5 +105,7 @@ export async function GET(req: NextRequest) {
       await db.from("report_subscriptions").update({ last_sent_at: new Date(now).toISOString() }).eq("id", s.id);
     } else skipped++;
   }
-  return NextResponse.json({ ok: true, due: due.length, sent, skipped });
+  // Mondays: the weekly "wins" email to agents (for businesses that switched it on).
+  const wins = await sendAgentWins(db, now);
+  return NextResponse.json({ ok: true, due: due.length, sent, skipped, wins });
 }

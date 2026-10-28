@@ -62,18 +62,29 @@ export function parseCsv(input: string, maxRows = IMPORT_MAX_ROWS + 1): { rows: 
   return { rows, truncated: false };
 }
 
+// Header names used by TapRate's own sample and by common tools' exports (Delighted, Customer Thermometer,
+// Nicereply, Simplesat, SurveyMonkey, spreadsheets). Matching ignores case, spaces/underscores and "(UTC)"-style notes.
 const SYNONYMS: Record<ImportField, string[]> = {
-  date: ["date", "created", "created at", "created_at", "timestamp", "submitted", "submitted at", "time", "date time", "datetime"],
-  rating: ["rating", "score", "value", "rate", "csat", "nps"],
-  email: ["email", "e-mail", "customer email", "respondent", "respondent email", "customer"],
-  comment: ["comment", "comments", "feedback", "note", "notes", "message"],
-  agent: ["agent", "agent name", "assignee", "staff", "employee", "advisor"],
-  ticket: ["ticket", "ticket id", "ticket_id", "ticket number", "ticket ref", "ticket_ref", "reference", "case", "case id"],
+  date: ["date", "created", "created at", "timestamp", "submitted", "submitted at", "time", "date time", "datetime", "response timestamp", "response date", "responded at", "survey date", "response created at", "rated at"],
+  rating: ["rating", "score", "value", "rate", "csat", "nps", "nps score", "response score", "rating score", "csat score", "answer"],
+  email: ["email", "e-mail", "customer email", "respondent", "respondent email", "customer", "person email", "email address", "contact email", "recipient email", "recipient"],
+  comment: ["comment", "comments", "feedback", "note", "notes", "message", "response comment", "comment text", "additional feedback", "open text", "verbatim"],
+  agent: ["agent", "agent name", "assignee", "staff", "employee", "advisor", "owner", "rep", "team member"],
+  ticket: ["ticket", "ticket id", "ticket number", "ticket ref", "reference", "case", "case id", "order", "order id", "order number", "conversation id"],
 };
+
+const normHeader = (h: string) =>
+  h
+    .replace(/^\uFEFF/, "")
+    .replace(/\([^)]*\)/g, " ")
+    .trim()
+    .toLowerCase()
+    .replace(/[_\s]+/g, " ")
+    .trim();
 
 /** Guesses which column is which from the header row. */
 export function detectColumns(header: string[]): ColumnMapping {
-  const norm = header.map((h) => h.trim().toLowerCase().replace(/\s+/g, " "));
+  const norm = header.map(normHeader);
   const out: ColumnMapping = {};
   const used = new Set<number>();
   for (const field of IMPORT_FIELDS) {
@@ -93,6 +104,12 @@ export function detectColumns(header: string[]): ColumnMapping {
  */
 export function parseDateCell(value: string): string | null {
   const v = value.trim();
+  // Unix time (seconds or milliseconds), as some tools export it.
+  if (/^\d{10}$/.test(v) || /^\d{13}$/.test(v)) {
+    const ms = v.length === 10 ? Number(v) * 1000 : Number(v);
+    const d = new Date(ms);
+    return Number.isNaN(d.getTime()) ? null : d.toISOString().replace(/\.\d{3}Z$/, "Z");
+  }
   const m = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?)?\s*(Z|[+-]\d{2}:?\d{2})?$/i.exec(v);
   if (!m) return null;
   const [y, mo, d, h = "0", mi = "0", s = "0", , tz] = m.slice(1) as Array<string | undefined>;

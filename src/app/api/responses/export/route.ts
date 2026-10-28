@@ -18,6 +18,7 @@ export const GET = secureRoute<undefined, z.infer<typeof exportQuerySchema>>(
       .eq("account_id", membership.accountId)
       .eq("status", "confirmed");
     if (query.surveyId) q = q.eq("survey_id", query.surveyId);
+    if (query.locationId) q = q.eq("location_id", query.locationId);
     if (query.from) q = q.gte("created_at", `${query.from}T00:00:00Z`);
     if (query.to) q = q.lte("created_at", `${query.to}T23:59:59.999Z`);
 
@@ -28,6 +29,7 @@ export const GET = secureRoute<undefined, z.infer<typeof exportQuerySchema>>(
       ...r,
       ratingLabel: r.iconSet && isIconSetId(r.iconSet) && r.rating !== null ? ratingOption(r.iconSet, r.rating)?.label ?? "" : "",
       verified: r.verified ? "yes" : "no",
+      branch: r.location?.name ?? "",
     }));
 
     const csv = toCsv(rows, [
@@ -39,6 +41,7 @@ export const GET = secureRoute<undefined, z.infer<typeof exportQuerySchema>>(
       { key: "email", header: "Customer email" },
       { key: "agent", header: "Agent" },
       { key: "ticket", header: "Ticket" },
+      { key: "branch", header: "Branch" },
       { key: "verified", header: "Details verified" },
     ]);
 

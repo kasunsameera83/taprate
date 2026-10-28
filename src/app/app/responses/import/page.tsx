@@ -121,6 +121,19 @@ export default function ImportPage() {
 
       {result && <Notice kind={result.kind}>{result.text}</Notice>}
 
+      <details className="panel group p-5 sm:p-6">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold">
+          Moving from Delighted, Customer Thermometer or another tool?
+          <span aria-hidden className="text-xl font-normal text-muted transition-transform group-open:rotate-45">+</span>
+        </summary>
+        <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm text-muted">
+          <li>Download your responses as a CSV from the old tool (in Delighted: Results → Export → CSV).</li>
+          <li>Create a survey here with the same scale: 0–10 for NPS, 5 stars or faces for CSAT.</li>
+          <li>Choose that survey and the file below. Common column names (Score, Comment, Response timestamp, Person email) are matched for you, and Unix times work too.</li>
+          <li>Import one file per survey. Importing the same file twice is safe: repeated rows are skipped.</li>
+        </ol>
+      </details>
+
       <SettingsSection title="1. Choose the survey and file" description="Imported ratings don't use credits, open follow-ups or send alerts.">
         {!surveys ? (
           <Skeleton className="h-24 w-full" />

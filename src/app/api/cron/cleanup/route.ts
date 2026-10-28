@@ -21,7 +21,9 @@ export async function GET(req: NextRequest) {
   if (!(await hitRateLimit(LIMITS.cron, hashIp(e.IP_HASH_SALT, getClientIp(req.headers))))) return NextResponse.json({ ok: false }, { status: 429 });
   if (!e.CRON_SECRET) return NextResponse.json({ ok: false, error: "CRON_SECRET is not set" }, { status: 503 });
   if (!authorized(req, e.CRON_SECRET)) return NextResponse.json({ ok: false }, { status: 401 });
-  const { data, error } = await adminClient().rpc("maintenance_cleanup");
+  const db = adminClient();
+  const { data, error } = await db.rpc("maintenance_cleanup");
   if (error) return NextResponse.json({ ok: false }, { status: 500 });
-  return NextResponse.json({ ok: true, removed: data });
+  const { data: sending } = await db.rpc("sending_cleanup");
+  return NextResponse.json({ ok: true, removed: data, sending: sending ?? null });
 }

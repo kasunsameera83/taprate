@@ -62,6 +62,7 @@ Use a **separate project** for production (keep your current one for testing).
    | `PAYHERE_SANDBOX` | `false` |
    | `PAYHERE_APP_ID`, `PAYHERE_APP_SECRET` | optional, see PayHere below |
    | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | from Stripe (live) |
+   | `RESEND_WEBHOOK_SECRET` | from Resend webhooks (bounces), see step 3 |
    | `ANTHROPIC_API_KEY` | optional (AI summaries) |
    | `SENTRY_DSN` | optional (error monitoring) |
 
@@ -69,7 +70,7 @@ Use a **separate project** for production (keep your current one for testing).
    `LINK_SIGNING_SECRET` later without putting the old one in `LINK_SIGNING_SECRET_PREVIOUS`
    (otherwise rating buttons already sent in emails stop working).
 3. Deploy. Then Settings → Domains → add your domain and create the DNS records Vercel shows.
-4. Crons are set in `vercel.json` (follow-up reminders, billing, email reports, clean-up). They run once a
+4. Crons are set in `vercel.json` (follow-up reminders, billing, email reports, survey email reminders, clean-up). They run once a
    day and are protected by `CRON_SECRET`.
 
 ## 3. Resend (email) and DNS
@@ -80,6 +81,13 @@ Use a **separate project** for production (keep your current one for testing).
    `TXT  _dmarc  v=DMARC1; p=none; rua=mailto:dmarc@YOUR-DOMAIN`
    After a few weeks with no problems, change `p=none` to `p=quarantine`.
 3. Create an API key → put it in Vercel (`RESEND_API_KEY`) and in Supabase SMTP (step 1.4).
+4. Survey emails (the "Send by email" tab) go out from `ALERT_FROM_EMAIL` with the business's name.
+   Webhooks → Add endpoint `https://YOUR-DOMAIN/api/webhooks/resend`, events **email.bounced** and
+   **email.complained**. Copy its signing secret (starts with `whsec_`) into Vercel as
+   `RESEND_WEBHOOK_SECRET`. Bounced or complaining addresses are then never emailed again, which keeps
+   your domain's reputation (and everyone's delivery) healthy.
+5. Limits: trial businesses can send 100 survey emails a day, paid plans 2,000. Resend's own plan limits
+   also apply; upgrade Resend before your customers send more than its plan allows.
 
 ## 4. PayHere (LKR)
 

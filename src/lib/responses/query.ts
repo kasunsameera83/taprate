@@ -1,7 +1,7 @@
 import "server-only";
 
 export const RESPONSE_COLUMNS =
-  "id, survey_id, rating, pending_rating, status, comment, respondent_email, agent, ticket_ref, metadata_verified, sentiment, drivers, channel, followup_status, assignee, due_at, resolved_at, created_at, confirmed_at, surveys(name, icon_set)";
+  "id, survey_id, rating, pending_rating, status, comment, respondent_email, agent, ticket_ref, metadata_verified, sentiment, drivers, channel, followup_status, assignee, due_at, resolved_at, created_at, confirmed_at, location_id, share_consent, display_name, featured_at, surveys(name, icon_set), locations(name)";
 
 export type ResponseRow = {
   id: string;
@@ -24,6 +24,11 @@ export type ResponseRow = {
   created_at: string;
   confirmed_at: string | null;
   surveys: { name: string; icon_set: string } | null;
+  location_id?: string | null;
+  locations?: { name: string } | null;
+  share_consent?: boolean;
+  display_name?: string | null;
+  featured_at?: string | null;
 };
 
 export function toResponseDto(r: ResponseRow) {
@@ -42,6 +47,9 @@ export function toResponseDto(r: ResponseRow) {
     sentiment: r.sentiment,
     drivers: r.drivers ?? [],
     channel: r.channel,
+    location: r.location_id ? { id: r.location_id, name: r.locations?.name ?? "" } : null,
+    // The customer agreed their comment may be shown publicly; featured = chosen for the website.
+    testimonial: r.share_consent ? { displayName: r.display_name ?? null, featured: Boolean(r.featured_at) } : null,
     followup: r.followup_status
       ? { status: r.followup_status, assigneeId: r.assignee, dueAt: r.due_at, resolvedAt: r.resolved_at }
       : null,

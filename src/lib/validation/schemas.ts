@@ -3,6 +3,7 @@
 // Every object schema is .strict(): unknown fields are rejected, not silently ignored.
 import { z } from "zod";
 import { ICON_SET_IDS, ICON_SETS, type IconSetId } from "../surveys/iconSets.ts";
+import { LANGS } from "../i18n/public.ts";
 
 // ---------------------------------------------------------------------------
 // Text helpers
@@ -125,6 +126,9 @@ const surveyFields = {
   followupsEnabled: z.boolean(),
   followupDueHours: z.number({ error: "Choose how soon to follow up" }).int().min(1).max(720),
   optionLabels: optionLabelsSchema,
+  language: z.enum(LANGS, { error: "Choose a language" }),
+  reasonsQuestionPositive: z.union([text(1, 80, "Question").refine((v) => !/[<>]/.test(v), "Questions can't contain < or >"), z.literal("").transform(() => null), z.null()]),
+  reasonsQuestionNegative: z.union([text(1, 80, "Question").refine((v) => !/[<>]/.test(v), "Questions can't contain < or >"), z.literal("").transform(() => null), z.null()]),
 };
 
 function thresholdFits(iconSet: IconSetId, threshold: number | null): boolean {
@@ -147,6 +151,9 @@ export const surveyCreateSchema = z
     followupsEnabled: z.boolean().default(true),
     followupDueHours: surveyFields.followupDueHours.default(48),
     optionLabels: optionLabelsSchema.default({}),
+    language: surveyFields.language.default("en"),
+    reasonsQuestionPositive: surveyFields.reasonsQuestionPositive.default(null),
+    reasonsQuestionNegative: surveyFields.reasonsQuestionNegative.default(null),
   })
   .strict()
   .refine((v) => thresholdFits(v.iconSet, v.alertThreshold), {
@@ -190,8 +197,10 @@ export const responsesQuerySchema = z
     status: z.enum(["confirmed", "pending"]).default("confirmed"),
     sentiment: z.enum(["positive", "neutral", "negative"]).optional(),
     hasComment: z.enum(["yes"]).optional(),
+    shareable: z.enum(["yes", "featured"]).optional(),
     channel: z.enum(["email", "qr", "whatsapp", "sms", "link", "web", "kiosk", "import"]).optional(),
     agent: z.string().trim().max(100).optional(),
+    locationId: uuidSchema.optional(),
     from: isoDate.optional(),
     to: isoDate.optional(),
     page: z.coerce.number().int().min(1).max(1000).default(1),
@@ -204,6 +213,7 @@ export type ResponsesQuery = z.infer<typeof responsesQuerySchema>;
 export const exportQuerySchema = z
   .object({
     surveyId: uuidSchema.optional(),
+    locationId: uuidSchema.optional(),
     from: isoDate.optional(),
     to: isoDate.optional(),
   })
@@ -213,6 +223,7 @@ export const exportQuerySchema = z
 export const statsQuerySchema = z
   .object({
     surveyId: uuidSchema.optional(),
+    locationId: uuidSchema.optional(),
     days: z.coerce.number().pipe(z.union([z.literal(7), z.literal(30), z.literal(90)])).default(30),
   })
   .strict();
@@ -241,6 +252,19 @@ export const publicCommentSchema = z
       .optional(),
     // Reasons tapped by the customer. The server also checks they're offered by this survey.
     drivers: z.array(driverLabel).max(8).optional(),
+    // Testimonials: the customer agrees their comment may be shown on the business's website.
+    shareConsent: z.boolean().optional(),
+    displayName: z
+      .union([
+        z
+          .string()
+          .max(160)
+          .transform((v) => cleanText(v))
+          .pipe(z.string().max(40, "Keep the name under 40 characters"))
+          .refine((v) => !/[<>@]/.test(v), "Use just a first name"),
+        z.null(),
+      ])
+      .optional(),
     // Honeypot: hidden field real people never fill in. Bots that fill every field are rejected.
     website: z.string().max(0, "Invalid submission").optional(),
   })
@@ -436,7 +460,25 @@ export const kioskRateSchema = z
   })
   .strict();
 
-export const kioskCreateSchema = z.object({ name: text(1, 60, "Kiosk name") }).strict();
+export const kioskCreateSchema = z.object({ name: text(1, 60, "Kiosk name"), locationId: z.union([uuidSchema, z.null()]).optional() }).strict();
+
+// Branches and locations
+export const locationCreateSchema = z
+  .object({ name: text(1, 60, "Branch name").refine((v) => !/[<>]/.test(v), "Branch names can't contain < or >") })
+  .strict();
+export const locationUpdateSchema = z
+  .object({ name: text(1, 60, "Branch name").refine((v) => !/[<>]/.test(v), "Branch names can't contain < or >"), archived: z.boolean() })
+  .strict();
+export const featureSchema = z.object({ featured: z.boolean() }).strict();
+export const tvScreenCreateSchema = z
+  .object({
+    name: text(1, 60, "Screen name").refine((v) => !/[<>]/.test(v), "Names can't contain < or >"),
+    surveyId: z.union([uuidSchema, z.null()]),
+    locationId: z.union([uuidSchema, z.null()]),
+    showComments: z.boolean(),
+  })
+  .strict();
+export const shareQuerySchema = z.object({ locationId: uuidSchema.optional() }).strict();
 
 export const integrationCreateSchema = z
   .object({
@@ -507,6 +549,7 @@ export const apiLinksSchema = z
       .refine((v) => !MERGE_TAG_LIKE.test(v), "Agent looks like an unreplaced merge tag")
       .optional(),
     ticket: z.string().trim().regex(TICKET_RE, "Ticket may use letters, numbers and # . _ / - (up to 100)").optional(),
+    location_id: uuidSchema.optional(),
   })
   .strict();
 export type ApiLinksInput = z.infer<typeof apiLinksSchema>;

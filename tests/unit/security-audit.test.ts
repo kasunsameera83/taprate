@@ -21,6 +21,8 @@ const SPECIAL: Record<string, RegExp[]> = {
   "src/app/api/webhooks/payhere/route.ts": [/verifyPayhereNotify\(/, /hitRateLimit\(/, /MAX_BYTES/],
   "src/app/api/webhooks/stripe/route.ts": [/verifyStripeSignature\(/, /hitRateLimit\(/, /MAX_BYTES/],
   "src/app/api/health/route.ts": [/hitRateLimit\(/],
+  "src/app/api/webhooks/resend/route.ts": [/verifySvixSignature\(/, /hitRateLimit\(/, /MAX_BYTES/],
+  "src/app/api/public/unsubscribe/one-click/route.ts": [/verifyPurposeToken\(/, /hitRateLimit\(/, /MAX_BYTES/],
 };
 
 test("every API route goes through a security wrapper (or has its own checks)", () => {
@@ -57,7 +59,7 @@ test("route files only export what Next.js allows", () => {
 });
 
 test("browser code never imports server secrets", () => {
-  const serverOnly = [/@\/lib\/supabase\/server/, /@\/lib\/env"/, /@\/lib\/admin"/, /@\/lib\/billing\/server/, /@\/lib\/insights\/(data|generate)/, /@\/lib\/email/];
+  const serverOnly = [/@\/lib\/supabase\/server/, /@\/lib\/env"/, /@\/lib\/admin"/, /@\/lib\/billing\/server/, /@\/lib\/insights\/(data|generate)/, /@\/lib\/email/, /@\/lib\/sending\/server/, /@\/lib\/insights\/wins"/];
   for (const f of files) {
     const src = readFileSync(f, "utf8");
     if (!/^["']use client["'];?/m.test(src.slice(0, 200))) continue;

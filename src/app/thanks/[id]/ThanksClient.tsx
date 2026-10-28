@@ -15,9 +15,15 @@ type Props = {
   driverPrompt: string;
   existingDrivers: string[];
   review: { label: string; url: string } | null;
+  /** Asking a happy customer if their comment may be shown on the business's website. */
+  share: { label: string; consent: boolean; name: string } | null;
+  /** Customer-facing words in the survey's language. */
+  text: Record<"shareName" | "shareHint" | "notCollecting" | "saveFailed" | "savingRating" | "ratingSaved" | "tapAny" | "saving" | "saved" | "couldntSave" | "commentThanks" | "yourComment" | "editComment" | "tellMore" | "optional" | "commentPlaceholder" | "sendComment" | "sending", string>;
 };
 
-export function ThanksClient({ responseId, token, allowComment, existingComment, brandColor, driverOptions, driverPrompt, existingDrivers, review }: Props) {
+export function ThanksClient({ responseId, token, allowComment, existingComment, brandColor, driverOptions, driverPrompt, existingDrivers, review, share, text: t }: Props) {
+  const [consent, setConsent] = useState(share?.consent ?? false);
+  const [displayName, setDisplayName] = useState(share?.name ?? "");
   const [state, setState] = useState<"confirming" | "recorded" | "closed" | "error">("confirming");
   const [comment, setComment] = useState(existingComment);
   const [commentState, setCommentState] = useState<{ kind: "idle" | "saving" | "saved" | "error"; text?: string }>({ kind: "idle" });
@@ -53,7 +59,13 @@ export function ThanksClient({ responseId, token, allowComment, existingComment,
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const honeypot = String(new FormData(e.currentTarget).get("website") ?? "");
-    const body = { responseId, token, comment, ...(honeypot ? { website: honeypot } : {}) };
+    const body = {
+      responseId,
+      token,
+      comment,
+      ...(share ? { shareConsent: consent, displayName: consent && displayName.trim() ? displayName : null } : {}),
+      ...(honeypot ? { website: honeypot } : {}),
+    };
     const parsed = publicCommentSchema.safeParse(body);
     if (!parsed.success) {
       setCommentState({ kind: "error", text: Object.values(fieldErrors(parsed.error))[0] });
@@ -71,13 +83,13 @@ export function ThanksClient({ responseId, token, allowComment, existingComment,
   }
 
   if (state === "closed") {
-    return <p className="mt-6 rounded-[10px] bg-[#eceef2] px-4 py-3 text-sm text-muted">This survey isn&rsquo;t collecting ratings right now.</p>;
+    return <p className="mt-6 rounded-[10px] bg-[#eceef2] px-4 py-3 text-sm text-muted">{t.notCollecting}</p>;
   }
   if (state === "error") {
     return (
       <p role="alert" className="mt-6 flex items-start gap-2 rounded-[10px] bg-neg-soft px-4 py-3 text-left text-sm text-neg-text">
         <IconAlert className="mt-0.5 h-4 w-4 shrink-0" />
-        We couldn&rsquo;t save your rating. Please tap the button in your email again.
+        {t.saveFailed}
       </p>
     );
   }
@@ -86,11 +98,11 @@ export function ThanksClient({ responseId, token, allowComment, existingComment,
     <div className="mt-6 text-left">
       <p className="flex items-center justify-center gap-1.5 text-sm text-muted" role="status">
         {state === "confirming" ? (
-          "Saving your rating…"
+          t.savingRating
         ) : (
           <>
             <IconCheck className="h-4 w-4 text-pos-text" />
-            Rating saved
+            {t.ratingSaved}
           </>
         )}
       </p>
@@ -110,7 +122,7 @@ export function ThanksClient({ responseId, token, allowComment, existingComment,
       {state === "recorded" && driverOptions.length > 0 && (
         <fieldset className="mt-6">
           <legend className="text-[15px] font-semibold">
-            {driverPrompt} <span className="font-normal text-muted">(tap any)</span>
+            {driverPrompt} <span className="font-normal text-muted">{t.tapAny}</span>
           </legend>
           <div className="mt-3 flex flex-wrap gap-2">
             {driverOptions.map((d) => {
@@ -131,14 +143,14 @@ export function ThanksClient({ responseId, token, allowComment, existingComment,
             })}
           </div>
           <p className="mt-2 h-4 text-xs text-muted" aria-live="polite">
-            {driverState === "saving" ? "Saving…" : driverState === "saved" ? "Saved" : driverState === "error" ? "Couldn't save. Tap again." : ""}
+            {driverState === "saving" ? t.saving : driverState === "saved" ? t.saved : driverState === "error" ? t.couldntSave : ""}
           </p>
         </fieldset>
       )}
 
       {allowComment && state === "recorded" && !editing && savedComment && (
         <div className="mt-6 rounded-[12px] border border-[#c6e7d3] bg-pos-soft p-4" role="status">
-          <p className="text-sm font-semibold text-pos-text">{commentState.kind === "saved" ? "Thanks, we've got your comment." : "Your comment"}</p>
+          <p className="text-sm font-semibold text-pos-text">{commentState.kind === "saved" ? t.commentThanks : t.yourComment}</p>
           {/* Rendered as text by React: never interpreted as HTML. */}
           <p className="mt-2 whitespace-pre-wrap break-words text-[15px] text-ink">{savedComment}</p>
           <button
@@ -150,7 +162,7 @@ export function ThanksClient({ responseId, token, allowComment, existingComment,
               setEditing(true);
             }}
           >
-            Edit comment
+            {t.editComment}
           </button>
         </div>
       )}
@@ -158,7 +170,7 @@ export function ThanksClient({ responseId, token, allowComment, existingComment,
       {allowComment && state === "recorded" && editing && (
         <form onSubmit={submit} noValidate className="mt-6 space-y-3">
           <label htmlFor="comment" className="block text-[15px] font-semibold">
-            Want to tell us more? <span className="font-normal text-muted">(optional)</span>
+            {t.tellMore} <span className="font-normal text-muted">{t.optional}</span>
           </label>
           <textarea
             id="comment"
@@ -168,8 +180,27 @@ export function ThanksClient({ responseId, token, allowComment, existingComment,
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             aria-describedby="comment-count"
-            placeholder="What went well, or what could be better?"
+            placeholder={t.commentPlaceholder}
           />
+          {share && (
+            <div className="space-y-2 rounded-[10px] border border-line bg-canvas p-3">
+              <label className="flex cursor-pointer items-start gap-2.5 text-sm">
+                <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0" style={{ accentColor: brandColor }} />
+                <span>
+                  {share.label}
+                  <span className="block text-[12px] text-muted">{t.shareHint}</span>
+                </span>
+              </label>
+              {consent && (
+                <div>
+                  <label htmlFor="displayName" className="mb-1 block text-[13px] font-semibold">
+                    {t.shareName}
+                  </label>
+                  <input id="displayName" className="input" maxLength={40} autoComplete="given-name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+                </div>
+              )}
+            </div>
+          )}
           {/* Honeypot for bots: hidden from people and screen readers. */}
           <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute left-[-9999px] h-0 w-0 opacity-0" />
           <div className="flex items-center justify-between gap-3">
@@ -181,7 +212,7 @@ export function ThanksClient({ responseId, token, allowComment, existingComment,
               style={{ background: brandColor, color: buttonText }}
               disabled={commentState.kind === "saving" || comment.trim().length === 0}
             >
-              {commentState.kind === "saving" ? "Sending…" : "Send comment"}
+              {commentState.kind === "saving" ? t.sending : t.sendComment}
             </button>
           </div>
           {commentState.kind === "error" && commentState.text && (

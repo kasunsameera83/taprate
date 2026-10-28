@@ -11,15 +11,15 @@ export const GET = secureRoute<undefined, undefined, undefined, "user-any">(
   { auth: "user-any", action: null, ipLimit: LIMITS.userRead, userLimit: LIMITS.userRead },
   async ({ supabase, membership, user }) => {
     const [all, mfa] = await Promise.all([listMemberships(supabase, user.id), mfaState(supabase)]);
-    let account: { name: string; plan: string; credits: number; createdAt: string; logoUrl: string | null } | null = null;
+    let account: { name: string; plan: string; credits: number; createdAt: string; logoUrl: string | null; localLanguages: boolean } | null = null;
     if (membership) {
       const { data, error } = await supabase
         .from("accounts")
-        .select("name, plan, credit_balance, created_at, logo_path")
+        .select("name, plan, credit_balance, created_at, logo_path, local_languages")
         .eq("id", membership.accountId)
         .maybeSingle();
       if (error) throw dbError(error);
-      if (data) account = { name: data.name, plan: data.plan, credits: data.credit_balance, createdAt: data.created_at, logoUrl: logoUrl(data.logo_path) };
+      if (data) account = { name: data.name, plan: data.plan, credits: data.credit_balance, createdAt: data.created_at, logoUrl: logoUrl(data.logo_path), localLanguages: Boolean(data.local_languages) };
     }
     return ok({
       userId: user.id,

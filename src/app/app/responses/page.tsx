@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { api, qs } from "@/lib/client/api";
-import type { ResponseItem, ResponsesPage, Survey } from "@/lib/client/types";
+import type { Location, ResponseItem, ResponsesPage, Survey } from "@/lib/client/types";
 import { ratingOption, isIconSetId, type Sentiment } from "@/lib/surveys/iconSets";
 import { responsesQuerySchema, fieldErrors } from "@/lib/validation/schemas";
 import { EmptyState, LoadError, Notice, Segmented, SentimentDot, Skeleton } from "@/components/ui";
@@ -19,6 +19,8 @@ type Filters = {
   to: string;
   agent: string;
   channel: string;
+  locationId: string;
+  shareable: "" | "yes" | "featured";
   page: number;
 };
 
@@ -53,6 +55,8 @@ function fromParams(sp: URLSearchParams): Filters {
     to: sp.get("to") ?? "",
     agent: sp.get("agent") ?? "",
     channel: CHANNEL_LABEL[sp.get("channel") ?? ""] ? (sp.get("channel") as string) : "",
+    locationId: /^[0-9a-f-]{36}$/.test(sp.get("locationId") ?? "") ? (sp.get("locationId") as string) : "",
+    shareable: sp.get("shareable") === "yes" || sp.get("shareable") === "featured" ? (sp.get("shareable") as "yes" | "featured") : "",
     page: 1,
   };
 }
@@ -60,6 +64,7 @@ function fromParams(sp: URLSearchParams): Filters {
 function ResponsesView() {
   const search = useSearchParams();
   const [surveys, setSurveys] = useState<Survey[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [filters, setFilters] = useState<Filters>(() => fromParams(search));
   const [data, setData] = useState<ResponsesPage | null>(null);
   const [error, setError] = useState("");
@@ -68,6 +73,7 @@ function ResponsesView() {
 
   useEffect(() => {
     api<Survey[]>("/api/surveys").then((r) => r.ok && setSurveys(r.data));
+    api<Location[]>("/api/locations").then((r) => r.ok && setLocations(r.data));
     api<{ role: string | null }>("/api/account").then((r) => r.ok && setCanExport(r.data.role === "owner" || r.data.role === "admin"));
   }, []);
 
@@ -80,6 +86,8 @@ function ResponsesView() {
     to: filters.to || undefined,
     agent: filters.agent.trim() || undefined,
     channel: filters.channel || undefined,
+    locationId: filters.locationId || undefined,
+    shareable: filters.status === "confirmed" ? filters.shareable || undefined : undefined,
     page: filters.page,
     limit: PAGE_SIZE,
   };
@@ -105,6 +113,8 @@ function ResponsesView() {
         to: query.to,
         agent: query.agent,
         channel: query.channel,
+        locationId: query.locationId,
+        shareable: query.shareable,
       })}`,
     );
 
@@ -126,10 +136,10 @@ function ResponsesView() {
   }, [queryKey, reload]);
 
   const update = (patch: Partial<Filters>) => setFilters((f) => ({ ...f, page: 1, ...patch }));
-  const filtersApplied = Boolean(filters.surveyId || filters.sentiment || filters.hasComment || filters.from || filters.to || filters.agent || filters.channel);
-  const clear = () => update({ surveyId: "", sentiment: "", hasComment: false, from: "", to: "", agent: "", channel: "" });
+  const filtersApplied = Boolean(filters.surveyId || filters.sentiment || filters.hasComment || filters.from || filters.to || filters.agent || filters.channel || filters.locationId || filters.shareable);
+  const clear = () => update({ surveyId: "", sentiment: "", hasComment: false, from: "", to: "", agent: "", channel: "", locationId: "", shareable: "" });
   const pages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1;
-  const exportHref = `/api/responses/export${qs({ surveyId: filters.surveyId || undefined, from: filters.from || undefined, to: filters.to || undefined })}`;
+  const exportHref = `/api/responses/export${qs({ surveyId: filters.surveyId || undefined, locationId: filters.locationId || undefined, from: filters.from || undefined, to: filters.to || undefined })}`;
   const load = useCallback(() => setReload((n) => n + 1), []);
 
   return (
@@ -198,6 +208,18 @@ function ResponsesView() {
               </option>
             ))}
           </select>
+          {filters.status === "confirmed" && (
+            <>
+              <label className="sr-only" htmlFor="f-shareable">
+                Testimonials
+              </label>
+              <select id="f-shareable" className="input w-auto" value={filters.shareable} onChange={(e) => update({ shareable: e.target.value as Filters["shareable"] })}>
+                <option value="">All comments</option>
+                <option value="yes">Customer agreed to share</option>
+                <option value="featured">Shown on your website</option>
+              </select>
+            </>
+          )}
           <label className="flex min-h-11 items-center gap-2 text-sm font-semibold">
             <input type="checkbox" checked={filters.hasComment} onChange={(e) => update({ hasComment: e.target.checked })} className="h-4 w-4 accent-[var(--color-brand)]" />
             With comments only
@@ -217,6 +239,22 @@ function ResponsesView() {
               ))}
             </select>
           </div>
+          {locations.length > 0 && (
+            <div>
+              <label htmlFor="f-location" className="mb-1 block text-[13px] font-semibold text-muted">
+                Branch
+              </label>
+              <select id="f-location" className="input" value={filters.locationId} onChange={(e) => update({ locationId: e.target.value })}>
+                <option value="">All branches</option>
+                {locations.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.name}
+                    {l.archived ? " (archived)" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div>
             <label htmlFor="f-agent" className="mb-1 block text-[13px] font-semibold text-muted">
               Agent
@@ -290,8 +328,8 @@ function ResponsesView() {
             <p className="mb-2 text-[13px] text-muted">
               {data.total} {data.total === 1 ? "response" : "responses"}
             </p>
-            <ResponseTable items={data.items} />
-            <ResponseCards items={data.items} />
+            <ResponseTable items={data.items} canFeature={canExport} />
+            <ResponseCards items={data.items} canFeature={canExport} />
           </>
         ) : null}
       </section>
@@ -364,7 +402,39 @@ function Customer({ r }: { r: ResponseItem }) {
   );
 }
 
-function ResponseTable({ items }: { items: ResponseItem[] }) {
+/** Show a consented, happy comment on the website testimonial wall. */
+function TestimonialToggle({ r, canFeature }: { r: ResponseItem; canFeature: boolean }) {
+  const [featured, setFeatured] = useState(r.testimonial?.featured ?? false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  if (!r.testimonial || r.sentiment !== "positive" || !r.comment) return null;
+  if (!canFeature) return featured ? <span className="mt-2 block text-[12px] font-semibold text-pos-text">Shown on your website</span> : null;
+  return (
+    <span className="mt-2 block">
+      <button
+        type="button"
+        aria-pressed={featured}
+        disabled={busy}
+        className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold ${featured ? "border-transparent bg-pos-soft text-pos-text" : "border-line-strong text-muted hover:border-ink hover:text-ink"}`}
+        onClick={async () => {
+          setBusy(true);
+          setErr("");
+          const res = await api(`/api/responses/${encodeURIComponent(r.id)}/feature`, { method: "POST", body: { featured: !featured } });
+          setBusy(false);
+          if (res.ok) setFeatured(!featured);
+          else setErr(res.message);
+        }}
+      >
+        <span aria-hidden>{featured ? "★" : "☆"}</span>
+        {featured ? "Shown on your website" : "Show on website"}
+      </button>
+      <span className="ml-2 text-[12px] text-muted">as {r.testimonial.displayName ?? "A customer"}</span>
+      {err && <span className="mt-1 block text-[12px] text-neg-text">{err}</span>}
+    </span>
+  );
+}
+
+function ResponseTable({ items, canFeature }: { items: ResponseItem[]; canFeature: boolean }) {
   return (
     <div className="panel hidden overflow-x-auto md:block">
       <table className="w-full text-sm">
@@ -388,6 +458,7 @@ function ResponseTable({ items }: { items: ResponseItem[] }) {
               <td className="max-w-xs whitespace-pre-wrap break-words px-4 py-3">
                 {r.comment ?? (r.drivers.length ? null : <span className="text-faint">No comment</span>)}
                 <Reasons r={r} />
+                <TestimonialToggle r={r} canFeature={canFeature} />
               </td>
               <td className="max-w-[220px] px-4 py-3">
                 <Customer r={r} />
@@ -395,7 +466,10 @@ function ResponseTable({ items }: { items: ResponseItem[] }) {
               <td className="px-4 py-3">{r.agent ?? <span className="text-faint">None</span>}</td>
               <td className="px-4 py-3">
                 {r.surveyName}
-                <span className="block text-[12px] text-muted">{CHANNEL_LABEL[r.channel] ?? r.channel}</span>
+                <span className="block text-[12px] text-muted">
+                  {CHANNEL_LABEL[r.channel] ?? r.channel}
+                  {r.location ? ` · ${r.location.name}` : ""}
+                </span>
               </td>
               <td className="whitespace-nowrap px-4 py-3 text-muted">{when(r.createdAt)}</td>
             </tr>
@@ -406,7 +480,7 @@ function ResponseTable({ items }: { items: ResponseItem[] }) {
   );
 }
 
-function ResponseCards({ items }: { items: ResponseItem[] }) {
+function ResponseCards({ items, canFeature }: { items: ResponseItem[]; canFeature: boolean }) {
   return (
     <ul className="space-y-3 md:hidden">
       {items.map((r) => (
@@ -417,11 +491,13 @@ function ResponseCards({ items }: { items: ResponseItem[] }) {
           </div>
           {r.comment && <p className="whitespace-pre-wrap break-words">&ldquo;{r.comment}&rdquo;</p>}
           <Reasons r={r} />
+          <TestimonialToggle r={r} canFeature={canFeature} />
           <div className="text-[13px] text-muted">
             <Customer r={r} />
             {r.agent && <span className="block">Agent: {r.agent}</span>}
             <span className="block">
               {r.surveyName}, via {CHANNEL_LABEL[r.channel] ?? r.channel}
+              {r.location ? ` · ${r.location.name}` : ""}
             </span>
           </div>
         </li>

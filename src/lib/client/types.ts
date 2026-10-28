@@ -4,7 +4,10 @@ import type { Stats } from "../surveys/stats.ts";
 
 export type Survey = SurveyDto;
 
+export type BranchStat = { id: string; name: string; total: number; satisfactionPct: number | null; previousPct: number | null; negative: number };
+
 export type StatsResponse = Stats & {
+  byLocation: BranchStat[];
   pending: number;
   truncated: boolean;
   account: { name: string; plan: string; credits: number; role: "owner" | "admin" | "viewer" } | null;
@@ -25,10 +28,14 @@ export type ResponseItem = {
   sentiment: "positive" | "neutral" | "negative" | null;
   drivers: string[];
   channel: string;
+  location: { id: string; name: string } | null;
+  testimonial: { displayName: string | null; featured: boolean } | null;
   followup: { status: "open" | "in_progress" | "resolved"; assigneeId: string | null; dueAt: string | null; resolvedAt: string | null } | null;
   createdAt: string;
   confirmedAt: string | null;
 };
+
+export type Location = { id: string; name: string; archived: boolean; createdAt: string };
 
 export type ResponsesPage = { items: ResponseItem[]; page: number; limit: number; total: number };
 

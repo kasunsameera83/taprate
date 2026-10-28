@@ -28,3 +28,5 @@ export const adminBusinessesQuerySchema = z
   .strict();
 
 export const adminPageQuerySchema = z.object({ page: z.coerce.number().int().min(1).max(500).default(1) }).strict();
+
+export const adminLanguagesSchema = z.object({ enabled: z.boolean() }).strict();

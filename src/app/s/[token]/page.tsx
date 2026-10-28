@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { env } from "@/lib/env";
-import { verifyShareToken } from "@/lib/security/signing";
+import { verifyLocationTag, verifyShareToken } from "@/lib/security/signing";
 import { LINK_CHANNELS, type Channel } from "@/lib/validation/schemas";
 import { loadPublicSurvey, ratingLinks } from "@/lib/publicSurvey";
 import { PublicRatingButtons } from "@/components/PublicRatingButtons";
+import { HTML_LANG, pt } from "@/lib/i18n/public";
 
 export const metadata: Metadata = { title: "Rate us", robots: { index: false, follow: false } };
 
@@ -19,15 +20,18 @@ export default async function SharePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { token } = await params;
-  const c = (await searchParams).c;
+  const sp = await searchParams;
+  const c = sp.c;
   const surveyId = verifyShareToken(env().linkSecrets, token);
   if (!surveyId) notFound();
   const survey = await loadPublicSurvey(surveyId);
   if (!survey) notFound();
   const channel = (typeof c === "string" && (LINK_CHANNELS as readonly string[]).includes(c) ? c : "link") as Exclude<Channel, "kiosk" | "email">;
+  // A branch's QR code: the tag is signed for this survey, and the database checks the branch again.
+  const locationId = typeof sp.l === "string" ? verifyLocationTag(env().linkSecrets, surveyId, sp.l) : null;
 
   return (
-    <div className="min-h-screen" style={{ background: `linear-gradient(180deg, ${survey.brandColor}14 0, transparent 260px)` }}>
+    <div lang={HTML_LANG[survey.lang]} className="min-h-screen" style={{ background: `linear-gradient(180deg, ${survey.brandColor}14 0, transparent 260px)` }}>
       <div className="h-1.5" style={{ background: survey.brandColor }} />
       <main className="mx-auto flex max-w-lg flex-col px-5 pb-10 pt-10 sm:pt-16">
         {survey.logo ? (
@@ -39,19 +43,19 @@ export default async function SharePage({
           <h1 className="text-[24px] font-bold leading-snug">{survey.question}</h1>
           {survey.active ? (
             <>
-              <p className="mt-1 text-sm text-muted">Tap one. It takes a second.</p>
+              <p className="mt-1 text-sm text-muted">{pt(survey.lang, "tapOne")}</p>
               <div className="mt-6">
-                <PublicRatingButtons iconSet={survey.iconSet} links={ratingLinks(survey.id, survey.options, channel)} />
+                <PublicRatingButtons iconSet={survey.iconSet} links={ratingLinks(survey.id, survey.options, channel, locationId)} lang={survey.lang} />
               </div>
             </>
           ) : (
-            <p className="mt-4 text-muted">This survey isn&rsquo;t collecting ratings right now.</p>
+            <p className="mt-4 text-muted">{pt(survey.lang, "notCollecting")}</p>
           )}
         </div>
         <p className="mt-10 text-center text-[12px] text-muted">
-          Feedback by <span className="font-semibold">TapRate</span> ·{" "}
+          {pt(survey.lang, "feedbackBy")} <span className="font-semibold">TapRate</span> ·{" "}
           <a href="/privacy" className="underline underline-offset-2">
-            Privacy
+            {pt(survey.lang, "privacy")}
           </a>
         </p>
       </main>

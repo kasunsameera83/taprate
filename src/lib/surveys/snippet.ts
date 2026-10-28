@@ -3,6 +3,7 @@
 import { ICON_SETS, type IconSetId } from "./iconSets.ts";
 import { escapeHtml } from "../security/html.ts";
 import type { ResolvedOption } from "./customIcons.ts";
+import { pt, standardLabel, type Lang } from "../i18n/public.ts";
 
 // Custom pictures must be our own public storage files (https, survey-icons bucket).
 const ICON_URL_RE = /^https:\/\/[A-Za-z0-9.-]+(:\d+)?\/storage\/v1\/object\/public\/survey-icons\/accounts\/[0-9a-f-]{36}\/surveys\/[0-9a-f-]{36}\/icon-\d{1,2}-[A-Za-z0-9_-]{16,40}\.(png|jpg|webp)$/;
@@ -31,6 +32,10 @@ export type SnippetInput = {
   signToken: (surveyId: string, rating: number) => string; // returns "<id>.<rating>.<sig>"
   /** The business's own labels and pictures (optional). */
   options?: ResolvedOption[];
+  /** Full link for each rating, when the server signs per-recipient links itself (emails TapRate sends). */
+  urlFor?: (rating: number) => string;
+  /** Language of the standard labels and the 0–10 / 1–7 legend (default English). */
+  lang?: Lang;
 };
 
 export function buildClickUrl(appUrl: string, token: string, mergeTags: MergeTags): string {
@@ -62,9 +67,11 @@ export function buildSnippetHtml(input: SnippetInput): string {
   const compact = set.id === "nps" || set.id === "ces";
   const showLabels = set.id === "thumbs" || set.id === "faces3" || set.id === "faces5";
 
-  const options = input.options ?? set.options.map((o) => ({ ...o, imageUrl: null }));
+  const lang = input.lang ?? "en";
+  const options = input.options ?? set.options.map((o) => ({ ...o, label: standardLabel(set.id, o.value, lang), imageUrl: null }));
+  const rate = pt(lang, "rate");
   const buttons = options.map((o) => {
-    const url = buildClickUrl(input.appUrl, input.signToken(input.surveyId, o.value), input.mergeTags);
+    const url = input.urlFor ? input.urlFor(o.value) : buildClickUrl(input.appUrl, input.signToken(input.surveyId, o.value), input.mergeTags);
     // A custom picture always comes with its label as text, so the button still works when images are blocked.
     const image = o.imageUrl && ICON_URL_RE.test(o.imageUrl) ? o.imageUrl : null;
     const symbol = image
@@ -78,7 +85,7 @@ export function buildSnippetHtml(input: SnippetInput): string {
       : "";
     return (
       `<td align="center" valign="middle" bgcolor="#ffffff" style="background-color:#ffffff;border:2px solid ${o.color};border-radius:8px;">` +
-      `<a href="${escapeHtml(url)}" target="_blank" rel="noopener" title="Rate: ${escapeHtml(o.label)}" aria-label="Rate: ${escapeHtml(o.label)}" ` +
+      `<a href="${escapeHtml(url)}" target="_blank" rel="noopener" title="${escapeHtml(rate)}: ${escapeHtml(o.label)}" aria-label="${escapeHtml(rate)}: ${escapeHtml(o.label)}" ` +
       `style="display:block;padding:${compact ? "10px 0" : "8px 10px"};min-width:${compact ? 30 : 48}px;` +
       `font-family:${FONT};font-size:${compact ? 15 : 22}px;line-height:${compact ? 20 : 26}px;font-weight:bold;` +
       `color:${symbolColor};text-decoration:none;text-align:center;">${symbol}${label}</a></td>`
@@ -90,8 +97,8 @@ export function buildSnippetHtml(input: SnippetInput): string {
   const npsLegend = compact
     ? `<tr><td style="padding:4px 0 0 0;font-family:${FONT};font-size:11px;line-height:14px;color:${LABEL};">` +
       `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>` +
-      `<td align="left" style="font-family:${FONT};font-size:11px;color:${LABEL};">${set.id === "ces" ? "1 = Very difficult" : "0 = Not likely"}</td>` +
-      `<td align="right" style="font-family:${FONT};font-size:11px;color:${LABEL};">${set.id === "ces" ? "7 = Very easy" : "10 = Very likely"}</td>` +
+      `<td align="left" style="font-family:${FONT};font-size:11px;color:${LABEL};">${escapeHtml(pt(lang, set.id === "ces" ? "cesLow" : "npsLow"))}</td>` +
+      `<td align="right" style="font-family:${FONT};font-size:11px;color:${LABEL};">${escapeHtml(pt(lang, set.id === "ces" ? "cesHigh" : "npsHigh"))}</td>` +
       `</tr></table></td></tr>`
     : "";
 

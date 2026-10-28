@@ -6,6 +6,9 @@ Disallow: /r/
 Disallow: /s/
 Disallow: /w/
 Disallow: /k/
+Disallow: /tv/
+Disallow: /wall/
 Disallow: /thanks/
 Disallow: /reports/
+Disallow: /unsubscribe
 Disallow: /welcome
