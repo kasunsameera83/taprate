@@ -42,6 +42,8 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* Base styles live in the base layer, so Tailwind utilities (font-sans, text sizes…) can override them. */
+@layer base {
 body {
   background: var(--color-canvas);
   color: var(--color-ink);
@@ -57,6 +59,7 @@ h3,
   font-family: var(--font-display);
   letter-spacing: -0.015em;
 }
+}
 
 .tabular {
   font-variant-numeric: tabular-nums;
@@ -69,6 +72,8 @@ h3,
   border-radius: 6px;
 }
 
+/* Components are in the components layer, so utilities on the same element win (md:hidden, px-3, w-full…). */
+@layer components {
 /* ---------- Controls ---------- */
 
 .input {
@@ -169,6 +174,7 @@ textarea.input {
 }
 .link:hover {
   text-decoration: underline;
+}
 }
 
 /* Loading skeletons keep the layout still while data loads. */
@@ -512,4 +518,21 @@ html {
   .lp-card { transition: opacity 0.6s ease var(--d, 0ms), transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms), box-shadow 0.2s ease; }
   .lp-cards[data-in] .lp-card { opacity: 1; transform: none; }
   .lp-cards[data-in] .lp-card:hover { transform: translateY(-4px); transition-delay: 0ms; }
+}
+
+/* Phone menu sheet slides up from the bottom. */
+@media (prefers-reduced-motion: no-preference) {
+  .menu-sheet[open] { animation: sheet-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .menu-sheet[open]::backdrop { animation: sheet-fade 0.28s ease; }
+}
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes sheet-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* Integration chips light up one after another. */
+@keyframes lp-chip {
+  0%, 12%, 100% { border-color: var(--color-line); color: inherit; }
+  4%, 8% { border-color: var(--color-brand); color: var(--color-brand); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lp-chip { animation: lp-chip 6s ease-in-out infinite; }
 }

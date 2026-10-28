@@ -37,6 +37,40 @@ export function SiteHeader({ cta = "Start free", showPricing = true }: { cta?: s
   }, []);
   const links = LINKS.filter((l) => showPricing || l.href !== "/#pricing");
 
+  // Phone menu: stop the page scrolling behind it, and close it if the screen becomes wide.
+  function openMenu() {
+    menu.current?.showModal();
+    document.documentElement.style.overflow = "hidden";
+  }
+  function onMenuClosed() {
+    document.documentElement.style.overflow = "";
+  }
+  useEffect(() => {
+    const wide = window.matchMedia("(min-width: 768px)");
+    const onChange = () => wide.matches && menu.current?.open && menu.current.close();
+    wide.addEventListener("change", onChange);
+    return () => {
+      wide.removeEventListener("change", onChange);
+      document.documentElement.style.overflow = "";
+    };
+  }, []);
+
+  /** A menu link: on the landing page, close the sheet first, then glide to the section. */
+  function goTo(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
+    const id = href.replace("/#", "");
+    const target = window.location.pathname === "/" ? document.getElementById(id) : null;
+    if (!target) {
+      menu.current?.close();
+      return; // another page: normal navigation to /#section
+    }
+    e.preventDefault();
+    menu.current?.close();
+    history.pushState(null, "", `#${id}`);
+    const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Wait a frame so the page can scroll again after the sheet closes.
+    requestAnimationFrame(() => target.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" }));
+  }
+
   useEffect(() => {
     let frame = 0;
     const update = () => {
@@ -91,7 +125,7 @@ export function SiteHeader({ cta = "Start free", showPricing = true }: { cta?: s
           <Link href="/signup" className="btn btn-primary">
             {cta}
           </Link>
-          <button type="button" className="btn btn-ghost px-3 md:hidden" aria-label="Open menu" aria-haspopup="dialog" onClick={() => menu.current?.showModal()}>
+          <button type="button" className="btn btn-ghost px-3 md:hidden" aria-label="Open menu" aria-haspopup="dialog" aria-controls="site-menu" onClick={openMenu}>
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden>
               <path d="M4 7h16M4 12h16M4 17h16" />
             </svg>
@@ -101,20 +135,40 @@ export function SiteHeader({ cta = "Start free", showPricing = true }: { cta?: s
       <span ref={progress} aria-hidden className="pointer-events-none absolute inset-x-0 bottom-[-1px] h-[2px] origin-left scale-x-0 bg-brand" />
       <dialog
         ref={menu}
+        id="site-menu"
         aria-label="Menu"
+        onClose={onMenuClosed}
         onClick={(e) => {
-          if (e.target === menu.current || (e.target as HTMLElement).closest("a")) menu.current?.close();
+          // A tap on the dimmed area outside the sheet closes it.
+          if (e.target === menu.current) menu.current?.close();
         }}
-        className="mb-0 mt-auto max-h-[85vh] w-full max-w-none rounded-t-[20px] border-0 bg-surface p-0 text-ink shadow-xl backdrop:bg-ink/40 md:hidden"
+        className="menu-sheet fixed inset-x-0 bottom-0 top-auto m-0 max-h-[85dvh] w-full max-w-none overflow-y-auto rounded-t-[20px] border-0 bg-surface p-0 text-ink shadow-xl backdrop:bg-ink/40"
       >
         <div className="px-5 pt-3" style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }}>
-          <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-line-strong" aria-hidden />
-          <nav aria-label="Site" className="grid">
-            {links.map((l) => (
-              <a key={l.href} href={l.href} className="flex min-h-12 items-center border-b border-line text-lg font-semibold">
-                {l.label}
-              </a>
-            ))}
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-[13px] font-semibold text-muted">Menu</span>
+            <button type="button" className="btn btn-ghost -mr-2 px-3" aria-label="Close menu" onClick={() => menu.current?.close()}>
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden>
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </button>
+          </div>
+          <nav aria-label="Site menu" className="grid">
+            {links.map((l) => {
+              const on = current === l.href.replace("/#", "");
+              return (
+                <a
+                  key={l.href}
+                  href={l.href}
+                  onClick={(e) => goTo(e, l.href)}
+                  aria-current={on ? "location" : undefined}
+                  className={`flex min-h-12 items-center justify-between border-b border-line text-lg font-semibold ${on ? "text-brand" : ""}`}
+                >
+                  {l.label}
+                  <span aria-hidden className="text-muted">→</span>
+                </a>
+              );
+            })}
           </nav>
           <div className="mt-5 grid gap-2">
             <Link href="/signup" className="btn btn-primary min-h-12">

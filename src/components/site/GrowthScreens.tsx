@@ -86,3 +86,36 @@ export function AlertsScreen() {
     </div>
   );
 }
+
+/** A helpdesk ticket with TapRate's private note, and the tools it connects to. */
+export function HelpdeskScreen() {
+  const tools = ["Zendesk", "Freshdesk", "Gorgias", "Intercom", "Front", "Help Scout", "HubSpot", "Shopify", "Slack", "Teams"];
+  return (
+    <AppWindow
+      title="Ticket #1087 · Your helpdesk"
+      label="A helpdesk ticket where TapRate has added a private note: the customer rated this ticket Poor and added a comment. Below, the tools TapRate connects to: Zendesk, Freshdesk, Gorgias, Intercom, Front, Help Scout, HubSpot, Shopify, Slack and Teams."
+    >
+      <div className="space-y-2.5 p-5">
+        <div className="rounded-[10px] border border-line px-3 py-2.5">
+          <p className="text-[12px] text-muted">Nimal (agent) · 10:12</p>
+          <p className="text-[13px]">Your refund is on its way. Sorry again for the delay!</p>
+        </div>
+        <div className="lp-seq rounded-[10px] border border-[#f3d27a] bg-[#fff8e6] px-3 py-2.5" style={{ animationDelay: "0.4s" }}>
+          <p className="flex items-center justify-between text-[12px] font-semibold text-[#8a6100]">
+            <span>Private note · TapRate</span>
+            <span className="rounded-full bg-white/70 px-2 py-0.5 text-[10px]">Only your team sees this</span>
+          </p>
+          <p className="mt-1 text-[13px]">🔴 The customer rated this ticket <strong>Poor (2)</strong> for Nimal.</p>
+          <p className="mt-0.5 text-[12px] text-muted">&ldquo;Took three days to hear back.&rdquo;</p>
+        </div>
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          {tools.map((t, i) => (
+            <span key={t} className="lp-chip rounded-full border border-line bg-white px-2.5 py-1 text-[11px] font-semibold" style={{ animationDelay: `${i * 0.25}s` }}>
+              {t}
+            </span>
+          ))}
+        </div>
+      </div>
+    </AppWindow>
+  );
+}

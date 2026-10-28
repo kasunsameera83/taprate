@@ -14,7 +14,7 @@ import { ScrollStatement } from "./ScrollStatement";
 import { TapStory } from "./TapStory";
 import { TiltCard } from "./TiltCard";
 import { ShowcaseRow } from "./ShowcaseRow";
-import { AlertsScreen, RecoveryScreen } from "./GrowthScreens";
+import { AlertsScreen, HelpdeskScreen, RecoveryScreen } from "./GrowthScreens";
 import { MoreFeatures } from "./MoreFeatures";
 
 // The public landing page. Text marked "c." comes from /admin → Landing page; the product pictures and
@@ -48,6 +48,12 @@ const SHOWCASE: Showcase[] = [
     body: "Get an alert on your phone the moment a customer is unhappy, and a warning when satisfaction falls sharply for your business or any branch. No app to install.",
     points: ["Phone and computer alerts, straight from the browser", "A warning when this week falls 10 points below last week", "Owners and admins alerted; agents only for their own customers"],
     Screen: AlertsScreen,
+  },
+  {
+    title: "Ratings right inside your helpdesk",
+    body: "Connect your helpdesk once and every rating lands on the ticket it was for, as a private note your customers never see. Sell online? Connect Shopify and every customer gets a survey after their order ships.",
+    points: ["Zendesk, Freshdesk, Gorgias, Intercom and Front", "Help Scout and HubSpot buttons fill in the customer and agent", "Shopify: one survey per order, never twice in a month"],
+    Screen: HelpdeskScreen,
   },
   {
     title: "We'll send the survey for you",
