@@ -146,6 +146,42 @@ rate limiter fails closed.
 - CSV import of past ratings: checked in the browser (preview), again on the server and again in the
   database; duplicates skipped; no credits, follow-ups or alerts; one-click undo per import.
 
+## Billing
+
+- PayHere (LKR, Sri Lanka) and Stripe (USD). Plans (monthly/yearly) add responses each paid period;
+  one-off top-up packs. Prices live only in `src/lib/billing/catalog.ts` (placeholders: change them).
+- The browser sends only an item id. The server prices it and stores an order; credits change only
+  when a signed provider notification arrives (`/api/webhooks/payhere` md5sig, `/api/webhooks/stripe`
+  HMAC + 5-min replay window), the amount and currency match the order (checked again in the
+  database), and each provider payment is applied once. Users can read but never write billing tables.
+- Refunds and chargebacks take back unused credits. Cancelled plans run to the end of the paid period,
+  then the business moves to the free plan (credits kept). Printable receipts.
+
+## Promo codes
+
+Created in /admin → Promo codes: % off (up to 90%), an amount off (LKR and/or USD) or bonus responses;
+limited to certain plans/packs, dates and a total number of uses; once per business. Customers apply
+them on the Billing page. The server re-checks the code at checkout and stores the discounted amount
+on the order, so the payment must match it. Plan discounts last for that subscription. Trying codes is
+rate limited (10 an hour per business).
+
+## Product admin (/admin)
+
+For the product owner: overview numbers (revenue, sign-ups, active businesses, failing payments),
+businesses (search, usage, add/remove responses with a reason, suspend/restore), landing page editor
+(draft, preview, publish), promotion pop-ups and seasonal greetings with dates, and prices.
+
+- Access needs BOTH a row in `platform_admins` AND two-step verification on the current session;
+  everyone else gets a 404. The database checks the same thing in every admin function and policy.
+- Admins see business-level numbers only, never customers' ratings or comments.
+- Every admin change is written to the admin log.
+- Add yourself once, in the Supabase SQL Editor (use your sign-in email):
+
+  ```sql
+  insert into public.platform_admins (user_id, note)
+  select id, 'Product owner' from auth.users where email = 'you@example.com';
+  ```
+
 ## Still to come
 
-Billing (PayHere + Stripe), AI summaries, scheduled reports.
+AI summaries, scheduled reports.

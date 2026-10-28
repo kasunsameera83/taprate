@@ -132,7 +132,7 @@ export default function ImportPage() {
               <label htmlFor="imp-survey" className="block text-sm font-semibold">
                 Survey
               </label>
-              <select id="imp-survey" className="input w-auto min-w-56" value={surveyId} onChange={(e) => setSurveyId(e.target.value)}>
+              <select id="imp-survey" className="input w-auto min-w-56 max-w-full" value={surveyId} onChange={(e) => setSurveyId(e.target.value)}>
                 {surveys.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name} ({ICON_SETS[s.iconSet].name}, {ICON_SETS[s.iconSet].min}–{ICON_SETS[s.iconSet].max})
@@ -230,7 +230,7 @@ export default function ImportPage() {
                           <td className="py-1.5 pr-3 whitespace-nowrap">{new Date(r.date).toLocaleString()}</td>
                           <td className="py-1.5 pr-3">{r.rating}</td>
                           <td className="py-1.5 pr-3">{r.email ?? ""}</td>
-                          <td className="max-w-56 truncate py-1.5 pr-3">{r.comment ?? ""}</td>
+                          <td className="max-w-40 truncate py-1.5 pr-3 sm:max-w-56">{r.comment ?? ""}</td>
                           <td className="py-1.5 pr-3">{r.agent ?? ""}</td>
                           <td className="py-1.5 pr-3">{r.ticket ?? ""}</td>
                         </tr>

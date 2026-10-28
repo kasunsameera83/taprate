@@ -164,7 +164,7 @@ export function Segmented<T extends string | number>({
 }
 
 export function Skeleton({ className }: { className: string }) {
-  return <div className={`skeleton ${className}`} aria-hidden />;
+  return <div className={`skeleton max-w-full ${className}`} aria-hidden />;
 }
 
 export function EmptyState({

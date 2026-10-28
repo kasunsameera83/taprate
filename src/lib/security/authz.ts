@@ -22,6 +22,7 @@ export const ACTIONS = [
   "integrations:write",
   "apikeys:manage",
   "responses:import",
+  "billing:manage",
 ] as const;
 export type Action = (typeof ACTIONS)[number];
 

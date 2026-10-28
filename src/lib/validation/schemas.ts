@@ -563,3 +563,70 @@ export const importSchema = z
     rows: z.array(z.unknown()).min(1, "The file has no rows").max(IMPORT_MAX_ROWS, `Up to ${IMPORT_MAX_ROWS} rows per import`),
   })
   .strict();
+
+// ---------------------------------------------------------------------------
+// Billing (Phase 5). Prices are NEVER accepted from the browser: only ids from the server catalog.
+// ---------------------------------------------------------------------------
+
+export const billingProfileSchema = z
+  .object({
+    firstName: text(1, 60, "First name"),
+    lastName: text(1, 60, "Last name"),
+    email: emailSchema,
+    phone: z.string().trim().regex(/^\+?[0-9 ()-]{7,20}$/, "Enter a phone number like +94 77 123 4567"),
+    address: text(1, 200, "Address"),
+    city: text(1, 80, "City"),
+    country: z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/, "Choose a country"),
+    company: z.union([text(1, 120, "Company"), z.literal("").transform(() => null), z.null()]).optional(),
+    taxId: z.union([text(1, 40, "Tax / VAT number"), z.literal("").transform(() => null), z.null()]).optional(),
+  })
+  .strict();
+export type BillingProfileInput = z.infer<typeof billingProfileSchema>;
+
+export const checkoutSchema = z
+  .object({
+    item: z.enum(["starter", "growth", "scale", "pack_250", "pack_1000", "pack_5000"], { error: "Choose a plan or pack" }),
+    interval: z.enum(["month", "year"]).optional(),
+    provider: z.enum(["payhere", "stripe"], { error: "Choose how to pay" }),
+    promoCode: z.string().trim().toUpperCase().regex(/^[A-Z0-9_-]{4,30}$/, "That code isn't valid.").optional(),
+  })
+  .strict()
+  .refine((v) => (v.item.startsWith("pack_") ? v.interval === undefined : v.interval !== undefined), { message: "Choose monthly or yearly", path: ["interval"] });
+export type CheckoutInput = z.infer<typeof checkoutSchema>;
+
+/** "What would this code do?" — same fields as checkout, code required. */
+export const promoPreviewSchema = z
+  .object({ code: z.string().trim().toUpperCase().regex(/^[A-Z0-9_-]{4,30}$/, "That code isn't valid."), provider: z.enum(["payhere", "stripe"]), interval: z.enum(["month", "year"]) })
+  .strict();
+
+const promoItems = z.array(z.enum(["starter", "growth", "scale", "pack_250", "pack_1000", "pack_5000"])).max(6);
+const moneyText = z
+  .string()
+  .trim()
+  .transform((v) => v.replace(/,/g, ""))
+  .pipe(z.string().regex(/^\d{1,9}(\.\d{1,2})?$/, "Enter an amount like 1000 or 5.00"))
+  .transform((v) => Math.round(Number(v) * 100));
+
+export const promoCodeSchema = z
+  .object({
+    code: z.string().trim().toUpperCase().regex(/^[A-Z0-9_-]{4,30}$/, "4–30 letters, numbers, - or _"),
+    description: z.union([text(1, 120, "Description"), z.literal("")]),
+    kind: z.enum(["percent", "amount", "credits"], { error: "Choose what the code gives" }),
+    percentOff: z.number().int().min(1, "1–90%").max(90, "Up to 90% (use bonus responses for free extras)").nullable(),
+    amountOffLkr: z.union([moneyText, z.literal("").transform(() => null), z.null()]),
+    amountOffUsd: z.union([moneyText, z.literal("").transform(() => null), z.null()]),
+    bonusCredits: z.number().int().min(1).max(1_000_000).nullable(),
+    appliesTo: promoItems,
+    maxUses: z.number().int().min(1).max(1_000_000).nullable(),
+    startsAt: z.string().datetime({ offset: true, error: "Choose a start date" }),
+    endsAt: z.union([z.string().datetime({ offset: true }), z.null()]),
+    enabled: z.boolean(),
+  })
+  .strict()
+  .refine((v) => v.kind !== "percent" || v.percentOff !== null, { message: "Enter the percentage", path: ["percentOff"] })
+  .refine((v) => v.kind !== "amount" || v.amountOffLkr !== null || v.amountOffUsd !== null, { message: "Enter an amount in LKR, USD or both", path: ["amountOffLkr"] })
+  .refine((v) => v.amountOffLkr === null || v.amountOffLkr >= 100, { message: "At least Rs 1", path: ["amountOffLkr"] })
+  .refine((v) => v.amountOffUsd === null || v.amountOffUsd >= 50, { message: "At least $0.50", path: ["amountOffUsd"] })
+  .refine((v) => v.kind !== "credits" || v.bonusCredits !== null, { message: "Enter the bonus responses", path: ["bonusCredits"] })
+  .refine((v) => !v.endsAt || Date.parse(v.endsAt) > Date.parse(v.startsAt), { message: "The end must be after the start", path: ["endsAt"] });
+export type PromoCodeInput = z.infer<typeof promoCodeSchema>;

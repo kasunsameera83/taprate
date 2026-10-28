@@ -40,6 +40,10 @@ const ACTIONS: Record<string, string> = {
   "apikey.revoked": "Revoked an API key",
   "import.created": "Imported past ratings",
   "import.deleted": "Undid an import",
+  "billing.profile_updated": "Updated billing details",
+  "billing.checkout_started": "Started a payment",
+  "billing.paid": "Payment received",
+  "billing.cancelled": "Cancelled the plan",
 };
 
 function describe(e: Entry): string {

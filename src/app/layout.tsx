@@ -14,7 +14,8 @@ export const metadata: Metadata = {
   description: "One-click customer feedback inside the emails you already send.",
 };
 
-export const viewport: Viewport = { themeColor: "#f5f6f8", width: "device-width", initialScale: 1 };
+// viewport-fit=cover lets the bottom tab bar sit above the iPhone home indicator (safe-area padding).
+export const viewport: Viewport = { themeColor: "#f5f6f8", width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

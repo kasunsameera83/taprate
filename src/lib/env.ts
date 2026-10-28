@@ -18,6 +18,14 @@ const schema = z.object({
   RESEND_API_KEY: z.string().optional(),
   CRON_SECRET: z.union([secret("CRON_SECRET"), z.literal("")]).optional(),
   ALERT_FROM_EMAIL: z.string().email().optional().or(z.literal("")),
+  // Billing (optional: each provider is switched on only when its settings are present).
+  PAYHERE_MERCHANT_ID: z.string().regex(/^\d{1,20}$/, "PAYHERE_MERCHANT_ID must be digits").optional().or(z.literal("")),
+  PAYHERE_MERCHANT_SECRET: z.string().min(10, "PAYHERE_MERCHANT_SECRET looks too short").optional().or(z.literal("")),
+  PAYHERE_APP_ID: z.string().max(100).optional().or(z.literal("")),
+  PAYHERE_APP_SECRET: z.string().max(200).optional().or(z.literal("")),
+  PAYHERE_SANDBOX: z.enum(["true", "false"]).default("true"),
+  STRIPE_SECRET_KEY: z.string().regex(/^(sk|rk)_(test|live)_[A-Za-z0-9]+$/, "STRIPE_SECRET_KEY must start with sk_test_ or sk_live_").optional().or(z.literal("")),
+  STRIPE_WEBHOOK_SECRET: z.string().regex(/^whsec_[A-Za-z0-9]+$/, "STRIPE_WEBHOOK_SECRET must start with whsec_").optional().or(z.literal("")),
 });
 
 export type ServerEnv = z.infer<typeof schema> & { linkSecrets: string[]; appOrigin: string };
@@ -41,4 +49,13 @@ export function env(): ServerEnv {
   }
   cached = { ...e, linkSecrets: secrets, appOrigin: new URL(e.NEXT_PUBLIC_APP_URL).origin };
   return cached;
+}
+
+/** Which payment providers are fully configured. */
+export function billingProviders(): { payhere: boolean; stripe: boolean } {
+  const e = env();
+  return {
+    payhere: Boolean(e.PAYHERE_MERCHANT_ID && e.PAYHERE_MERCHANT_SECRET),
+    stripe: Boolean(e.STRIPE_SECRET_KEY && e.STRIPE_WEBHOOK_SECRET),
+  };
 }

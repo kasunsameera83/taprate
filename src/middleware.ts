@@ -22,7 +22,8 @@ function buildCsp(nonce: string, framable: boolean): string {
     `connect-src 'self' ${supabase}`.trim(),
     // Only the website widget (/w/...) may be shown inside other sites; everything else refuses framing.
     framable ? "frame-ancestors https: http://localhost:*" : "frame-ancestors 'none'",
-    "form-action 'self'",
+    // PayHere checkout is a form POST to PayHere's own page.
+    "form-action 'self' https://www.payhere.lk https://sandbox.payhere.lk",
     "base-uri 'self'",
     "object-src 'none'",
     dev ? "" : "upgrade-insecure-requests",
@@ -31,7 +32,7 @@ function buildCsp(nonce: string, framable: boolean): string {
     .join("; ");
 }
 
-const NEEDS_SESSION = /^\/(app|login|signup|welcome|forgot-password|reset-password)(\/|$)/;
+const NEEDS_SESSION = /^\/(app|admin|login|signup|welcome|forgot-password|reset-password)(\/|$)/;
 
 export async function middleware(request: NextRequest) {
   const nonce = btoa(crypto.randomUUID()); // Edge runtime: no Buffer
@@ -68,7 +69,7 @@ export async function middleware(request: NextRequest) {
     const path = request.nextUrl.pathname;
 
     let redirectTo: string | null = null;
-    if (!user && path.startsWith("/app")) redirectTo = "/login";
+    if (!user && (path.startsWith("/app") || path.startsWith("/admin"))) redirectTo = "/login";
     if (user && (path === "/login" || path === "/signup")) redirectTo = "/app";
 
     if (redirectTo) {

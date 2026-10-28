@@ -9,6 +9,7 @@ export default async function SettingsLayout({ children }: { children: React.Rea
     { href: "/app/settings", label: "Your account" },
     ...(canPerform(role, "team:read") ? [{ href: "/app/settings/team", label: "Team" }] : []),
     { href: "/app/settings/business", label: "Business" },
+    ...(canPerform(role, "billing:manage") ? [{ href: "/app/settings/billing", label: "Billing" }] : []),
     ...(canPerform(role, "integrations:read") ? [{ href: "/app/settings/integrations", label: "Integrations" }] : []),
     ...(canPerform(role, "apikeys:manage") ? [{ href: "/app/settings/api", label: "API" }] : []),
     ...(canPerform(role, "audit:read") ? [{ href: "/app/settings/activity", label: "Activity" }] : []),

@@ -33,6 +33,10 @@ export const LIMITS = {
   apiWrite: { name: "api:write", limit: 60, windowSec: 60 },
   apiKeysPerUser: { name: "apikey:user", limit: 10, windowSec: 3600 },
   importPerUser: { name: "import:user", limit: 10, windowSec: 3600 },
+  checkoutPerUser: { name: "checkout:user", limit: 10, windowSec: 600 },
+  // Trying promo codes: low enough that guessing codes is pointless.
+  promoPerAccount: { name: "promo:account", limit: 10, windowSec: 3600 },
+  webhookPerIp: { name: "webhook:ip", limit: 300, windowSec: 60 },
 } as const satisfies Record<string, RateLimitRule>;
 
 /**
