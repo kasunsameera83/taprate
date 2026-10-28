@@ -46,8 +46,8 @@ export type Landing = z.infer<typeof landingSchema>;
 export const DEFAULT_LANDING: Landing = {
   seo: { title: "TapRate: one-click customer feedback", description: "Add rating buttons to the emails you already send. Customers tap once; you see who's happy and who needs a call back." },
   hero: {
-    title: "Know how every customer felt about every email.",
-    subtitle: "Add rating buttons to the emails your team already sends. Customers tap once; you see who's happy and who needs a call back, the moment it happens.",
+    title: "Know how every customer feels, the moment they tap.",
+    subtitle: "One-tap ratings in your emails, on QR codes, WhatsApp, your website and a tablet at the counter. See who's happy and who needs a call back, right away.",
     primaryCta: "Start free",
     note: "50 free responses. No card needed.",
   },
