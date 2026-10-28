@@ -23,7 +23,7 @@ export default async function WidgetPage({ params }: { params: Promise<{ token: 
         <p className="font-display text-[17px] font-bold leading-snug">{survey.question}</p>
         {survey.active ? (
           <div className="mt-4">
-            <PublicRatingButtons iconSet={survey.iconSet} links={ratingLinks(survey.id, survey.iconSet, "web")} newTab compact />
+            <PublicRatingButtons iconSet={survey.iconSet} links={ratingLinks(survey.id, survey.options, "web")} newTab compact />
           </div>
         ) : (
           <p className="mt-2 text-sm text-muted">Not collecting ratings right now.</p>

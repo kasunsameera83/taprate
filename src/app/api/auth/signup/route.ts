@@ -4,6 +4,7 @@ import { signUpSchema, type SignUpInput } from "@/lib/validation/schemas";
 import { userClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
 import { audit } from "@/lib/audit";
+import { COMPANY } from "@/lib/site/company";
 
 export const POST = secureRoute<undefined, undefined, SignUpInput, "public">(
   { auth: "public", action: null, ipLimit: LIMITS.signupPerIp, body: signUpSchema },
@@ -14,7 +15,8 @@ export const POST = secureRoute<undefined, undefined, SignUpInput, "public">(
       password: body.password,
       options: {
         emailRedirectTo: `${env().appOrigin}/auth/callback`,
-        data: { account_name: body.accountName },
+        // Which version of the Terms/Privacy Policy they agreed to, and when.
+        data: { account_name: body.accountName, terms_version: COMPANY.termsVersion, terms_accepted_at: new Date().toISOString() },
       },
     });
 
@@ -25,7 +27,7 @@ export const POST = secureRoute<undefined, undefined, SignUpInput, "public">(
       console.error("[signup] supabase error", { code: error.code, status: error.status });
     }
 
-    if (data?.user) await audit({ accountId: null, userId: data.user.id, action: "auth.signup", ipHash });
+    if (data?.user) await audit({ accountId: null, userId: data.user.id, action: "auth.signup", metadata: { terms_version: COMPANY.termsVersion }, ipHash });
 
     // Same answer whether or not the email already has an account (no account enumeration).
     return ok({ message: "Check your email to confirm your account." }, 202);

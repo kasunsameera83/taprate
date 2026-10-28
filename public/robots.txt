@@ -1,5 +1,11 @@
 User-agent: *
 Disallow: /app
+Disallow: /admin
 Disallow: /api
 Disallow: /r/
+Disallow: /s/
+Disallow: /w/
+Disallow: /k/
 Disallow: /thanks/
+Disallow: /reports/
+Disallow: /welcome

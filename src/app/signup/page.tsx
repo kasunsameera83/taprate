@@ -20,6 +20,7 @@ export default function SignupPage() {
       accountName: String(form.get("accountName") ?? ""),
       email: String(form.get("email") ?? ""),
       password: String(form.get("password") ?? ""),
+      acceptTerms: form.get("acceptTerms") === "on",
     };
     const parsed = signUpSchema.safeParse(input);
     if (!parsed.success) return setErrors(fieldErrors(parsed.error));
@@ -71,6 +72,33 @@ export default function SignupPage() {
         <Field label="Password" name="password" error={errors.password} hint="At least 10 characters, with a number or symbol.">
           <PasswordInput name="password" autoComplete="new-password" minLength={10} maxLength={128} required error={errors.password} hasHint />
         </Field>
+        <div className="space-y-1">
+          <label className="flex items-start gap-2.5 text-sm">
+            <input
+              type="checkbox"
+              name="acceptTerms"
+              className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--color-brand)]"
+              aria-invalid={errors.acceptTerms ? "true" : undefined}
+              aria-describedby={errors.acceptTerms ? "acceptTerms-error" : undefined}
+            />
+            <span>
+              I agree to the{" "}
+              <Link href="/terms" target="_blank" className="link">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link href="/privacy" target="_blank" className="link">
+                Privacy Policy
+              </Link>
+              .
+            </span>
+          </label>
+          {errors.acceptTerms && (
+            <p id="acceptTerms-error" className="text-[13px] font-medium text-neg-text">
+              {errors.acceptTerms}
+            </p>
+          )}
+        </div>
         <button className="btn btn-primary w-full" disabled={busy}>
           {busy ? "Creating account…" : "Create account"}
         </button>

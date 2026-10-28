@@ -9,6 +9,7 @@ import { Badge, LoadError, Notice, Skeleton } from "@/components/ui";
 import { IconArrowLeft } from "@/components/icons";
 import { SnippetPanel } from "./SnippetPanel";
 import { CollectPanel } from "./CollectPanel";
+import { IconCustomizer } from "./IconCustomizer";
 import { confirmDialog } from "@/components/ConfirmDialog";
 
 type Tab = "buttons" | "collect" | "settings";
@@ -120,6 +121,7 @@ function SurveyDetail({ id }: { id: string }) {
         ) : tab === "collect" ? (
           <CollectPanel surveyId={survey.id} surveyName={survey.name} canEdit={canEdit} />
         ) : (
+          <div className="space-y-6">
           <SurveyForm
             initial={survey}
             hasResponses={hasResponses}
@@ -134,6 +136,8 @@ function SurveyDetail({ id }: { id: string }) {
               return { ok: false, message: res.message, fields: res.fields };
             }}
           />
+          <IconCustomizer key={survey.updatedAt} survey={survey} canEdit={canEdit} onChanged={load} />
+          </div>
         )}
       </div>
     </div>

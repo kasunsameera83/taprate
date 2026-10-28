@@ -2,6 +2,7 @@ import { secureRoute, ok, dbError } from "@/lib/security/route";
 import { LIMITS } from "@/lib/security/rateLimit";
 import { billingProviders } from "@/lib/env";
 import { loadCatalog } from "@/lib/billing/catalogServer";
+import { preferredCurrency } from "@/lib/site/geo";
 
 // Billing overview for the owner: plan, credits, subscription, billing details, payments.
 // Read through the user's own session, so the database's owner-only rules apply as well.
@@ -9,7 +10,7 @@ export const GET = secureRoute(
   { auth: "user", action: "billing:manage", ipLimit: LIMITS.userRead, userLimit: LIMITS.userRead },
   async ({ supabase, membership }) => {
     const acc = membership.accountId;
-    const [account, sub, profile, payments, catalog] = await Promise.all([
+    const [account, sub, profile, payments, catalog, currency] = await Promise.all([
       supabase.from("accounts").select("plan, credit_balance").eq("id", acc).maybeSingle(),
       supabase
         .from("subscriptions")
@@ -22,6 +23,7 @@ export const GET = secureRoute(
       supabase.from("billing_profiles").select("first_name, last_name, email, phone, address, city, country, company, tax_id, stripe_customer_id").eq("account_id", acc).maybeSingle(),
       supabase.from("billing_payments").select("id, receipt_no, description, amount_minor, currency, status, paid_at, provider").eq("account_id", acc).order("paid_at", { ascending: false }).limit(24),
       loadCatalog(),
+      preferredCurrency(),
     ]);
     for (const r of [account, sub, profile, payments]) if (r.error) throw dbError(r.error);
     const p = profile.data;
@@ -31,6 +33,8 @@ export const GET = secureRoute(
       credits: account.data?.credit_balance ?? 0,
       providers: billingProviders(),
       catalog,
+      // Which way to pay to show first: Sri Lanka -> PayHere (rupees), elsewhere -> Stripe (dollars).
+      suggestedProvider: currency === "LKR" ? "payhere" : "stripe",
       subscription: s
         ? {
             provider: s.provider,

@@ -2,14 +2,15 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/client/api";
 import { kioskRateSchema, publicCommentSchema } from "@/lib/validation/schemas";
-import { sentimentOf, type IconSetId, type RatingOption } from "@/lib/surveys/iconSets";
+import { sentimentOf, type IconSetId } from "@/lib/surveys/iconSets";
+import type { ResolvedOption } from "@/lib/surveys/customIcons";
 import { readableTextOn } from "@/lib/surveys/color";
 
 type Props = {
   token: string;
   question: string;
   iconSet: IconSetId;
-  options: RatingOption[];
+  options: ResolvedOption[];
   brandColor: string;
   logo: string | null;
   business: string;
@@ -95,9 +96,13 @@ export function KioskClient(p: Props) {
                     }`}
                     style={{ borderColor: o.color }}
                   >
-                    <span className={numeric ? "" : "text-6xl sm:text-7xl"} aria-hidden>
-                      {p.iconSet === "stars5" ? `${o.value}★` : o.symbol}
-                    </span>
+                    {o.imageUrl ? (
+                      <img src={o.imageUrl} alt="" width={80} height={80} className="h-16 w-16 object-contain sm:h-20 sm:w-20" />
+                    ) : (
+                      <span className={numeric ? "" : "text-6xl sm:text-7xl"} aria-hidden>
+                        {p.iconSet === "stars5" ? `${o.value}★` : o.symbol}
+                      </span>
+                    )}
                     {!numeric && <span className="mt-1 text-base font-semibold text-muted">{o.label}</span>}
                   </button>
                 </li>

@@ -68,7 +68,7 @@ export const DEFAULT_LANDING: Landing = {
     title: "Only real customers are counted",
     body: "Corporate email scanners open every link in an email, which fills other tools with fake ratings. TapRate holds each click until a real browser confirms it, so scanners are never counted and never use up your responses. Every link is signed, and your data is kept separate from every other business.",
   },
-  pricing: { show: true, title: "Simple pricing", subtitle: "Pay in rupees with PayHere or in dollars by card. Unused responses roll over." },
+  pricing: { show: true, title: "Simple pricing", subtitle: "Start free with 50 responses. Unused responses roll over, and you can cancel any time." },
   faqTitle: "Questions",
   faq: [
     { q: "Do customers need to log in or fill a form?", a: "No. They tap a face or a number in your email and that's the answer. They can add a comment if they want." },

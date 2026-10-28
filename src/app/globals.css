@@ -241,3 +241,17 @@ textarea.input {
     inset: 0 0 auto 0;
   }
 }
+
+/* Legal pages */
+.legal h2 {
+  margin-top: 2rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.legal ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+}
+.legal li + li {
+  margin-top: 0.25rem;
+}

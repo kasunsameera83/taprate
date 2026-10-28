@@ -56,3 +56,43 @@ select pg_temp.as_user('dddddddd-0000-0000-0000-000000000001'); -- owner
 select pg_temp.eq((select count(*) from public.report_subscriptions), 1, 'owner sees own report setting');
 select pg_temp.expect_fail($q$update public.report_subscriptions set frequency = 'monthly'$q$, 'user edits report directly', 'permission denied');
 reset role;
+
+-- Housekeeping: service only; removes old unconfirmed clicks, closes abandoned checkouts.
+set role authenticated;
+select pg_temp.as_user('dddddddd-0000-0000-0000-000000000001');
+select pg_temp.expect_fail($q$select public.maintenance_cleanup()$q$, 'user runs cleanup', 'permission denied');
+reset role;
+set role service_role;
+insert into public.responses (account_id, survey_id, pending_rating, status, dedupe_key, created_at)
+  values ((select acc from d10), '5d000000-0000-0000-0000-000000000001', 4, 'pending', repeat('o', 64), now() - interval '40 days');
+create temp table oo as select gen_random_uuid() as id;
+insert into public.billing_orders (id, account_id, provider, kind, item, credits, amount_minor, currency, created_at)
+  values ((select id from oo), (select acc from d10), 'stripe', 'topup', 'pack_250', 250, 1200, 'USD', now() - interval '10 days');
+select public.maintenance_cleanup();
+select pg_temp.eq((select count(*) from public.responses where dedupe_key = repeat('o', 64)), 0, 'old unconfirmed click removed');
+select pg_temp.eq((select count(*) from public.billing_orders where id = (select id from oo) and status = 'cancelled'), 1, 'abandoned checkout closed');
+reset role;
+
+-- Custom icons and labels (0012).
+create temp table sv as select id, account_id from public.surveys where id = '5d000000-0000-0000-0000-000000000001';
+grant select on sv to authenticated, service_role;
+set role authenticated;
+select pg_temp.as_user('dddddddd-0000-0000-0000-000000000001'); -- owner
+update public.surveys set option_labels = '{"5":"Loved it","1":"Not great"}' where id = (select id from sv);
+select pg_temp.eq((select count(*) from public.surveys where id = (select id from sv) and option_labels ->> '5' = 'Loved it'), 1, 'owner sets labels');
+select pg_temp.expect_fail($q$update public.surveys set option_labels = '{"9":"x"}' where id = (select id from sv)$q$, 'label outside scale', 'invalid label rating');
+select pg_temp.expect_fail($q$update public.surveys set option_labels = '{"3":"<script>"}' where id = (select id from sv)$q$, 'label with markup', 'invalid option label');
+select pg_temp.expect_fail($q$update public.surveys set option_labels = jsonb_build_object('3', repeat('x', 30)) where id = (select id from sv)$q$, 'label too long', 'invalid option label');
+select pg_temp.expect_fail($q$update public.surveys set icon_images = '{"5":"accounts/x/evil.png"}' where id = (select id from sv)$q$, 'user sets icon path', 'permission denied');
+select pg_temp.as_user('dddddddd-0000-0000-0000-000000000003'); -- viewer
+update public.surveys set option_labels = '{"5":"Hacked"}' where id = (select id from sv);
+reset role;
+select pg_temp.eq((select count(*) from public.surveys where id = (select id from sv) and option_labels ->> '5' = 'Loved it'), 1, 'viewer cannot change labels');
+
+set role service_role;
+update public.surveys set icon_images = jsonb_build_object('5', 'accounts/' || (select account_id from sv) || '/surveys/' || (select id from sv) || '/icon-5-abcdefghijklmnop.png') where id = (select id from sv);
+select pg_temp.eq((select count(*) from public.surveys where id = (select id from sv) and icon_images ? '5'), 1, 'server sets a valid icon');
+select pg_temp.expect_fail($q$update public.surveys set icon_images = jsonb_build_object('5', 'accounts/' || (select account_id from sv) || '/surveys/5b000000-0000-0000-0000-000000000001/icon-5-abcdefghijklmnop.png') where id = (select id from sv)$q$, 'icon from another survey folder', 'invalid icon path');
+select pg_temp.expect_fail($q$update public.surveys set icon_images = jsonb_build_object('5', 'accounts/' || (select account_id from sv) || '/surveys/' || (select id from sv) || '/icon-5-abcdefghijklmnop.svg') where id = (select id from sv)$q$, 'svg icon', 'invalid icon path');
+select pg_temp.expect_fail($q$update public.surveys set icon_images = jsonb_build_object('7', 'accounts/' || (select account_id from sv) || '/surveys/' || (select id from sv) || '/icon-7-abcdefghijklmnop.png') where id = (select id from sv)$q$, 'icon outside scale', 'invalid icon rating');
+reset role;

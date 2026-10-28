@@ -6,6 +6,7 @@ import { isUuid, verifyResponseToken } from "@/lib/security/signing";
 import { isIconSetId, ratingOption, sentimentOf } from "@/lib/surveys/iconSets";
 import { ThanksClient } from "./ThanksClient";
 import { logoUrl } from "@/lib/branding";
+import { iconUrlMap, labelsFor, resolveOptions } from "@/lib/surveys/customIcons";
 
 export const metadata: Metadata = { title: "Thank you", robots: { index: false, follow: false } };
 
@@ -26,7 +27,7 @@ export default async function ThanksPage({
   // Service role, scoped to this one response id (proven by the signed token above).
   const { data } = await adminClient()
     .from("responses")
-    .select("id, rating, pending_rating, comment, drivers, surveys(question, icon_set, brand_color, thank_you_message, allow_comment, website_url, status, drivers_positive, drivers_negative, review_cta_label, review_cta_url, accounts(name, logo_path))")
+    .select("id, rating, pending_rating, comment, drivers, surveys(question, icon_set, brand_color, thank_you_message, allow_comment, website_url, status, drivers_positive, drivers_negative, review_cta_label, review_cta_url, icon_images, option_labels, accounts(name, logo_path))")
     .eq("id", id)
     .maybeSingle();
   const survey = (data?.surveys ?? null) as unknown as {
@@ -41,12 +42,17 @@ export default async function ThanksPage({
     drivers_negative: string[];
     review_cta_label: string | null;
     review_cta_url: string | null;
+    icon_images: Record<string, string> | null;
+    option_labels: Record<string, string> | null;
     accounts: { name: string; logo_path: string | null } | null;
   } | null;
   if (!data || !survey || !isIconSetId(survey.icon_set)) notFound();
 
   const rating = (data.pending_rating ?? data.rating) as number | null;
-  const option = rating !== null ? ratingOption(survey.icon_set, rating) : undefined;
+  const option =
+    rating !== null
+      ? resolveOptions(survey.icon_set, { images: iconUrlMap(survey.icon_set, survey.icon_images), labels: labelsFor(survey.icon_set, survey.option_labels) }).find((o) => o.value === rating)
+      : undefined;
   const sentiment = rating !== null ? sentimentOf(survey.icon_set, rating) : null;
   const business = survey.accounts?.name;
   const logo = logoUrl(survey.accounts?.logo_path);
@@ -72,12 +78,16 @@ export default async function ThanksPage({
           <p className="text-sm text-muted">{survey.question}</p>
           {option && (
             <div className="mt-4">
+              {option.imageUrl ? (
+                <img src={option.imageUrl} alt="" width={72} height={72} className="mx-auto h-[72px] w-[72px] object-contain" />
+              ) : (
               <span
                 className={`font-display block leading-none ${survey.icon_set === "nps" || survey.icon_set === "ces" ? "text-[56px] font-bold" : survey.icon_set === "stars5" ? "text-[36px] text-neu-fill" : "text-[64px]"}`}
                 aria-hidden
               >
                 {symbol}
               </span>
+              )}
               <span className={`mt-2 block text-[15px] font-semibold ${sentiment ? SENTIMENT_TEXT[sentiment] : ""}`}>
                 <span className="sr-only">You rated: </span>
                 {option.label}
@@ -103,7 +113,10 @@ export default async function ThanksPage({
           </a>
         )}
         <p className="mt-10 text-center text-[12px] text-muted">
-          Feedback by <span className="font-semibold">TapRate</span>
+          Feedback by <span className="font-semibold">TapRate</span> ·{" "}
+          <a href="/privacy" className="underline underline-offset-2">
+            Privacy
+          </a>
         </p>
       </main>
     </div>

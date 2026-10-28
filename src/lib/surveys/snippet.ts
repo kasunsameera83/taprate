@@ -2,6 +2,10 @@
 // Buttons are styled text links (no images), so they show even when a mail client blocks images.
 import { ICON_SETS, type IconSetId } from "./iconSets.ts";
 import { escapeHtml } from "../security/html.ts";
+import type { ResolvedOption } from "./customIcons.ts";
+
+// Custom pictures must be our own public storage files (https, survey-icons bucket).
+const ICON_URL_RE = /^https:\/\/[A-Za-z0-9.-]+(:\d+)?\/storage\/v1\/object\/public\/survey-icons\/accounts\/[0-9a-f-]{36}\/surveys\/[0-9a-f-]{36}\/icon-\d{1,2}-[A-Za-z0-9_-]{16,40}\.(png|jpg|webp)$/;
 
 export const MERGE_PRESETS = {
   signature: { label: "Email signature (Gmail / Outlook)", email: "", agent: "", ticket: "" },
@@ -25,6 +29,8 @@ export type SnippetInput = {
   brandColor: string;
   mergeTags: MergeTags;
   signToken: (surveyId: string, rating: number) => string; // returns "<id>.<rating>.<sig>"
+  /** The business's own labels and pictures (optional). */
+  options?: ResolvedOption[];
 };
 
 export function buildClickUrl(appUrl: string, token: string, mergeTags: MergeTags): string {
@@ -56,11 +62,18 @@ export function buildSnippetHtml(input: SnippetInput): string {
   const compact = set.id === "nps" || set.id === "ces";
   const showLabels = set.id === "thumbs" || set.id === "faces3" || set.id === "faces5";
 
-  const buttons = set.options.map((o) => {
+  const options = input.options ?? set.options.map((o) => ({ ...o, imageUrl: null }));
+  const buttons = options.map((o) => {
     const url = buildClickUrl(input.appUrl, input.signToken(input.surveyId, o.value), input.mergeTags);
-    const symbol = set.id === "stars5" ? `${o.value}&#9733;` : escapeHtml(o.symbol);
+    // A custom picture always comes with its label as text, so the button still works when images are blocked.
+    const image = o.imageUrl && ICON_URL_RE.test(o.imageUrl) ? o.imageUrl : null;
+    const symbol = image
+      ? `<img src="${escapeHtml(image)}" width="36" height="36" alt="${escapeHtml(o.label)}" style="display:block;margin:0 auto 2px auto;width:36px;height:36px;border:0;outline:none;">`
+      : set.id === "stars5"
+        ? `${o.value}&#9733;`
+        : escapeHtml(o.symbol);
     const symbolColor = compact ? INK : o.color;
-    const label = showLabels
+    const label = showLabels || image
       ? `<br><span style="font-family:${FONT};font-size:11px;line-height:14px;font-weight:bold;color:${LABEL};">${escapeHtml(o.label)}</span>`
       : "";
     return (

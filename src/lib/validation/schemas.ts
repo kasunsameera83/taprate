@@ -49,6 +49,7 @@ export const signUpSchema = z
     email: emailSchema,
     password: passwordSchema,
     accountName: text(1, 80, "Business name"),
+    acceptTerms: z.literal(true, { error: "Please agree to the Terms and Privacy Policy" }),
   })
   .strict();
 export type SignUpInput = z.infer<typeof signUpSchema>;
@@ -90,6 +91,19 @@ const driverList = z
   .max(8, "Up to 8 reasons")
   .refine((a) => new Set(a.map((x) => x.toLowerCase())).size === a.length, "Each reason must be different");
 
+/** Custom labels for the rating buttons: { "<rating>": "label" }, up to 24 characters of plain text. */
+export const optionLabelsSchema = z
+  .record(
+    z.string().regex(/^\d{1,2}$/),
+    z
+      .string()
+      .max(100)
+      .transform((v) => cleanText(v).replace(/[<>]/g, ""))
+      .pipe(z.string().max(24, "Labels can be up to 24 characters")),
+  )
+  .refine((r) => Object.keys(r).length <= 11, "Too many labels")
+  .transform((r) => Object.fromEntries(Object.entries(r).filter(([, v]) => v.length > 0)));
+
 const surveyFields = {
   name: text(1, 80, "Survey name"),
   question: text(1, 200, "Question"),
@@ -110,6 +124,7 @@ const surveyFields = {
   reviewCtaUrl: z.union([httpsUrl, z.literal("").transform(() => null), z.null()]),
   followupsEnabled: z.boolean(),
   followupDueHours: z.number({ error: "Choose how soon to follow up" }).int().min(1).max(720),
+  optionLabels: optionLabelsSchema,
 };
 
 function thresholdFits(iconSet: IconSetId, threshold: number | null): boolean {
@@ -131,6 +146,7 @@ export const surveyCreateSchema = z
     reviewCtaUrl: surveyFields.reviewCtaUrl.default(null),
     followupsEnabled: z.boolean().default(true),
     followupDueHours: surveyFields.followupDueHours.default(48),
+    optionLabels: optionLabelsSchema.default({}),
   })
   .strict()
   .refine((v) => thresholdFits(v.iconSet, v.alertThreshold), {

@@ -7,6 +7,7 @@ import { ACCOUNT_COOKIE } from "@/lib/account";
 import { audit } from "@/lib/audit";
 import { adminClient } from "@/lib/supabase/server";
 import { isLogoPath } from "@/lib/branding";
+import { isIconPath } from "@/lib/surveys/customIcons";
 
 // Permanently delete the business and all its data. Owner only, needs the exact business name AND the
 // password (and 2FA, if on, via the wrapper). The database checks ownership again.
@@ -24,9 +25,12 @@ export const POST = secureRoute<undefined, undefined, z.infer<typeof deleteAccou
     if (check === "wrong") return fail("validation_failed", undefined, { password: "That password is incorrect" }, requestId);
 
     const { data: logo } = await supabase.from("accounts").select("logo_path").eq("id", membership.accountId).maybeSingle();
+    const { data: iconRows } = await supabase.from("surveys").select("icon_images").eq("account_id", membership.accountId);
+    const iconPaths = (iconRows ?? []).flatMap((r) => Object.values((r.icon_images ?? {}) as Record<string, string>)).filter((p) => isIconPath(p, membership.accountId));
     const { error } = await supabase.rpc("delete_account", { p_account: membership.accountId });
     if (error) throw dbError(error);
     if (isLogoPath(logo?.logo_path)) await adminClient().storage.from("logos").remove([logo.logo_path]);
+    if (iconPaths.length) await adminClient().storage.from("survey-icons").remove(iconPaths);
 
     // The account's own log is gone with it; keep a record without the account link.
     await audit({ accountId: null, userId: user.id, action: "account.deleted", targetType: "account", targetId: membership.accountId, ipHash });

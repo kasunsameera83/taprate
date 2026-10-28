@@ -14,6 +14,10 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
+  async rewrites() {
+    // RFC 9116 location for the security contact (served by src/app/security-txt/route.ts).
+    return [{ source: "/.well-known/security.txt", destination: "/security-txt" }];
+  },
   async headers() {
     return [
       // Everything except the embeddable widget refuses to be framed.
@@ -36,6 +40,10 @@ const nextConfig: NextConfig = {
           { key: "Referrer-Policy", value: "no-referrer" },
           { key: "X-Robots-Tag", value: "noindex, nofollow" },
         ],
+      },
+      {
+        source: "/(admin|reports)/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
       },
       {
         source: "/thanks/:path*",

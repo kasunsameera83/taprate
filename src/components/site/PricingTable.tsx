@@ -4,15 +4,16 @@ import { useState } from "react";
 import { formatMoney, type BillingInterval, type Catalog, type Currency } from "@/lib/billing/catalog";
 import { Badge, Segmented } from "@/components/ui";
 
-export function PricingTable({ catalog }: { catalog: Catalog }) {
-  const [currency, setCurrency] = useState<Currency>("LKR");
+// Prices are shown in ONE currency, picked from where the visitor is: rupees in Sri Lanka, US dollars
+// everywhere else. (A Sri Lankan price shown to an overseas visitor looks out of place.)
+export function PricingTable({ catalog, defaultCurrency = "LKR" }: { catalog: Catalog; defaultCurrency?: Currency }) {
+  const currency = defaultCurrency;
   const [interval, setInterval_] = useState<BillingInterval>("month");
   const plans = catalog.plans.filter((p) => p.active);
   const packs = catalog.packs.filter((p) => p.active);
   return (
     <div>
       <div className="flex flex-wrap items-center gap-3">
-        <Segmented label="Currency" value={currency} onChange={setCurrency} options={[{ value: "LKR", label: "LKR" }, { value: "USD", label: "USD" }]} />
         <Segmented label="Billing period" value={interval} onChange={setInterval_} options={[{ value: "month", label: "Monthly" }, { value: "year", label: "Yearly" }]} />
       </div>
       <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -34,8 +35,11 @@ export function PricingTable({ catalog }: { catalog: Catalog }) {
           </div>
         ))}
       </div>
+      <p className="mt-5 text-sm text-muted">
+        {currency === "LKR" ? "Prices in Sri Lankan rupees. Pay securely with PayHere." : "Prices in US dollars. Pay securely by card with Stripe."}
+      </p>
       {packs.length > 0 && (
-        <p className="mt-5 text-sm text-muted">
+        <p className="mt-1 text-sm text-muted">
           Need more? Top-ups from {formatMoney(Math.min(...packs.map((k) => k.price[currency])), currency)} for {Math.min(...packs.map((k) => k.responses)).toLocaleString("en")} responses. They never expire.
         </p>
       )}

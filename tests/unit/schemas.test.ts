@@ -27,14 +27,16 @@ const validSurvey = {
 };
 
 test("sign up: valid input passes, email normalised", () => {
-  const r = signUpSchema.safeParse({ email: "  Owner@Example.COM ", password: "correct-horse-1", accountName: " Acme  Ltd " });
+  const r = signUpSchema.safeParse({ email: "  Owner@Example.COM ", password: "correct-horse-1", accountName: " Acme  Ltd ", acceptTerms: true });
   assert.ok(r.success);
   assert.equal(r.data.email, "owner@example.com");
   assert.equal(r.data.accountName, "Acme Ltd");
 });
 
 test("sign up: weak passwords, bad emails and extra fields are rejected", () => {
-  const base = { email: "a@b.com", password: "correct-horse-1", accountName: "Acme" };
+  const base = { email: "a@b.com", password: "correct-horse-1", accountName: "Acme", acceptTerms: true };
+  assert.equal(signUpSchema.safeParse({ ...base, acceptTerms: false }).success, false, "must agree to the terms");
+  assert.equal(signUpSchema.safeParse({ email: base.email, password: base.password, accountName: base.accountName }).success, false, "agreement required");
   assert.equal(signUpSchema.safeParse({ ...base, password: "short1" }).success, false);
   assert.equal(signUpSchema.safeParse({ ...base, password: "aaaaaaaaaaaa" }).success, false);
   assert.equal(signUpSchema.safeParse({ ...base, password: "onlyletterslong" }).success, false);

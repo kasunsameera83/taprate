@@ -14,6 +14,7 @@ type Summary = {
   credits: number;
   providers: { payhere: boolean; stripe: boolean };
   catalog: Catalog;
+  suggestedProvider: Provider;
   subscription: {
     provider: Provider;
     plan: PlanId;
@@ -282,7 +283,10 @@ function BillingDetails({ profile, onSaved }: { profile: Summary["profile"]; onS
 
 function Buy({ data }: { data: Summary }) {
   const providers = (["payhere", "stripe"] as const).filter((p) => data.providers[p]);
-  const [provider, setProvider] = useState<Provider>(providers[0] ?? "payhere");
+  // One currency, chosen from where the business is: Sri Lanka pays in rupees (PayHere), everyone else in
+  // dollars (Stripe). Sri Lankans with a foreign card can still switch to dollars.
+  const [provider, setProvider] = useState<Provider>(providers.includes(data.suggestedProvider) ? data.suggestedProvider : (providers[0] ?? "payhere"));
+  const canSwitchToUsd = data.suggestedProvider === "payhere" && providers.includes("stripe");
   const [interval, setBillingInterval] = useState<BillingInterval>("month");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -372,17 +376,6 @@ function Buy({ data }: { data: Summary }) {
     <>
       <SettingsSection title="Plans" description="Cancel any time. Yearly plans cost the same as 10 months.">
         <div className="mb-4 flex flex-wrap items-center gap-3">
-          {providers.length > 1 && (
-            <Segmented
-              label="Pay with"
-              value={provider}
-              onChange={changeProvider}
-              options={[
-                { value: "payhere", label: "LKR · PayHere" },
-                { value: "stripe", label: "USD · Card (Stripe)" },
-              ]}
-            />
-          )}
           <Segmented
             label="Billing period"
             value={interval}
@@ -393,6 +386,17 @@ function Buy({ data }: { data: Summary }) {
             ]}
           />
         </div>
+        <p className="mb-4 text-[13px] text-muted">
+          {provider === "payhere" ? "Prices in Sri Lankan rupees, paid with PayHere." : "Prices in US dollars, paid by card with Stripe."}
+          {canSwitchToUsd && (
+            <>
+              {" "}
+              <button type="button" className="font-semibold text-brand underline underline-offset-2" onClick={() => changeProvider(provider === "payhere" ? "stripe" : "payhere")}>
+                {provider === "payhere" ? "Paying with a foreign card? Pay in US dollars" : "Pay in rupees instead"}
+              </button>
+            </>
+          )}
+        </p>
         <form
           className="mb-4 flex flex-wrap items-start gap-2"
           onSubmit={(e) => {

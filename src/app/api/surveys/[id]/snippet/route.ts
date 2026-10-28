@@ -6,6 +6,7 @@ import { buildSnippetHtml, buildClickUrl, MERGE_PRESETS, type MergeTags } from "
 import { buildLinkToken } from "@/lib/security/signing";
 import { ICON_SETS, type IconSetId } from "@/lib/surveys/iconSets";
 import { env } from "@/lib/env";
+import { iconUrlMap, labelsFor, resolveOptions } from "@/lib/surveys/customIcons";
 
 const params = z.object({ id: uuidSchema }).strict();
 
@@ -15,7 +16,7 @@ export const GET = secureRoute<z.infer<typeof params>, z.infer<typeof snippetQue
   async ({ supabase, membership, params, query }) => {
     const { data, error } = await supabase
       .from("surveys")
-      .select("id, question, icon_set, brand_color, status")
+      .select("id, question, icon_set, brand_color, status, icon_images, option_labels")
       .eq("id", params.id)
       .eq("account_id", membership.accountId)
       .maybeSingle();
@@ -30,6 +31,7 @@ export const GET = secureRoute<z.infer<typeof params>, z.infer<typeof snippetQue
     const e = env();
     const sign = (surveyId: string, rating: number) => buildLinkToken(e.LINK_SIGNING_SECRET, surveyId, rating);
     const iconSet = data.icon_set as IconSetId;
+    const options = resolveOptions(iconSet, { images: iconUrlMap(iconSet, data.icon_images), labels: labelsFor(iconSet, data.option_labels) });
 
     const html = buildSnippetHtml({
       appUrl: e.appOrigin,
@@ -39,8 +41,9 @@ export const GET = secureRoute<z.infer<typeof params>, z.infer<typeof snippetQue
       brandColor: data.brand_color,
       mergeTags: tags,
       signToken: sign,
+      options,
     });
-    const links = ICON_SETS[iconSet].options.map((o) => ({
+    const links = options.map((o) => ({
       rating: o.value,
       label: o.label,
       url: buildClickUrl(e.appOrigin, sign(data.id, o.value), tags),

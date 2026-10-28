@@ -30,7 +30,7 @@ export default async function KioskPage({ params }: { params: Promise<{ token: s
       token={token}
       question={survey.question}
       iconSet={survey.iconSet}
-      options={ICON_SETS[survey.iconSet].options}
+      options={survey.options}
       brandColor={survey.brandColor}
       logo={survey.logo}
       business={survey.business}

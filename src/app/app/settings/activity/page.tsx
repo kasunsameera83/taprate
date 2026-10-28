@@ -48,6 +48,8 @@ const ACTIONS: Record<string, string> = {
   "insights.enabled": "Turned on AI summaries",
   "insights.disabled": "Turned off AI summaries",
   "reports.updated": "Changed email report settings",
+  "survey.icon_updated": "Uploaded a rating picture",
+  "survey.icon_removed": "Removed a rating picture",
 };
 
 function describe(e: Entry): string {

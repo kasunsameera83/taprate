@@ -41,7 +41,7 @@ export default async function SharePage({
             <>
               <p className="mt-1 text-sm text-muted">Tap one. It takes a second.</p>
               <div className="mt-6">
-                <PublicRatingButtons iconSet={survey.iconSet} links={ratingLinks(survey.id, survey.iconSet, channel)} />
+                <PublicRatingButtons iconSet={survey.iconSet} links={ratingLinks(survey.id, survey.options, channel)} />
               </div>
             </>
           ) : (
@@ -49,7 +49,10 @@ export default async function SharePage({
           )}
         </div>
         <p className="mt-10 text-center text-[12px] text-muted">
-          Feedback by <span className="font-semibold">TapRate</span>
+          Feedback by <span className="font-semibold">TapRate</span> ·{" "}
+          <a href="/privacy" className="underline underline-offset-2">
+            Privacy
+          </a>
         </p>
       </main>
     </div>

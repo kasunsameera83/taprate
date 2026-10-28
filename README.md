@@ -194,6 +194,26 @@ businesses (search, usage, add/remove responses with a reason, suspend/restore),
   Daily job: `/api/cron/reports` (needs `CRON_SECRET` and Resend).
 - PDF report: `/app/reports/print` is laid out for paper; use the browser's "Save as PDF".
 
-## Still to come
+## Custom rating pictures
 
-Launch readiness: deploy, domain, email sending (SPF/DKIM), terms & privacy pages, monitoring, backups.
+Faces, thumbs and stars surveys can use the business's own pictures and labels (survey → Settings).
+Uploads are checked in the browser and again on the server from the file's bytes: PNG/JPEG/WebP only
+(no SVG), up to 200 KB, 32–1024 px, roughly square, not animated; metadata is stripped and the cleaned
+file is checked again; stored under a random name in the survey's own folder of the `survey-icons`
+bucket, written only by the server; the database re-checks every path and label. In emails the label is
+always shown next to the picture, so buttons still work when pictures are blocked.
+
+## Launch readiness
+
+- Terms of Service and Privacy Policy (`/terms`, `/privacy`), filled from `src/lib/site/company.ts`;
+  sign-up requires agreeing, and the accepted version is recorded.
+- Errors: logged as JSON and optionally sent to Sentry (`SENTRY_DSN`), scrubbed of personal data;
+  friendly error pages; `/api/health` for uptime monitors.
+- Daily clean-up (`/api/cron/cleanup`): rate-limit rows, unconfirmed clicks after 30 days, abandoned
+  checkouts, old logs.
+- `robots.txt`, `sitemap.xml`, `/.well-known/security.txt`.
+- Automated security checks run with the unit tests (`tests/unit/security-audit.test.ts`): every API
+  route uses a security wrapper or its own verified checks, browser code never imports server secrets,
+  no raw HTML, service-role queries are scoped.
+- Scripts: `scripts/backup.mjs` (pg_dump), `scripts/load-test.mjs` (staging only).
+- **Step-by-step go-live guide: [DEPLOY.md](DEPLOY.md).**
