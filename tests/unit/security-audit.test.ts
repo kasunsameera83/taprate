@@ -71,7 +71,8 @@ test("browser code never imports server secrets", () => {
 
 // The one allowed exception: the email-button preview, which shows HTML our own server built with every
 // value escaped (src/lib/surveys/snippet.ts), with clicks disabled.
-const RAW_HTML_ALLOWED = new Set(["src/app/app/surveys/[id]/SnippetPanel.tsx"]);
+// SnippetPanel previews the email HTML we build; JsonLd writes escaped schema.org JSON (no user HTML).
+const RAW_HTML_ALLOWED = new Set(["src/app/app/surveys/[id]/SnippetPanel.tsx", "src/components/JsonLd.tsx"]);
 
 test("no HTML injection points and no eval", () => {
   for (const f of files) {

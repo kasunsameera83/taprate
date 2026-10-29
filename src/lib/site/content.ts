@@ -44,7 +44,7 @@ export const landingSchema = z
 export type Landing = z.infer<typeof landingSchema>;
 
 export const DEFAULT_LANDING: Landing = {
-  seo: { title: "TapTruly: one-click customer feedback", description: "Add rating buttons to the emails you already send. Customers tap once; you see who's happy and who needs a call back." },
+  seo: { title: "TapTruly: One-Click Customer Feedback & CSAT Surveys", description: "One-tap customer satisfaction surveys in emails, QR codes, WhatsApp and kiosks. See who's happy, follow up on unhappy customers and win them back. Start free." },
   hero: {
     title: "Know how every customer feels, the moment they tap.",
     subtitle: "One-tap ratings in your emails, on QR codes, WhatsApp, your website and a tablet at the counter. See who's happy and who needs a call back, right away.",

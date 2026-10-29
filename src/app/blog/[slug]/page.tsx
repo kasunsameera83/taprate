@@ -5,6 +5,8 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooterAuto } from "@/components/site/SiteFooterAuto";
 import { PostBody } from "@/components/blog/PostBody";
 import { getPublishedPost, listPublishedPosts } from "@/lib/blog/server";
+import { JsonLd } from "@/components/JsonLd";
+import { blogPosting, breadcrumbs, siteUrl } from "@/lib/site/structuredData";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -35,8 +37,19 @@ export default async function BlogPost({ params }: Props) {
   const post = await getPublishedPost((await params).slug);
   if (!post) notFound();
   const more = (await listPublishedPosts(4)).filter((p) => p.slug !== post.slug).slice(0, 3);
+  const site = siteUrl();
   return (
     <div className="min-h-screen">
+      <JsonLd
+        data={[
+          blogPosting(site, { slug: post.slug, title: post.title, description: post.seoDescription || post.excerpt, authorName: post.authorName, publishedAt: post.publishedAt, updatedAt: post.updatedAt, image: post.coverUrl }),
+          breadcrumbs(site, [
+            { name: "Home", path: "/" },
+            { name: "Blog", path: "/blog" },
+            { name: post.title, path: `/blog/${post.slug}` },
+          ]),
+        ]}
+      />
       <SiteHeader />
       <main id="main" className="pb-20 pt-8">
         <article>

@@ -11,9 +11,17 @@ const sans = Instrument_Sans({ subsets: ["latin"], variable: "--font-instrument"
 // Rendered per request so Next.js can attach the CSP nonce from middleware to its scripts.
 export const dynamic = "force-dynamic";
 
+const SITE = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/+$/, "");
+
 export const metadata: Metadata = {
+  // Absolute links for canonical URLs, sitemaps and social previews.
+  metadataBase: new URL(SITE),
   title: { default: "TapTruly", template: "%s | TapTruly" },
   description: "One-tap customer feedback in emails, QR codes, WhatsApp, your website and kiosks.",
+  applicationName: "TapTruly",
+  openGraph: { type: "website", siteName: "TapTruly", locale: "en_US" },
+  twitter: { card: "summary_large_image" },
+  formatDetection: { telephone: false, email: false, address: false },
   icons: { apple: "/apple-icon-180.png" },
   appleWebApp: { capable: true, title: "TapTruly", statusBarStyle: "default" },
 };

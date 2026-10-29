@@ -4,7 +4,7 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooterAuto } from "@/components/site/SiteFooterAuto";
 
 export const metadata: Metadata = {
-  title: "Switching from Delighted | TapTruly",
+  title: "Delighted alternative: switch to TapTruly",
   description: "Delighted closed on 30 June 2026. Move your NPS and CSAT surveys to TapTruly in an afternoon: import your history, keep one-click email ratings, and follow up on every unhappy customer.",
   alternates: { canonical: "/switch-from-delighted" },
 };
