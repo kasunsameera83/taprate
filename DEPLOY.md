@@ -42,6 +42,9 @@ Use a **separate project** for production (keep your current one for testing).
 > Vercel's free **Hobby** plan is for personal, non-commercial use. A paid product needs **Pro**
 > (check Vercel's current terms and pricing).
 
+> **Region:** `vercel.json` runs the server code in Singapore (`sin1`), next to the Supabase database
+> (also Singapore). Keep the two in the same region: every page makes several database queries.
+
 1. vercel.com → Add New → Project → import the GitHub repo `kasunsameera83/taptruly`.
 2. Settings → Environment Variables (Production). Generate each secret with:
    `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`
