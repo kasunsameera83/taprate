@@ -32,9 +32,12 @@ export const POST = secureRoute<undefined, undefined, SignUpInput, "public">(
 
     // Sinhala and Tamil for sign-ups from Sri Lanka (country from our host's edge, not from the browser).
     // Only touches a business this new person owns that was created in the last hour.
-    if (data?.user && (await visitorCountry()) === "LK") await adminClient().rpc("enable_local_languages_for_new_user", { p_user: data.user.id });
-    if (data?.user) await attachReferral(data.user.id, body.ref);
-    if (data?.user) await audit({ accountId: null, userId: data.user.id, action: "auth.signup", metadata: { terms_version: COMPANY.termsVersion }, ipHash });
+    // For an email that already has an account, Supabase returns a placeholder user with no identities
+    // (so nobody can tell which emails are registered). Only a real new account gets the follow-up steps.
+    const newUser = data?.user && Array.isArray(data.user.identities) && data.user.identities.length > 0 ? data.user : null;
+    if (newUser && (await visitorCountry()) === "LK") await adminClient().rpc("enable_local_languages_for_new_user", { p_user: newUser.id });
+    if (newUser) await attachReferral(newUser.id, body.ref);
+    if (newUser) await audit({ accountId: null, userId: newUser.id, action: "auth.signup", metadata: { terms_version: COMPANY.termsVersion }, ipHash });
 
     // Same answer whether or not the email already has an account (no account enumeration).
     return ok({ message: "Check your email to confirm your account." }, 202);
