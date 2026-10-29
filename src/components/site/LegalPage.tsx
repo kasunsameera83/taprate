@@ -1,6 +1,6 @@
 import { COMPANY, hasPlaceholders } from "@/lib/site/company";
 import { SiteHeader } from "./SiteHeader";
-import { SiteFooter } from "./SiteFooter";
+import { SiteFooterAuto } from "./SiteFooterAuto";
 
 export function LegalPage({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -18,7 +18,7 @@ export function LegalPage({ title, children }: { title: string; children: React.
           {children}
         </article>
       </main>
-      <SiteFooter />
+      <SiteFooterAuto />
     </div>
   );
 }

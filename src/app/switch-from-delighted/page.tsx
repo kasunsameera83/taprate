@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { SiteFooter } from "@/components/site/SiteFooter";
+import { SiteFooterAuto } from "@/components/site/SiteFooterAuto";
 
 export const metadata: Metadata = {
   title: "Switching from Delighted | TapTruly",
@@ -90,7 +90,7 @@ export default function SwitchFromDelighted() {
           </div>
         </section>
       </main>
-      <SiteFooter />
+      <SiteFooterAuto />
     </div>
   );
 }

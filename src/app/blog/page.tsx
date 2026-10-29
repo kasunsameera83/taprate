@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { SiteFooter } from "@/components/site/SiteFooter";
+import { SiteFooterAuto } from "@/components/site/SiteFooterAuto";
 import { listPublishedPosts } from "@/lib/blog/server";
 
 export const metadata: Metadata = {
@@ -59,7 +59,7 @@ export default async function BlogIndex() {
           </>
         )}
       </main>
-      <SiteFooter />
+      <SiteFooterAuto />
     </div>
   );
 }

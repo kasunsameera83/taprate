@@ -302,7 +302,7 @@ export function LandingView({
         </section>
       </main>
 
-      <SiteFooter tagline={c.footer.tagline} />
+      <SiteFooter tagline={c.footer.tagline} sriLanka={currency === "LKR"} />
       {popup && !preview && <PromoPopup promo={popup} />}
     </div>
   );

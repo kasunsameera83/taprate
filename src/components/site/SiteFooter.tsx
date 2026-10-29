@@ -3,7 +3,8 @@ import { COMPANY } from "@/lib/site/company";
 import { Logo } from "@/components/icons";
 
 // Site footer: what you can do, who we are, and the legal pages.
-export function SiteFooter({ tagline }: { tagline?: string }) {
+/** sriLanka: show "Made in Sri Lanka" (only to visitors in Sri Lanka; see SiteFooterAuto). */
+export function SiteFooter({ tagline, sriLanka = false }: { tagline?: string; sriLanka?: boolean }) {
   const email = COMPANY.supportEmail.replace(/[[\]]/g, "");
   const columns = [
     {
@@ -67,9 +68,9 @@ export function SiteFooter({ tagline }: { tagline?: string }) {
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-5 text-[13px]">
           <span>
-            &copy; {new Date().getFullYear()} {COMPANY.legalName.replace(/[[\]]/g, "")}
+            &copy; {new Date().getFullYear()} {COMPANY.productName}
           </span>
-          <span>Made in Sri Lanka</span>
+          {sriLanka && <span>Made in Sri Lanka 🇱🇰</span>}
         </div>
       </div>
     </footer>
