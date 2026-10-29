@@ -57,6 +57,10 @@ export const signUpSchema = z
   .strict();
 export type SignUpInput = z.infer<typeof signUpSchema>;
 
+/** "Send the confirmation email again". */
+export const resendConfirmSchema = z.object({ email: emailSchema }).strict();
+export type ResendConfirmInput = z.infer<typeof resendConfirmSchema>;
+
 export const signInSchema = z
   .object({
     email: emailSchema,

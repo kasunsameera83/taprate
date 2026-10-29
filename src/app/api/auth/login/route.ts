@@ -20,7 +20,7 @@ export const POST = secureRoute<undefined, undefined, SignInInput, "public">(
     if (error || !data.user) {
       await audit({ accountId: null, userId: null, action: "auth.login_failed", metadata: { emailHash: sha256Hex(body.email) }, ipHash });
       if (error?.code === "email_not_confirmed") {
-        return fail("unauthorized", "Please confirm your email first, then sign in.", undefined, requestId);
+        return fail("unauthorized", "Please confirm your email first, then sign in.", { unconfirmed: "true" }, requestId);
       }
       // One message for "no such user" and "wrong password".
       return fail("unauthorized", "Email or password is incorrect.", undefined, requestId);

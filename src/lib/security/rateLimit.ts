@@ -6,6 +6,8 @@ export type RateLimitRule = { name: string; limit: number; windowSec: number };
 // Central list so limits are easy to review in one place.
 export const LIMITS = {
   signupPerIp: { name: "signup:ip", limit: 5, windowSec: 3600 },
+  resendPerIp: { name: "resend:ip", limit: 6, windowSec: 3600 },
+  resendPerEmail: { name: "resend:email", limit: 3, windowSec: 3600 },
   loginPerIp: { name: "login:ip", limit: 20, windowSec: 900 },
   loginPerIpEmail: { name: "login:ip-email", limit: 5, windowSec: 900 },
   clickPerIp: { name: "click:ip", limit: 60, windowSec: 60 },

@@ -5,6 +5,7 @@ import { api } from "@/lib/client/api";
 import { signUpSchema, fieldErrors } from "@/lib/validation/schemas";
 import { Field, Notice, PasswordInput, TextInput } from "@/components/ui";
 import { AuthShell } from "@/components/AuthShell";
+import { ResendConfirmation } from "@/components/ResendConfirmation";
 
 export default function SignupPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -59,9 +60,12 @@ export default function SignupPage() {
     return (
       <AuthShell title="Check your email" subtitle="One more step to finish setting up." footer={footer}>
         <Notice kind="success">
-          We sent a confirmation link to <strong className="break-all">{sentTo}</strong>. Open it on this device to sign in. It can take a minute to arrive; check
-          your spam folder if you don&rsquo;t see it.
+          We sent a confirmation link to <strong className="break-all">{sentTo}</strong>. Open it to finish signing up (on this device or your phone). It can take a
+          minute to arrive; check your spam folder if you don&rsquo;t see it.
         </Notice>
+        <div className="mt-4">
+          <ResendConfirmation email={sentTo} />
+        </div>
       </AuthShell>
     );
   }

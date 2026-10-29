@@ -6,6 +6,7 @@ import { api } from "@/lib/client/api";
 import { signInSchema, fieldErrors } from "@/lib/validation/schemas";
 import { Field, Notice, PasswordInput, TextInput } from "@/components/ui";
 import { AuthShell } from "@/components/AuthShell";
+import { ResendConfirmation } from "@/components/ResendConfirmation";
 
 const LINK_ERRORS: Record<string, string> = {
   link: "That confirmation link is invalid or has expired. Try signing in, or sign up again.",
@@ -17,6 +18,8 @@ function LoginForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [message, setMessage] = useState(LINK_ERRORS[params.get("error") ?? ""] ?? "");
   const [busy, setBusy] = useState(false);
+  // Set when the password was right but the email isn't confirmed yet: offer to send the link again.
+  const [unconfirmed, setUnconfirmed] = useState("");
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -36,13 +39,16 @@ function LoginForm() {
       return;
     }
     setBusy(false);
-    setErrors(res.fields ?? {});
+    const { unconfirmed: flag, ...fields } = res.fields ?? {};
+    setUnconfirmed(flag ? parsed.data.email : "");
+    setErrors(fields);
     setMessage(res.message);
   }
 
   return (
     <form onSubmit={onSubmit} noValidate className="space-y-5">
       {message && <Notice kind="error">{message}</Notice>}
+      {unconfirmed && <ResendConfirmation email={unconfirmed} startWaiting={false} />}
       <Field label="Email" name="email" error={errors.email}>
         <TextInput name="email" type="email" inputMode="email" autoComplete="email" maxLength={254} required error={errors.email} />
       </Field>
