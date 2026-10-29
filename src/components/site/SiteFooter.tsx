@@ -13,6 +13,7 @@ export function SiteFooter({ tagline }: { tagline?: string }) {
         { href: "/#features", label: "Features" },
         { href: "/#pricing", label: "Pricing" },
         { href: "/#faq", label: "Questions" },
+        { href: "/blog", label: "Blog" },
       ],
     },
     {

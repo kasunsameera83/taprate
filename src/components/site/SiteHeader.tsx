@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Logo } from "@/components/icons";
 
 const LINKS = [
@@ -8,6 +9,7 @@ const LINKS = [
   { href: "/#features", label: "Features" },
   { href: "/#pricing", label: "Pricing" },
   { href: "/#faq", label: "Questions" },
+  { href: "/blog", label: "Blog" },
 ];
 
 // Sticky site navigation. Gains a border once you scroll; on phones the links move into a menu sheet.
@@ -16,6 +18,9 @@ export function SiteHeader({ cta = "Start free", showPricing = true }: { cta?: s
   const menu = useRef<HTMLDialogElement>(null);
   const progress = useRef<HTMLSpanElement>(null);
   const [current, setCurrent] = useState<string | null>(null);
+  const pathname = usePathname();
+  // The Blog link is "current" anywhere under /blog; the others follow the section you're reading.
+  const isOn = (href: string) => (href === "/blog" ? pathname.startsWith("/blog") : current === href.replace("/#", ""));
 
   // Which section you're reading, so the menu can show it (landing page only; elsewhere nothing matches).
   useEffect(() => {
@@ -101,7 +106,7 @@ export function SiteHeader({ cta = "Start free", showPricing = true }: { cta?: s
         </Link>
         <nav aria-label="Site" className="hidden items-center gap-1 md:flex">
           {links.map((l) => {
-            const on = current === l.href.replace("/#", "");
+            const on = isOn(l.href);
             return (
               <a
                 key={l.href}
@@ -155,7 +160,7 @@ export function SiteHeader({ cta = "Start free", showPricing = true }: { cta?: s
           </div>
           <nav aria-label="Site menu" className="grid">
             {links.map((l) => {
-              const on = current === l.href.replace("/#", "");
+              const on = isOn(l.href);
               return (
                 <a
                   key={l.href}

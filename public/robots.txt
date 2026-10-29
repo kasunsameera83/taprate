@@ -12,3 +12,5 @@ Disallow: /thanks/
 Disallow: /reports/
 Disallow: /unsubscribe
 Disallow: /welcome
+
+Sitemap: https://taptruly.com/sitemap.xml
