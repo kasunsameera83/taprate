@@ -5,9 +5,9 @@ export const COMPANY = {
   legalName: "[Your company name (Pvt) Ltd]",
   registrationNo: "[Company registration number]",
   address: "[Registered address], Sri Lanka",
-  supportEmail: "[support@yourdomain.com]",
-  privacyEmail: "[privacy@yourdomain.com]",
-  securityEmail: "[security@yourdomain.com]",
+  supportEmail: "support@taptruly.com",
+  privacyEmail: "privacy@taptruly.com",
+  securityEmail: "security@taptruly.com",
   governingLaw: "the laws of the Democratic Socialist Republic of Sri Lanka",
   courts: "the courts of Colombo, Sri Lanka",
   /** Change this date whenever the Terms or Privacy Policy change; people agree to this version. */
