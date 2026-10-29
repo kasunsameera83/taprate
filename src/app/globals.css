@@ -541,3 +541,19 @@ html {
 @media (prefers-reduced-motion: no-preference) {
   .lp-chip { animation: lp-chip 6s ease-in-out infinite; }
 }
+
+/* 404 page: gradient numbers, and the faces bob in turn (still with reduced motion). */
+.nf-404 {
+  background: linear-gradient(90deg, var(--color-brand-from), var(--color-brand-to));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@keyframes nf-bob {
+  0%, 70%, 100% { transform: translateY(0); }
+  80% { transform: translateY(-6px); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .nf-face { animation: nf-bob 3s ease-in-out infinite; }
+  .nf-face:hover, .nf-face[aria-pressed="true"] { animation: none; }
+}

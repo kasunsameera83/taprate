@@ -110,7 +110,7 @@ function SurveyDetail({ id }: { id: string }) {
         )}
       </header>
 
-      <div role="tablist" aria-label="Survey sections" className="flex gap-1 overflow-x-auto border-b border-line">
+      <div role="tablist" aria-label="Survey sections" className="flex gap-1 overflow-x-auto overflow-y-hidden shadow-[inset_0_-1px_0_var(--color-line)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {tabs.map((t) => (
           <button
             key={t.value}
@@ -120,7 +120,7 @@ function SurveyDetail({ id }: { id: string }) {
             aria-selected={tab === t.value}
             aria-controls={`panel-${t.value}`}
             onClick={() => switchTab(t.value)}
-            className={`-mb-px min-h-11 shrink-0 border-b-2 px-3 text-sm font-semibold ${
+            className={`min-h-11 shrink-0 border-b-2 px-3 text-sm font-semibold ${
               tab === t.value ? "border-brand text-ink" : "border-transparent text-muted hover:text-ink"
             }`}
           >

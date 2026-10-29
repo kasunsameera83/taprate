@@ -25,7 +25,12 @@ export function TabNav({ label, tabs, exactRoot }: { label: string; tabs: Array<
           ))}
         </select>
       </div>
-      <nav aria-label={label} className="hidden gap-1 overflow-x-auto border-b border-line sm:flex">
+      {/* Scrolls sideways if the tabs don't fit, without showing a scroll bar. The grey line is drawn inside the
+          row (inset shadow) so nothing sticks out and no stray up/down scroll bar appears. */}
+      <nav
+        aria-label={label}
+        className="hidden gap-1 overflow-x-auto overflow-y-hidden shadow-[inset_0_-1px_0_var(--color-line)] [scrollbar-width:none] sm:flex [&::-webkit-scrollbar]:hidden"
+      >
         {tabs.map((t) => {
           const active = t.href === current?.href;
           return (
@@ -33,7 +38,7 @@ export function TabNav({ label, tabs, exactRoot }: { label: string; tabs: Array<
               key={t.href}
               href={t.href}
               aria-current={active ? "page" : undefined}
-              className={`-mb-px flex min-h-11 shrink-0 items-center border-b-2 px-3 text-sm font-semibold ${active ? "border-brand text-ink" : "border-transparent text-muted hover:text-ink"}`}
+              className={`flex min-h-11 shrink-0 items-center border-b-2 px-3 text-sm font-semibold ${active ? "border-brand text-ink" : "border-transparent text-muted hover:text-ink"}`}
             >
               {t.label}
             </Link>
