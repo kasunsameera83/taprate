@@ -12,6 +12,7 @@ import { CollectPanel } from "./CollectPanel";
 import { IconCustomizer } from "./IconCustomizer";
 import { SendPanel } from "./SendPanel";
 import { confirmDialog } from "@/components/ConfirmDialog";
+import { PageLoader } from "@/components/FaceLoader";
 
 type Tab = "buttons" | "send" | "collect" | "settings";
 
@@ -62,7 +63,7 @@ function SurveyDetail({ id }: { id: string }) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-96 w-full rounded-[var(--radius-panel)]" />
+        <PageLoader className="h-96" />
       </div>
     );
   }
@@ -136,7 +137,7 @@ function SurveyDetail({ id }: { id: string }) {
           canSeeSends ? (
             <SendPanel survey={survey} canSend={canEdit} />
           ) : role === null ? (
-            <Skeleton className="h-64 w-full rounded-[var(--radius-panel)]" />
+            <PageLoader className="h-64" />
           ) : (
             <Notice kind="info">Only owners, admins and viewers can see survey emails.</Notice>
           )

@@ -5,9 +5,10 @@ import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/client/api";
 import { billingProfileSchema, fieldErrors } from "@/lib/validation/schemas";
 import { formatMoney, type BillingInterval, type Catalog, type Currency, type PackId, type PayWay, type PlanId, type Provider } from "@/lib/billing/catalog";
-import { Badge, Field, LoadError, Notice, Segmented, Skeleton, TextInput } from "@/components/ui";
+import { Badge, Field, LoadError, Notice, Segmented, TextInput } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
+import { PageLoader } from "@/components/FaceLoader";
 
 type Summary = {
   plan: string;
@@ -46,7 +47,7 @@ function BillingView() {
   useEffect(load, [load]);
 
   if (error) return <LoadError message={error} onRetry={load} />;
-  if (!data) return <Skeleton className="h-96 w-full rounded-[var(--radius-panel)]" />;
+  if (!data) return <PageLoader className="h-96" />;
 
   const anyProvider = data.providers.payhere || data.providers.stripe;
   return (

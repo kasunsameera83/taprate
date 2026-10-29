@@ -4,10 +4,11 @@ import { api } from "@/lib/client/api";
 import { landingSchema, type Landing } from "@/lib/site/content";
 import { fieldErrors } from "@/lib/validation/schemas";
 import type { Catalog } from "@/lib/billing/catalog";
-import { LoadError, Notice, Skeleton } from "@/components/ui";
+import { LoadError, Notice } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
 import { LandingView } from "@/components/site/LandingView";
+import { PageLoader } from "@/components/FaceLoader";
 
 type Loaded = { draft: Landing; hasUnpublished: boolean; updatedAt: string | null; publishedAt: string | null };
 
@@ -126,7 +127,7 @@ export default function LandingEditor() {
   }, [dirty]);
 
   if (error) return <LoadError message={error} onRetry={load} />;
-  if (!c || !loaded) return <Skeleton className="h-96 w-full rounded-[var(--radius-panel)]" />;
+  if (!c || !loaded) return <PageLoader className="h-96" />;
 
   const set = (patch: Partial<Landing>) => {
     setC({ ...c, ...patch });

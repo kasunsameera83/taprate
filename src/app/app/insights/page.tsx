@@ -4,10 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import { api, qs } from "@/lib/client/api";
 import type { Survey } from "@/lib/client/types";
 import type { InsightResult } from "@/lib/insights/ai";
-import { Badge, EmptyState, LoadError, Notice, Segmented, Skeleton } from "@/components/ui";
+import { Badge, EmptyState, LoadError, Notice, Segmented } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
 import { IconDownload, IconSparkle } from "@/components/icons";
+import { PageLoader } from "@/components/FaceLoader";
 
 type Item = { id: string; surveyId: string | null; surveyName: string | null; days: number; periodStart: string; periodEnd: string; commentCount: number; ratingCount: number; result: InsightResult; createdAt: string };
 type List = { enabled: boolean; configured: boolean; items: Item[] };
@@ -98,7 +99,7 @@ export default function InsightsPage() {
       </div>
 
       {error && <LoadError message={error} onRetry={load} />}
-      {!list && !error && <Skeleton className="h-64 w-full rounded-[var(--radius-panel)]" />}
+      {!list && !error && <PageLoader className="h-64" />}
 
       {list && (
         <SettingsSection title="AI summary" description="Themes, real quotes and suggested actions from your customers' comments.">

@@ -3,10 +3,11 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { api } from "@/lib/client/api";
 import { changeEmailSchema, mfaCodeSchema, mfaConfirmSchema, newPasswordSchema, fieldErrors } from "@/lib/validation/schemas";
 import { ROLE_DESCRIPTION, ROLE_LABEL, isRole } from "@/lib/security/authz";
-import { Badge, Field, LoadError, Notice, PasswordInput, Skeleton, TextInput } from "@/components/ui";
+import { Badge, Field, LoadError, Notice, PasswordInput, TextInput } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
 import { PhoneAlerts } from "./PhoneAlerts";
+import { PageLoader } from "@/components/FaceLoader";
 
 type Me = {
   email: string | null;
@@ -24,7 +25,7 @@ export default function AccountSettingsPage() {
   useEffect(load, [load]);
 
   if (loadError) return <LoadError message={loadError} onRetry={load} />;
-  if (!me) return <Skeleton className="h-72 w-full rounded-[var(--radius-panel)]" />;
+  if (!me) return <PageLoader className="h-72" />;
 
   const role = me.account?.role;
   return (

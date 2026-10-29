@@ -2,7 +2,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/client/api";
-import { Badge, EmptyState, LoadError, Skeleton } from "@/components/ui";
+import { Badge, EmptyState, LoadError } from "@/components/ui";
+import { PageLoader } from "@/components/FaceLoader";
 
 type Post = { id: string; slug: string; title: string; status: "draft" | "published"; publishedAt: string | null; updatedAt: string };
 
@@ -24,7 +25,7 @@ export default function AdminBlogPage() {
   useEffect(load, [load]);
 
   if (error) return <LoadError message={error} onRetry={load} />;
-  if (!posts) return <Skeleton className="h-64 w-full rounded-[var(--radius-panel)]" />;
+  if (!posts) return <PageLoader className="h-64" />;
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">

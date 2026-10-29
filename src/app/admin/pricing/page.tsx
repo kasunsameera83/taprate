@@ -4,9 +4,10 @@ import { api } from "@/lib/client/api";
 import { catalogItemSchema } from "@/lib/site/content";
 import { fieldErrors } from "@/lib/validation/schemas";
 import type { Catalog, Pack, Plan } from "@/lib/billing/catalog";
-import { LoadError, Notice, Skeleton } from "@/components/ui";
+import { LoadError, Notice } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
+import { PageLoader } from "@/components/FaceLoader";
 
 const major = (minor: number) => (minor / 100).toFixed(2).replace(/\.00$/, "");
 
@@ -32,7 +33,7 @@ export default function PricingAdmin() {
   }, []);
   useEffect(load, [load]);
   if (error) return <LoadError message={error} onRetry={load} />;
-  if (!catalog) return <Skeleton className="h-96 w-full rounded-[var(--radius-panel)]" />;
+  if (!catalog) return <PageLoader className="h-96" />;
   return (
     <div className="space-y-6">
       <div>

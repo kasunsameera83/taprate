@@ -5,10 +5,11 @@ import { api } from "@/lib/client/api";
 import { formatMoney, type Currency } from "@/lib/billing/catalog";
 import { adminCreditsSchema } from "@/lib/validation/admin";
 import { fieldErrors } from "@/lib/validation/schemas";
-import { Badge, Field, LoadError, Notice, Skeleton, TextInput } from "@/components/ui";
+import { Badge, Field, LoadError, Notice, TextInput } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
 import { IconArrowLeft } from "@/components/icons";
+import { PageLoader } from "@/components/FaceLoader";
 
 type Detail = {
   id: string;
@@ -40,7 +41,7 @@ export default function AdminBusiness({ params }: { params: Promise<{ id: string
   }, [id]);
   useEffect(load, [load]);
   if (error) return <LoadError message={error} onRetry={load} />;
-  if (!d) return <Skeleton className="h-96 w-full rounded-[var(--radius-panel)]" />;
+  if (!d) return <PageLoader className="h-96" />;
 
   return (
     <div className="space-y-6">

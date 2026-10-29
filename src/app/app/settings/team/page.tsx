@@ -7,6 +7,7 @@ import { Badge, Field, LoadError, Notice, Skeleton, TextInput } from "@/componen
 import { SettingsSection } from "@/components/SettingsSection";
 import { IconCopy } from "@/components/icons";
 import { confirmDialog } from "@/components/ConfirmDialog";
+import { PageLoader } from "@/components/FaceLoader";
 
 type Member = { userId: string; email: string; role: string; agentName: string | null; joinedAt: string };
 type Invite = { id: string; email: string; role: string; agentName: string | null; createdAt: string; expiresAt: string };
@@ -31,7 +32,7 @@ export default function TeamPage() {
   useEffect(load, [load]);
 
   if (loadError) return <LoadError message={loadError} onRetry={load} />;
-  if (!team) return <Skeleton className="h-72 w-full rounded-[var(--radius-panel)]" />;
+  if (!team) return <PageLoader className="h-72" />;
 
   return (
     <div className="space-y-6">

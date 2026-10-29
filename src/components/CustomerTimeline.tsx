@@ -2,7 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { api } from "@/lib/client/api";
-import { Badge, LoadError, Skeleton } from "@/components/ui";
+import { Badge, LoadError } from "@/components/ui";
+import { PageLoader } from "@/components/FaceLoader";
 
 type Timeline = {
   email: string;
@@ -96,7 +97,7 @@ function TimelineBody({ email }: { email: string }) {
   }, [email, tick]);
 
   if (error) return <div className="mt-4"><LoadError message={error} onRetry={() => setTick((t) => t + 1)} /></div>;
-  if (!data) return <Skeleton className="mt-4 h-48 w-full rounded-[var(--radius-panel)]" />;
+  if (!data) return <PageLoader className="mt-4 h-48" />;
 
   const items: Item[] = [
     ...data.ratings.map((r) => ({ kind: "rating" as const, at: r.at, r })),

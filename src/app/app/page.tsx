@@ -9,6 +9,7 @@ import { LoadError, Segmented, SentimentDot, Skeleton, Notice } from "@/componen
 import { IconPlus } from "@/components/icons";
 import { Checklist } from "./Checklist";
 import { sampleStats } from "@/lib/onboarding/sample";
+import { PageLoader } from "@/components/FaceLoader";
 
 type Days = 7 | 30 | 90;
 const PERIODS: ReadonlyArray<{ value: Days; label: string }> = [
@@ -325,7 +326,7 @@ function KpiRow({ stats, days }: { stats: StatsResponse | null; days: number }) 
 }
 
 function DailyChart({ stats }: { stats: StatsResponse | null }) {
-  if (!stats) return <Skeleton className="h-64 w-full rounded-[var(--radius-panel)]" />;
+  if (!stats) return <PageLoader className="h-64" />;
   const max = Math.max(1, ...stats.byDay.map((d) => d.total));
   const mid = stats.byDay[Math.floor(stats.byDay.length / 2)];
   const fmt = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" });

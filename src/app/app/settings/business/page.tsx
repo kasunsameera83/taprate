@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { api } from "@/lib/client/api";
 import { accountUpdateSchema, deleteAccountSchema, eraseCustomerSchema, fieldErrors } from "@/lib/validation/schemas";
 import { canPerform, isRole, type Role } from "@/lib/security/authz";
-import { Badge, Field, LoadError, Notice, PasswordInput, Skeleton, TextInput } from "@/components/ui";
+import { Badge, Field, LoadError, Notice, PasswordInput, TextInput } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { IconDownload } from "@/components/icons";
 import { LOGO_MAX_BYTES, sniffImage } from "@/lib/branding";
@@ -12,6 +12,7 @@ import { DoNotEmail } from "./DoNotEmail";
 import { TvScreens } from "./TvScreens";
 import { OwnDomain } from "./OwnDomain";
 import { DropAlerts } from "./DropAlerts";
+import { PageLoader } from "@/components/FaceLoader";
 
 type Me = { account: { id: string; name: string; plan: string; credits: number; role: string; logoUrl: string | null } | null };
 
@@ -25,7 +26,7 @@ export default function BusinessSettingsPage() {
   useEffect(load, [load]);
 
   if (loadError) return <LoadError message={loadError} onRetry={load} />;
-  if (!me?.account) return <Skeleton className="h-72 w-full rounded-[var(--radius-panel)]" />;
+  if (!me?.account) return <PageLoader className="h-72" />;
   const a = me.account;
   const role: Role | null = isRole(a.role) ? a.role : null;
 

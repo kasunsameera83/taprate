@@ -6,10 +6,11 @@ import { api } from "@/lib/client/api";
 import { blogPostSchema, slugify } from "@/lib/blog/schema";
 import { readingMinutes } from "@/lib/blog/markdown";
 import { fieldErrors } from "@/lib/validation/schemas";
-import { Field, LoadError, Notice, Segmented, Skeleton, TextInput } from "@/components/ui";
+import { Field, LoadError, Notice, Segmented, TextInput } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
 import { PostBody } from "@/components/blog/PostBody";
+import { PageLoader } from "@/components/FaceLoader";
 
 type Post = {
   id: string;
@@ -71,7 +72,7 @@ export default function BlogEditorPage() {
   }, [id, isNew]);
 
   if (loadError) return <LoadError message={loadError} onRetry={() => window.location.reload()} />;
-  if (!draft) return <Skeleton className="h-96 w-full rounded-[var(--radius-panel)]" />;
+  if (!draft) return <PageLoader className="h-96" />;
   const d = draft;
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft({ ...d, [k]: v });
 

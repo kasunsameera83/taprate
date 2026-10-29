@@ -2,8 +2,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, qs } from "@/lib/client/api";
 import type { Survey } from "@/lib/client/types";
-import { EmptyState, LoadError, Segmented, Skeleton } from "@/components/ui";
+import { EmptyState, LoadError, Segmented } from "@/components/ui";
 import { IconTrophy } from "@/components/icons";
+import { PageLoader } from "@/components/FaceLoader";
 
 type Row = { agent: string; total: number; satisfactionPct: number; negative: number; previousSatisfactionPct: number | null };
 type Board = { ranked: Row[]; tooFew: Row[]; minRatings: number; truncated: boolean };
@@ -72,7 +73,7 @@ export default function LeaderboardPage() {
       {error && <LoadError message={error} onRetry={retry} />}
 
       {!board && !error ? (
-        <Skeleton className="h-80 w-full rounded-[var(--radius-panel)]" />
+        <PageLoader className="h-80" />
       ) : board && board.ranked.length === 0 && board.tooFew.length === 0 ? (
         <div className="panel">
           <EmptyState

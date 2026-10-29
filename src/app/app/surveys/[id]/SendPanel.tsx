@@ -11,6 +11,7 @@ import { Badge, Field, LoadError, Notice, Skeleton, TextInput } from "@/componen
 import { EmailButtonsPreview } from "@/components/SurveyPreview";
 import { IconUpload } from "@/components/icons";
 import { confirmDialog } from "@/components/ConfirmDialog";
+import { PageLoader } from "@/components/FaceLoader";
 
 // "Send by email": TapTruly emails the survey to a list of customers, with an optional reminder.
 
@@ -437,7 +438,7 @@ function Composer({ survey, credits, onSent }: { survey: Survey; credits: number
 // ---------------------------------------------------------------------------
 
 function History({ survey, list, canSend, onChanged }: { survey: Survey; list: SendList | null; canSend: boolean; onChanged: () => void }) {
-  if (!list) return <Skeleton className="h-40 w-full rounded-[var(--radius-panel)]" />;
+  if (!list) return <PageLoader className="h-40" />;
   if (list.sends.length === 0) {
     return (
       <section className="panel p-5 text-sm text-muted sm:p-6">

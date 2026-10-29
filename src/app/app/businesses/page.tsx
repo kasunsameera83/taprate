@@ -1,7 +1,8 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/client/api";
-import { Badge, EmptyState, LoadError, Skeleton } from "@/components/ui";
+import { Badge, EmptyState, LoadError } from "@/components/ui";
+import { PageLoader } from "@/components/FaceLoader";
 
 type Biz = {
   id: string;
@@ -42,7 +43,7 @@ export default function BusinessesPage() {
   }
 
   if (error) return <LoadError message={error} onRetry={load} />;
-  if (!data) return <Skeleton className="h-96 w-full rounded-[var(--radius-panel)]" />;
+  if (!data) return <PageLoader className="h-96" />;
 
   const rows = [...data.businesses].sort((a, b) =>
     sort === "name" ? a.name.localeCompare(b.name) : sort === "satisfaction" ? (a.satisfaction ?? 101) - (b.satisfaction ?? 101) : b.openFollowups - a.openFollowups,

@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api, qs } from "@/lib/client/api";
-import { EmptyState, LoadError, Skeleton } from "@/components/ui";
+import { EmptyState, LoadError } from "@/components/ui";
+import { PageLoader } from "@/components/FaceLoader";
 
 type Entry = { id: number; admin_id: string | null; action: string; target_type: string | null; target_id: string | null; metadata: Record<string, unknown>; created_at: string };
 type Page = { page: number; total: number; pageSize: number; items: Entry[] };
@@ -30,7 +31,7 @@ export default function AdminActivity() {
     api<Page>(`/api/admin/activity${qs({ page })}`).then((r) => (r.ok ? setData(r.data) : setError(r.message)));
   }, [page]);
   if (error) return <LoadError message={error} onRetry={() => setPage((p) => p)} />;
-  if (!data) return <Skeleton className="h-64 w-full rounded-[var(--radius-panel)]" />;
+  if (!data) return <PageLoader className="h-64" />;
   const pages = Math.max(1, Math.ceil(data.total / data.pageSize));
   return (
     <div className="space-y-4">

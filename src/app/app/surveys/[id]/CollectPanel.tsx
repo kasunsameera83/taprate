@@ -7,6 +7,7 @@ import { kioskCreateSchema, fieldErrors } from "@/lib/validation/schemas";
 import { Field, LoadError, Notice, Skeleton, TextInput } from "@/components/ui";
 import { IconCheck, IconCopy, IconDownload } from "@/components/icons";
 import { confirmDialog } from "@/components/ConfirmDialog";
+import { PageLoader } from "@/components/FaceLoader";
 
 type Share = {
   active: boolean;
@@ -69,7 +70,7 @@ export function CollectPanel({ surveyId, canEdit, surveyName }: { surveyId: stri
   useEffect(load, [load]);
 
   if (error) return <LoadError message={error} onRetry={load} />;
-  if (!share) return <Skeleton className="h-96 w-full rounded-[var(--radius-panel)]" />;
+  if (!share) return <PageLoader className="h-96" />;
 
   // Our own server-generated SVG, shown as an image (never inserted as HTML).
   const qrDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(share.qr.svg)}`;

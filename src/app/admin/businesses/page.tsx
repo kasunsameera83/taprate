@@ -2,7 +2,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, qs } from "@/lib/client/api";
-import { Badge, EmptyState, LoadError, Skeleton } from "@/components/ui";
+import { Badge, EmptyState, LoadError } from "@/components/ui";
+import { PageLoader } from "@/components/FaceLoader";
 
 type Row = { id: string; name: string; plan: string; credits: number; createdAt: string; suspended: boolean; ownerEmail: string | null; members: number; responses30d: number };
 type Page = { page: number; pageSize: number; total: number; items: Row[] };
@@ -45,7 +46,7 @@ export default function AdminBusinesses() {
         </div>
       </div>
       {error && <LoadError message={error} onRetry={() => setReload((n) => n + 1)} />}
-      {!data && !error && <Skeleton className="h-64 w-full rounded-[var(--radius-panel)]" />}
+      {!data && !error && <PageLoader className="h-64" />}
       {data && data.items.length === 0 && <EmptyState title="No businesses found" body="Try another search." />}
       {data && data.items.length > 0 && (
         <>

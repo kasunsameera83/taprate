@@ -557,3 +557,7 @@ html {
   .nf-face { animation: nf-bob 3s ease-in-out infinite; }
   .nf-face:hover, .nf-face[aria-pressed="true"] { animation: none; }
 }
+
+/* Loader label breathes gently (also fine with reduced motion: no movement, only a soft fade). */
+@keyframes fl-breathe { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+.fl-label { animation: fl-breathe 2.6s ease-in-out infinite; }

@@ -2,7 +2,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/client/api";
 import { formatMoney, type Currency } from "@/lib/billing/catalog";
-import { LoadError, Skeleton } from "@/components/ui";
+import { LoadError } from "@/components/ui";
+import { PageLoader } from "@/components/FaceLoader";
 
 type Overview = {
   businesses: number;
@@ -43,7 +44,7 @@ export default function AdminOverview() {
   }, []);
   useEffect(load, [load]);
   if (error) return <LoadError message={error} onRetry={load} />;
-  if (!d) return <Skeleton className="h-64 w-full rounded-[var(--radius-panel)]" />;
+  if (!d) return <PageLoader className="h-64" />;
 
   const max = Math.max(1, ...d.signups_by_day.map((s) => Number(s.n)));
   const days = Array.from({ length: 30 }, (_, i) => {
