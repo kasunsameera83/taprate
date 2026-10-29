@@ -8,9 +8,6 @@ export const dynamic = "force-dynamic";
 // POST so the email address never sits in a URL or server log.
 const bodySchema = z.object({ email: emailSchema }).strict();
 
-/** Exact, case-insensitive match: LIKE wildcards in the address are escaped. */
-const exact = (email: string) => email.replace(/[\\%_]/g, (c) => `\\${c}`);
-
 type Rated = {
   id: string;
   rating: number | null;
@@ -35,7 +32,8 @@ export const POST = secureRoute<undefined, undefined, z.infer<typeof bodySchema>
       .select("id, rating, sentiment, comment, channel, followup_status, resolved_at, recovery_of, created_at, surveys(name), locations(name)")
       .eq("account_id", membership.accountId)
       .eq("status", "confirmed")
-      .ilike("respondent_email", exact(body.email))
+      // Lower-case copy kept by the database (0028): ignores capitals and uses an index.
+      .eq("respondent_email_lc", body.email)
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw dbError(error);
