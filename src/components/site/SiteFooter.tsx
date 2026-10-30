@@ -22,6 +22,7 @@ export function SiteFooter({ tagline, sriLanka = false }: { tagline?: string; sr
       links: [
         { href: "/signup", label: "Create a free account" },
         { href: "/login", label: "Sign in" },
+        { href: "/compare", label: "Compare with other tools" },
         { href: "/switch-from-delighted", label: "Switching from Delighted" },
       ],
     },
