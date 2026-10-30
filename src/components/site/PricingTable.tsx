@@ -11,12 +11,28 @@ export function PricingTable({ catalog, defaultCurrency = "LKR" }: { catalog: Ca
   const [interval, setInterval_] = useState<BillingInterval>("month");
   const plans = catalog.plans.filter((p) => p.active);
   const packs = catalog.packs.filter((p) => p.active);
+  const free = catalog.free ?? { responses: 0, dailyEmails: 0 };
   return (
     <div>
       <div className="flex flex-wrap items-center gap-3">
         <Segmented label="Billing period" value={interval} onChange={setInterval_} options={[{ value: "month", label: "Monthly" }, { value: "year", label: "Yearly" }]} />
       </div>
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
+      <div className={`mt-6 grid gap-4 ${free.responses > 0 ? "sm:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-3"}`}>
+        {free.responses > 0 && (
+          <div className="flex flex-col rounded-[var(--radius-panel)] border border-line bg-surface p-6">
+            <p className="text-lg font-semibold">Free</p>
+            <p className="mt-3 text-3xl font-bold">
+              {currency === "LKR" ? "Rs 0" : "$0"}
+              <span className="text-base font-normal text-muted"> forever</span>
+            </p>
+            <p className="mt-2 text-sm font-semibold">{free.responses.toLocaleString("en")} responses to start</p>
+            {free.dailyEmails > 0 && <p className="text-[13px] text-muted">Send up to {free.dailyEmails.toLocaleString("en")} survey emails a day</p>}
+            <p className="mt-1 flex-1 text-sm text-muted">No card needed. Upgrade any time.</p>
+            <Link href="/signup" className="btn btn-secondary mt-5">
+              Start free
+            </Link>
+          </div>
+        )}
         {plans.map((p) => (
           <div key={p.id} className={`flex flex-col rounded-[var(--radius-panel)] border bg-surface p-6 ${p.id === "growth" ? "border-brand shadow-sm" : "border-line"}`}>
             <p className="flex items-center justify-between text-lg font-semibold">
@@ -31,7 +47,7 @@ export function PricingTable({ catalog, defaultCurrency = "LKR" }: { catalog: Ca
             <p className="text-[13px] text-muted">Send up to {SEND_LIMITS[p.id].toLocaleString("en")} survey emails a day</p>
             <p className="mt-1 flex-1 text-sm text-muted">{p.blurb}</p>
             <Link href="/signup" className={`btn mt-5 ${p.id === "growth" ? "btn-primary" : "btn-secondary"}`}>
-              Start free
+              Choose {p.name}
             </Link>
           </div>
         ))}
