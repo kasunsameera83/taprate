@@ -49,6 +49,19 @@ export function SiteFooter({ tagline, sriLanka = false }: { tagline?: string; sr
               {COMPANY.phone}
             </a>
           )}
+          <div className="mt-4 flex gap-2">
+            <a
+              href={COMPANY.social.facebook}
+              target="_blank"
+              rel="noopener noreferrer me"
+              aria-label="TapTruly on Facebook"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-[#1877F2]"
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>
+                <path d="M13.5 21v-7.5h2.5l.4-3h-2.9V8.6c0-.9.3-1.5 1.5-1.5h1.5V4.4c-.3 0-1.2-.1-2.2-.1-2.2 0-3.7 1.3-3.7 3.8v2.4H8v3h2.6V21h2.9z" />
+              </svg>
+            </a>
+          </div>
         </div>
         {columns.map((c) => (
           <nav key={c.title} aria-label={c.title}>

@@ -10,6 +10,8 @@ export const COMPANY = {
   supportEmail: "support@taptruly.com",
   privacyEmail: "privacy@taptruly.com",
   securityEmail: "security@taptruly.com",
+  /** Official social media pages (footer links and search engines). Add more as they're created. */
+  social: { facebook: "https://www.facebook.com/TapTruly" },
   governingLaw: "the laws of the Democratic Socialist Republic of Sri Lanka",
   courts: "the courts of Colombo, Sri Lanka",
   /** Change this date whenever the Terms, Privacy or Refund Policy change; people agree to this version. */
@@ -17,7 +19,7 @@ export const COMPANY = {
   effectiveDate: "1 November 2026",
 };
 
-export const hasPlaceholders = () => Object.values(COMPANY).some((v) => v.includes("["));
+export const hasPlaceholders = () => Object.values(COMPANY).some((v) => typeof v === "string" && v.includes("["));
 
 /** Services that process data for us (shown in the Privacy Policy). Keep in step with what you use. */
 export const SUBPROCESSORS = [

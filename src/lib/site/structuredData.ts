@@ -1,5 +1,6 @@
 // schema.org data for the public pages. Pure, unit-tested.
 import type { Catalog, Currency } from "../billing/catalog.ts";
+import { COMPANY } from "./company.ts";
 
 type FaqItem = { q: string; a: string };
 
@@ -10,6 +11,9 @@ export function organization(site: string) {
     name: "TapTruly",
     url: site,
     logo: `${site}/icon-512.png`,
+    email: COMPANY.supportEmail,
+    telephone: COMPANY.phone,
+    sameAs: Object.values(COMPANY.social),
   };
 }
 
