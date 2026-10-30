@@ -76,11 +76,8 @@ export function TvClient({ token }: { token: string }) {
       <header className="flex items-baseline justify-between gap-6">
         <h1 className="flex items-center gap-4 font-display text-3xl font-bold lg:text-4xl">
           {data.logo && (
-            // White tile so dark and transparent logos are visible on the dark screen.
-            <span className="flex h-16 items-center rounded-[16px] bg-white px-4 lg:h-20">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={data.logo} alt="" className="max-h-12 max-w-[220px] object-contain lg:max-h-14" />
-            </span>
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={data.logo} alt="" className="max-h-16 max-w-[260px] rounded-[12px] object-contain lg:max-h-20" />
           )}
           {/* With a logo, the name is only for screen readers (the logo already says who it is). */}
           <span className={data.logo ? "sr-only" : undefined}>{data.business}</span>
