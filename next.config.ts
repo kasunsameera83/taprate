@@ -14,6 +14,9 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
+  // Put the (small, ~16 KB) stylesheet inside the page instead of a separate file the browser must wait
+  // for: faster first paint on phones. Allowed by our CSP (style-src 'unsafe-inline').
+  experimental: { inlineCss: true },
   async rewrites() {
     // RFC 9116 location for the security contact (served by src/app/security-txt/route.ts).
     return [{ source: "/.well-known/security.txt", destination: "/security-txt" }];

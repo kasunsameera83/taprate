@@ -299,8 +299,10 @@ textarea.input {
 }
 
 /* Statement + stripe, scrubbed by --p (0..1) as you scroll. */
+/* Words light up from grey to dark as you scroll. Colour (not opacity), so even the not-yet-lit words keep
+   readable contrast (slate-500 on the light background, 4.5:1+). */
 .ss-word {
-  opacity: clamp(0.14, calc(var(--p, 1) * (var(--n) + 3) - var(--i)), 1);
+  color: color-mix(in srgb, var(--color-ink) calc(clamp(0, calc(var(--p, 1) * (var(--n) + 3) - var(--i)), 1) * 100%), #64748b);
 }
 .ss-tick {
   transform-origin: bottom;
