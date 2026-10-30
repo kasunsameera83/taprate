@@ -8,6 +8,7 @@ import { isIconSetId, ratingOption } from "@/lib/surveys/iconSets";
 import type { ResponseItem } from "@/lib/client/types";
 import { Badge, EmptyState, LoadError, Notice, Skeleton } from "@/components/ui";
 import { IconFollowUp, IconSparkle } from "@/components/icons";
+import { Busy } from "@/components/FaceLoader";
 
 type Status = "active" | "overdue" | "open" | "in_progress" | "resolved";
 type Item = ResponseItem & { noteCount: number };

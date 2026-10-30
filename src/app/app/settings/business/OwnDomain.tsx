@@ -7,6 +7,7 @@ import { fieldErrors } from "@/lib/validation/schemas";
 import { Badge, Field, Notice, Skeleton, TextInput } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
+import { Busy } from "@/components/FaceLoader";
 
 type Info = { allowed: boolean; domain: { domain: string; from_local: string; status: string; records: DnsRecord[]; checked_at: string | null; verified_at: string | null } | null };
 

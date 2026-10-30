@@ -10,6 +10,7 @@ import { IconEye } from "@/components/icons";
 import { canCustomizeIcons, checkIconImage, resolveOptions } from "@/lib/surveys/customIcons";
 import { api } from "@/lib/client/api";
 import { LANG_NAME, LANGS, pt, standardLabel, SURVEY_DEFAULTS, type Lang } from "@/lib/i18n/public";
+import { Busy } from "@/components/FaceLoader";
 
 /** A picture chosen while creating a survey: checked here, uploaded (and checked again) right after the survey is created. */
 export type PendingIcon = { value: number; bytes: Uint8Array; mime: string };

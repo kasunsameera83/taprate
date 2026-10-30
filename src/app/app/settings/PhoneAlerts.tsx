@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api, qs } from "@/lib/client/api";
 import { Notice, Skeleton } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
+import { Busy } from "@/components/FaceLoader";
 
 type Info = { configured: boolean; publicKey: string | null; devices: Array<{ id: string; device: string | null; created_at: string; last_used_at: string | null }> };
 type InstallEvent = Event & { prompt: () => Promise<void> };

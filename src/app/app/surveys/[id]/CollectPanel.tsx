@@ -7,7 +7,7 @@ import { kioskCreateSchema, fieldErrors } from "@/lib/validation/schemas";
 import { Field, LoadError, Notice, Skeleton, TextInput } from "@/components/ui";
 import { IconCheck, IconCopy, IconDownload } from "@/components/icons";
 import { confirmDialog } from "@/components/ConfirmDialog";
-import { PageLoader } from "@/components/FaceLoader";
+import { PageLoader, Busy } from "@/components/FaceLoader";
 
 type Share = {
   active: boolean;

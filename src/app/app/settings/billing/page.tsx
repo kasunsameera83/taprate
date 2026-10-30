@@ -8,7 +8,7 @@ import { formatMoney, SEND_LIMITS, type BillingInterval, type Catalog, type Curr
 import { Badge, Field, LoadError, Notice, Segmented, TextInput } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
-import { PageLoader } from "@/components/FaceLoader";
+import { PageLoader, Busy } from "@/components/FaceLoader";
 
 type Summary = {
   plan: string;

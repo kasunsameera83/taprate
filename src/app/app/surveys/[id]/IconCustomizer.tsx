@@ -9,6 +9,7 @@ import { standardLabel } from "@/lib/i18n/public";
 import { Notice } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
+import { Busy } from "@/components/FaceLoader";
 
 // Your own pictures and words for the rating buttons. Every picture is checked here first (type from its
 // bytes, size, dimensions, shape, not animated) and then checked again, cleaned and stored by the server.

@@ -8,6 +8,7 @@ import { Badge, EmptyState, Field, LoadError, Notice, Skeleton, TextInput } from
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
 import { PlanLimitNotice } from "@/components/PlanContext";
+import { Busy } from "@/components/FaceLoader";
 
 // Branches: shops, counters, clinics or regions. Each gets its own QR codes and kiosks, and the
 // dashboard compares them.

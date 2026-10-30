@@ -7,7 +7,7 @@ import { Badge, Field, LoadError, Notice, PasswordInput, TextInput } from "@/com
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
 import { PhoneAlerts } from "./PhoneAlerts";
-import { PageLoader } from "@/components/FaceLoader";
+import { PageLoader, Busy } from "@/components/FaceLoader";
 
 type Me = {
   email: string | null;

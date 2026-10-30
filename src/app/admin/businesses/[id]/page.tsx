@@ -9,7 +9,7 @@ import { Badge, Field, LoadError, Notice, TextInput } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
 import { IconArrowLeft } from "@/components/icons";
-import { PageLoader } from "@/components/FaceLoader";
+import { PageLoader, Busy } from "@/components/FaceLoader";
 
 type Detail = {
   id: string;

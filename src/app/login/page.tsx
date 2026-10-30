@@ -7,6 +7,7 @@ import { signInSchema, fieldErrors } from "@/lib/validation/schemas";
 import { Field, Notice, PasswordInput, TextInput } from "@/components/ui";
 import { AuthShell } from "@/components/AuthShell";
 import { ResendConfirmation } from "@/components/ResendConfirmation";
+import { Busy } from "@/components/FaceLoader";
 
 const LINK_ERRORS: Record<string, string> = {
   link: "That confirmation link is invalid or has expired. Try signing in, or sign up again.",

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/client/api";
+import { Busy } from "@/components/FaceLoader";
 
 const WAIT = 60; // seconds between sends
 

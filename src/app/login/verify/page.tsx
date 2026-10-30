@@ -5,6 +5,7 @@ import { api } from "@/lib/client/api";
 import { mfaCodeSchema, fieldErrors } from "@/lib/validation/schemas";
 import { Field, Notice, TextInput } from "@/components/ui";
 import { AuthShell } from "@/components/AuthShell";
+import { Busy } from "@/components/FaceLoader";
 
 // Only these destinations are allowed after verifying (no open redirect).
 const NEXT: Record<string, string> = { reset: "/reset-password" };

@@ -6,6 +6,7 @@ import { api } from "@/lib/client/api";
 import { forgotPasswordSchema, fieldErrors } from "@/lib/validation/schemas";
 import { Field, Notice, TextInput } from "@/components/ui";
 import { AuthShell } from "@/components/AuthShell";
+import { Busy } from "@/components/FaceLoader";
 
 const LINK_ERRORS: Record<string, string> = {
   link: "That reset link is invalid or has expired. Request a new one below.",

@@ -10,6 +10,7 @@ import { EmptyState, LoadError, Notice, Skeleton } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { IconArrowLeft, IconDownload, IconUpload } from "@/components/icons";
 import { confirmDialog } from "@/components/ConfirmDialog";
+import { Busy } from "@/components/FaceLoader";
 
 type Batch = { id: string; surveyId: string; surveyName: string; fileName: string; rows: number; skipped: number; createdAt: string };
 type Loaded = { fileName: string; header: string[]; body: string[][] };

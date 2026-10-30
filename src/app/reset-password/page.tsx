@@ -5,6 +5,7 @@ import { api } from "@/lib/client/api";
 import { newPasswordSchema, fieldErrors } from "@/lib/validation/schemas";
 import { Field, Notice, PasswordInput } from "@/components/ui";
 import { AuthShell } from "@/components/AuthShell";
+import { Busy } from "@/components/FaceLoader";
 
 export default function ResetPasswordPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});

@@ -7,6 +7,7 @@ import { Field, Notice, Skeleton, TextInput } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
 import { PaidFeatureNotice } from "@/components/PlanContext";
+import { Busy } from "@/components/FaceLoader";
 
 type Screen = { id: string; name: string; survey: string | null; location: string | null; showComments: boolean; createdAt: string; lastSeenAt: string | null };
 

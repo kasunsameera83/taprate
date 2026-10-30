@@ -7,6 +7,7 @@ import { SettingsSection } from "@/components/SettingsSection";
 import { IconCopy } from "@/components/icons";
 import { confirmDialog } from "@/components/ConfirmDialog";
 import { PaidFeatureNotice, useAllows } from "@/components/PlanContext";
+import { Busy } from "@/components/FaceLoader";
 
 type ApiKey = {
   id: string;

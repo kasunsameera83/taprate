@@ -7,6 +7,7 @@ import { Badge, EmptyState, Field, LoadError, Notice, Segmented, Skeleton, TextI
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
 import { GreetingBar, PromoPopup } from "@/components/site/Promotions";
+import { Busy } from "@/components/FaceLoader";
 
 type Promo = {
   id: string;

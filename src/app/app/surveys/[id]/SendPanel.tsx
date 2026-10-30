@@ -11,7 +11,7 @@ import { Badge, Field, LoadError, Notice, Skeleton, TextInput } from "@/componen
 import { EmailButtonsPreview } from "@/components/SurveyPreview";
 import { IconUpload } from "@/components/icons";
 import { confirmDialog } from "@/components/ConfirmDialog";
-import { PageLoader } from "@/components/FaceLoader";
+import { PageLoader, Busy } from "@/components/FaceLoader";
 import { useAllows } from "@/components/PlanContext";
 
 // "Send by email": TapTruly emails the survey to a list of customers, with an optional reminder.

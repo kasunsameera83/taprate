@@ -7,7 +7,7 @@ import type { Catalog, FreePlan, Pack, Plan } from "@/lib/billing/catalog";
 import { LoadError, Notice } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
-import { PageLoader } from "@/components/FaceLoader";
+import { PageLoader, Busy } from "@/components/FaceLoader";
 
 const major = (minor: number) => (minor / 100).toFixed(2).replace(/\.00$/, "");
 

@@ -7,7 +7,7 @@ import { Badge, Field, LoadError, Notice, Skeleton, TextInput } from "@/componen
 import { SettingsSection } from "@/components/SettingsSection";
 import { IconCopy } from "@/components/icons";
 import { confirmDialog } from "@/components/ConfirmDialog";
-import { PageLoader } from "@/components/FaceLoader";
+import { PageLoader, Busy } from "@/components/FaceLoader";
 import { PlanLimitNotice } from "@/components/PlanContext";
 
 type Member = { userId: string; email: string; role: string; agentName: string | null; joinedAt: string };

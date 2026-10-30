@@ -6,6 +6,7 @@ import { signUpSchema, fieldErrors } from "@/lib/validation/schemas";
 import { Field, Notice, PasswordInput, TextInput } from "@/components/ui";
 import { AuthShell } from "@/components/AuthShell";
 import { ResendConfirmation } from "@/components/ResendConfirmation";
+import { Busy } from "@/components/FaceLoader";
 
 export default function SignupPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});

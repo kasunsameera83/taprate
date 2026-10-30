@@ -6,6 +6,7 @@ import { formatMoney, type Currency } from "@/lib/billing/catalog";
 import { Badge, EmptyState, Field, LoadError, Notice, Segmented, Skeleton, TextInput } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
+import { Busy } from "@/components/FaceLoader";
 
 type Kind = "percent" | "amount" | "credits";
 type PromoRow = {

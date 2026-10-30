@@ -8,7 +8,7 @@ import { Badge, EmptyState, LoadError, Notice, Segmented } from "@/components/ui
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
 import { IconDownload, IconSparkle } from "@/components/icons";
-import { PageLoader } from "@/components/FaceLoader";
+import { PageLoader, Busy } from "@/components/FaceLoader";
 import { PaidFeatureNotice, useAllows } from "@/components/PlanContext";
 
 type Item = { id: string; surveyId: string | null; surveyName: string | null; days: number; periodStart: string; periodEnd: string; commentCount: number; ratingCount: number; result: InsightResult; createdAt: string };
