@@ -296,7 +296,7 @@ function Editor({ draft, onClose, onSaved }: { draft: Draft; onClose: () => void
         </label>
         <div className="flex gap-2">
           <button type="button" className="btn btn-primary" disabled={busy} onClick={save}>
-            {busy ? "Saving…" : "Save"}
+            {busy ? <Busy>Saving…</Busy> : "Save"}
           </button>
           <button type="button" className="btn btn-ghost" onClick={onClose}>
             Cancel

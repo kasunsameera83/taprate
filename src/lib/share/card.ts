@@ -26,7 +26,7 @@ const HEX = /^#[0-9a-fA-F]{6}$/;
 
 /**
  * Everything a share card shows, or null when this comment may NOT be shared: the customer must have
- * agreed, the rating must be happy, there must be a comment, the business must not be suspended and must be
+ * agreed to social media sharing, the rating must be happy, there must be a comment, the business must not be suspended and must be
  * on a plan with share cards. Checked every time, so withdrawing consent or deleting the comment stops it.
  * Never includes the customer's email, ticket or agent.
  */
@@ -34,10 +34,10 @@ export async function loadShareCard(responseId: string): Promise<ShareCard | nul
   const db = adminClient();
   const { data: r } = await db
     .from("responses")
-    .select("id, account_id, rating, comment, display_name, share_consent, sentiment, status, surveys(icon_set, option_labels, brand_color, language)")
+    .select("id, account_id, rating, comment, display_name, share_consent, share_social, sentiment, status, surveys(icon_set, option_labels, brand_color, language)")
     .eq("id", responseId)
     .maybeSingle();
-  if (!r || !r.share_consent || r.sentiment !== "positive" || r.status !== "confirmed" || r.rating === null) return null;
+  if (!r || !r.share_consent || !r.share_social || r.sentiment !== "positive" || r.status !== "confirmed" || r.rating === null) return null;
   const comment = typeof r.comment === "string" ? r.comment.trim() : "";
   if (!comment) return null;
   const { data: acct } = await db.from("accounts").select("name, logo_path, suspended_at, plan").eq("id", r.account_id).maybeSingle();

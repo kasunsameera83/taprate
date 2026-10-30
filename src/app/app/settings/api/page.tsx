@@ -177,7 +177,7 @@ function CreateKey({ onCreated }: { onCreated: () => void }) {
           <PasswordInput name="keyPassword" autoComplete="current-password" error={errors.keyPassword || undefined} hasHint />
         </Field>
         <button className="btn btn-primary" disabled={busy}>
-          {busy ? "Creating…" : "Create key"}
+          {busy ? <Busy>Creating…</Busy> : "Create key"}
         </button>
       </form>
     </SettingsSection>

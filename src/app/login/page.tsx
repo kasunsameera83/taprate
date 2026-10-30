@@ -61,7 +61,7 @@ function LoginForm() {
         </Link>
       </div>
       <button className="btn btn-primary w-full" disabled={busy}>
-        {busy ? "Signing in…" : "Sign in"}
+        {busy ? <Busy>Signing in…</Busy> : "Sign in"}
       </button>
     </form>
   );

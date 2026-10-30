@@ -254,7 +254,7 @@ export default function ImportPage() {
               )}
               <button type="button" className="btn btn-primary" disabled={busy || check.valid.length === 0} onClick={runImport}>
                 <IconUpload className="h-4 w-4" />
-                {busy ? "Importing…" : `Import ${check.valid.length.toLocaleString()} rating${check.valid.length === 1 ? "" : "s"}`}
+                {busy ? <Busy>Importing…</Busy> : `Import ${check.valid.length.toLocaleString()} rating${check.valid.length === 1 ? "" : "s"}`}
               </button>
             </div>
           )}

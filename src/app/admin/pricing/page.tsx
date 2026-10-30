@@ -130,7 +130,7 @@ function PlanForm({ plan, onSaved }: { plan: Plan; onSaved: () => void }) {
             )
           }
         >
-          {busy ? "Saving…" : "Save"}
+          {busy ? <Busy>Saving…</Busy> : "Save"}
         </button>
       </div>
     </SettingsSection>
@@ -174,7 +174,7 @@ function PackForm({ pack, onSaved }: { pack: Pack; onSaved: () => void }) {
             )
           }
         >
-          {busy ? "Saving…" : "Save"}
+          {busy ? <Busy>Saving…</Busy> : "Save"}
         </button>
       </div>
     </SettingsSection>
@@ -217,7 +217,7 @@ function FreeForm({ free, onSaved }: { free: FreePlan; onSaved: () => void }) {
             )
           }
         >
-          {busy ? "Saving…" : "Save"}
+          {busy ? <Busy>Saving…</Busy> : "Save"}
         </button>
       </div>
     </SettingsSection>

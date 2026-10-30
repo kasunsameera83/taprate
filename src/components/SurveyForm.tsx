@@ -772,7 +772,7 @@ export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, su
           // Always within reach: sticks to the bottom of the screen (above the mobile tab bar) while you scroll.
           <div className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 -mx-5 -mb-5 mt-6 flex flex-wrap items-center gap-3 rounded-b-[var(--radius-panel)] border-t border-line bg-surface/95 px-5 py-3 backdrop-blur sm:-mx-7 sm:-mb-7 sm:px-7 lg:bottom-0">
             <button className="btn btn-primary min-h-11" disabled={busy}>
-              {busy ? (creating ? "Creating…" : "Saving…") : submitLabel}
+              {busy ? <Busy>{creating ? "Creating…" : "Saving…"}</Busy> : submitLabel}
             </button>
             <button
               type="button"

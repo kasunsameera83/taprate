@@ -124,7 +124,7 @@ function TwoFactor({ enabled, onChange }: { enabled: boolean; onChange: () => vo
 
         {!enabled && !setup && (
           <button type="button" className="btn btn-primary" onClick={start} disabled={busy}>
-            {busy ? "Starting…" : "Turn on two-step verification"}
+            {busy ? <Busy>Starting…</Busy> : "Turn on two-step verification"}
           </button>
         )}
 
@@ -143,7 +143,7 @@ function TwoFactor({ enabled, onChange }: { enabled: boolean; onChange: () => vo
               </Field>
               <div className="flex gap-2">
                 <button className="btn btn-primary" disabled={busy}>
-                  {busy ? "Checking…" : "Verify and turn on"}
+                  {busy ? <Busy>Checking…</Busy> : "Verify and turn on"}
                 </button>
                 <button type="button" className="btn btn-ghost" onClick={() => setSetup(null)}>
                   Cancel
@@ -165,7 +165,7 @@ function TwoFactor({ enabled, onChange }: { enabled: boolean; onChange: () => vo
             </Field>
             <div className="flex gap-2">
               <button className="btn btn-danger" disabled={busy}>
-                {busy ? "Turning off…" : "Turn off two-step verification"}
+                {busy ? <Busy>Turning off…</Busy> : "Turn off two-step verification"}
               </button>
               <button type="button" className="btn btn-ghost" onClick={() => setDisabling(false)}>
                 Keep it on
@@ -215,7 +215,7 @@ function ChangePassword() {
           <PasswordInput name="newPassword" autoComplete="new-password" maxLength={128} error={errors.newPassword} hasHint />
         </Field>
         <button className="btn btn-primary" disabled={busy}>
-          {busy ? "Saving…" : "Change password"}
+          {busy ? <Busy>Saving…</Busy> : "Change password"}
         </button>
       </form>
     </SettingsSection>
@@ -262,7 +262,7 @@ function ChangeEmail({ current }: { current: string }) {
           <PasswordInput name="emailPassword" autoComplete="current-password" maxLength={128} error={errors.emailPassword || undefined} />
         </Field>
         <button className="btn btn-secondary" disabled={busy}>
-          {busy ? "Sending…" : "Change email"}
+          {busy ? <Busy>Sending…</Busy> : "Change email"}
         </button>
       </form>
     </SettingsSection>
@@ -286,7 +286,7 @@ function SignOutEverywhere() {
           window.location.assign("/login");
         }}
       >
-        {busy ? "Signing out…" : "Sign out everywhere"}
+        {busy ? <Busy>Signing out…</Busy> : "Sign out everywhere"}
       </button>
     </SettingsSection>
   );

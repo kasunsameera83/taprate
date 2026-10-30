@@ -431,7 +431,11 @@ function TestimonialToggle({ r, canFeature }: { r: ResponseItem; canFeature: boo
         {featured ? "Shown on your website" : "Show on website"}
       </button>
       <span className="ml-2 text-[12px] text-muted">as {r.testimonial.displayName ?? "A customer"}</span>
-      <ShareCardButton responseId={r.id} />
+      {r.testimonial.social ? (
+        <ShareCardButton responseId={r.id} />
+      ) : (
+        <span className="ml-2 text-[12px] text-muted" title="This customer agreed before social media sharing was added, so their comment can only be shown on your website.">Website only</span>
+      )}
       {err && <span className="mt-1 block text-[12px] text-neg-text">{err}</span>}
     </span>
   );

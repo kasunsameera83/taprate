@@ -39,7 +39,7 @@ export const POST = secureRoute<undefined, undefined, z.infer<typeof publicComme
     // Only ratings a real browser confirmed can get extra detail.
     if (response.status !== "confirmed") return fail("conflict", "Please wait a moment and try again.", undefined, requestId);
 
-    const update: { comment?: string; drivers?: string[]; share_consent?: boolean; display_name?: string | null } = {};
+    const update: { comment?: string; drivers?: string[]; share_consent?: boolean; share_social?: boolean; display_name?: string | null } = {};
     if (body.comment !== undefined) {
       if (!survey.allow_comment) return fail("forbidden", "Comments are turned off for this survey.", undefined, requestId);
       update.comment = body.comment;
@@ -55,6 +55,8 @@ export const POST = secureRoute<undefined, undefined, z.infer<typeof publicComme
       // Only happy customers are asked; the database also drops the name and un-features when consent is off.
       if (response.sentiment !== "positive" && body.shareConsent) return fail("validation_failed", undefined, undefined, requestId);
       update.share_consent = body.shareConsent;
+      // The box now says "website and social media" (0033), so this consent covers share cards too.
+      update.share_social = body.shareConsent;
       update.display_name = body.shareConsent ? body.displayName || null : null;
     }
 

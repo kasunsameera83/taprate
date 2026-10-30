@@ -127,7 +127,7 @@ export default function InsightsPage() {
                 <div className="flex flex-wrap items-center gap-3">
                   <button type="button" className="btn btn-primary" disabled={busy} onClick={generate}>
                     <IconSparkle className="h-4 w-4" />
-                    {busy ? "Summarising…" : `Summarise the last ${days} days`}
+                    {busy ? <Busy>Summarising…</Busy> : `Summarise the last ${days} days`}
                   </button>
                   {isOwner && (
                     <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEnabled(false)}>

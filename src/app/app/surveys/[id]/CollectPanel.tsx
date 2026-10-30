@@ -254,7 +254,7 @@ function Kiosks({ surveyId, kiosks, canEdit, onChanged, locations }: { surveyId:
               </div>
             )}
             <button className="btn btn-primary" disabled={busy}>
-              {busy ? "Creating…" : "Create kiosk link"}
+              {busy ? <Busy>Creating…</Busy> : "Create kiosk link"}
             </button>
           </form>
         ) : (

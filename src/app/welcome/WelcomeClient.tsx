@@ -55,7 +55,7 @@ export function WelcomeClient({ email, hasAccounts, ownsAccount }: { email: stri
               </p>
               <div className="mt-4 flex gap-2">
                 <button type="button" className="btn btn-primary" disabled={busyId === i.id} onClick={() => respond(i.id, "accept")}>
-                  {busyId === i.id ? "Joining…" : "Accept and join"}
+                  {busyId === i.id ? <Busy>Joining…</Busy> : "Accept and join"}
                 </button>
                 <button type="button" className="btn btn-ghost" disabled={busyId === i.id} onClick={() => respond(i.id, "decline")}>
                   Decline
@@ -114,7 +114,7 @@ function CreateAccount() {
           <TextInput name="name" autoComplete="organization" maxLength={80} error={errors.name} />
         </Field>
         <button className="btn btn-secondary" disabled={busy}>
-          {busy ? "Creating…" : "Create business account"}
+          {busy ? <Busy>Creating…</Busy> : "Create business account"}
         </button>
       </form>
     </section>

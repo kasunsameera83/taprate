@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/client/api";
 import { Badge, EmptyState, LoadError } from "@/components/ui";
-import { PageLoader } from "@/components/FaceLoader";
+import { PageLoader, Busy } from "@/components/FaceLoader";
 
 type Biz = {
   id: string;
@@ -102,7 +102,7 @@ export default function BusinessesPage() {
                   <td className={`p-3 text-right tabular-nums ${b.credits !== null && b.credits < 50 ? "font-semibold text-neg-text" : ""}`}>{b.credits ?? "–"}</td>
                   <td className="p-3 text-right">
                     <button type="button" className="btn btn-secondary btn-sm" disabled={!!switching} onClick={() => open(b.id)}>
-                      {switching === b.id ? "Opening…" : "Open"}
+                      {switching === b.id ? <Busy>Opening…</Busy> : "Open"}
                     </button>
                   </td>
                 </tr>

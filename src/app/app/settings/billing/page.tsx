@@ -271,7 +271,7 @@ function BillingDetails({ profile, onSaved }: { profile: Summary["profile"]; onS
         </div>
         <div className="flex gap-2">
           <button className="btn btn-primary" disabled={busy}>
-            {busy ? "Saving…" : "Save details"}
+            {busy ? <Busy>Saving…</Busy> : "Save details"}
           </button>
           {profile && (
             <button type="button" className="btn btn-ghost" onClick={() => setEditing(false)}>
@@ -426,7 +426,7 @@ function Buy({ data }: { data: Summary }) {
             aria-describedby={promoError ? "promo-error" : undefined}
           />
           <button className="btn btn-secondary" disabled={promoBusy || !codeInput.trim()}>
-            {promoBusy ? "Checking…" : "Apply"}
+            {promoBusy ? <Busy>Checking…</Busy> : "Apply"}
           </button>
           {promo && (
             <button
@@ -482,7 +482,7 @@ function Buy({ data }: { data: Summary }) {
                   disabled={busy !== null || hasLivePlan || !data.profile}
                   onClick={() => checkout(p.id)}
                 >
-                  {current ? "Current plan" : busy === p.id ? "Opening…" : `Choose ${p.name}`}
+                  {current ? "Current plan" : busy === p.id ? <Busy>Opening…</Busy> : `Choose ${p.name}`}
                 </button>
               </div>
             );
@@ -501,7 +501,7 @@ function Buy({ data }: { data: Summary }) {
                 </p>
               </div>
               <button type="button" className="btn btn-secondary btn-sm" disabled={busy !== null || !data.profile} onClick={() => checkout(k.id)}>
-                {busy === k.id ? "Opening…" : "Buy"}
+                {busy === k.id ? <Busy>Opening…</Busy> : "Buy"}
               </button>
             </div>
           ))}

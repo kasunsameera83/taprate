@@ -41,7 +41,7 @@ function ForgotForm() {
         <TextInput name="email" type="email" inputMode="email" autoComplete="email" maxLength={254} required error={errors.email} />
       </Field>
       <button className="btn btn-primary w-full" disabled={busy}>
-        {busy ? "Sending…" : "Send reset link"}
+        {busy ? <Busy>Sending…</Busy> : "Send reset link"}
       </button>
     </form>
   );

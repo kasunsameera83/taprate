@@ -144,7 +144,7 @@ export function OwnDomain({ canChange }: { canChange: boolean }) {
           <div className="flex flex-wrap gap-2">
             {info.domain.status !== "verified" && (
               <button type="button" className="btn btn-primary" disabled={busy} onClick={check}>
-                {busy ? "Checking…" : "Check DNS"}
+                {busy ? <Busy>Checking…</Busy> : "Check DNS"}
               </button>
             )}
             {canChange && (
@@ -166,7 +166,7 @@ export function OwnDomain({ canChange }: { canChange: boolean }) {
             </Field>
           </div>
           <button className="btn btn-primary" disabled={busy}>
-            {busy ? "Adding…" : "Add domain"}
+            {busy ? <Busy>Adding…</Busy> : "Add domain"}
           </button>
         </form>
       ) : (

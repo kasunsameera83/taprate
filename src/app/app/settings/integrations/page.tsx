@@ -348,7 +348,7 @@ function AddIntegration({ onAdded }: { onAdded: () => void }) {
         </fieldset>
         )}
         <button className="btn btn-primary" disabled={busy}>
-          {busy ? "Connecting…" : "Connect"}
+          {busy ? <Busy>Connecting…</Busy> : "Connect"}
         </button>
         <p className="text-[13px] text-muted">
           {kind === "shopify" ? "The shop address and signing key are" : isHelpdeskKind(kind) ? "The address and token are" : "The URL is"} stored encrypted and can&rsquo;t be viewed again after saving.
@@ -479,7 +479,7 @@ function ShopifySetup({ item, onChanged }: { item: Integration; onChanged: () =>
             <TextInput name="key" type="password" autoComplete="off" maxLength={200} error={error || undefined} hasHint />
           </Field>
           <button className="btn btn-primary btn-sm" disabled={busy}>
-            {busy ? "Saving…" : "Save key"}
+            {busy ? <Busy>Saving…</Busy> : "Save key"}
           </button>
           {!item.hasKey && <p className="text-muted">Until the key is added, Shopify&rsquo;s notifications are refused (Shopify keeps retrying for 48 hours, so no orders are missed).</p>}
         </form>

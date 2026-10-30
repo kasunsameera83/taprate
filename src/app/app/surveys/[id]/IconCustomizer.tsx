@@ -132,7 +132,7 @@ export function IconCustomizer({ survey, canEdit, onChanged }: { survey: Survey;
                       }}
                     />
                     <button type="button" className="btn btn-secondary btn-sm" disabled={busy !== null} onClick={() => fileInputs.current[key]?.click()}>
-                      {busy === key ? "Uploading…" : img ? "Replace picture" : "Upload picture"}
+                      {busy === key ? <Busy>Uploading…</Busy> : img ? "Replace picture" : "Upload picture"}
                     </button>
                     {img && (
                       <button type="button" className="btn btn-ghost btn-sm" disabled={busy !== null} onClick={() => removeImage(o.value, labels[key] || o.label)}>
@@ -151,7 +151,7 @@ export function IconCustomizer({ survey, canEdit, onChanged }: { survey: Survey;
         </p>
         {canEdit && (
           <button type="button" className="btn btn-primary" disabled={!dirty || busy !== null} onClick={saveLabels}>
-            {busy === "labels" ? "Saving…" : "Save labels"}
+            {busy === "labels" ? <Busy>Saving…</Busy> : "Save labels"}
           </button>
         )}
 

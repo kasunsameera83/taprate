@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { api } from "@/lib/client/api";
 import { Notice } from "@/components/ui";
+import { Busy } from "@/components/FaceLoader";
 
 export function StopEmailsButton({ r, t, business }: { r: string; t: string; business: string }) {
   const [state, setState] = useState<"idle" | "busy" | "done">("idle");
@@ -24,7 +25,7 @@ export function StopEmailsButton({ r, t, business }: { r: string; t: string; bus
           }
         }}
       >
-        {state === "busy" ? "Stopping…" : "Stop survey emails"}
+        {state === "busy" ? <Busy>Stopping…</Busy> : "Stop survey emails"}
       </button>
     </div>
   );

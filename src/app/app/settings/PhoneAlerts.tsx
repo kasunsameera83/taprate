@@ -125,7 +125,7 @@ export function PhoneAlerts() {
                 </>
               ) : (
                 <button type="button" className="btn btn-primary" disabled={busy} onClick={turnOn}>
-                  {busy ? "Turning on…" : "Turn on alerts on this device"}
+                  {busy ? <Busy>Turning on…</Busy> : "Turn on alerts on this device"}
                 </button>
               )}
               {install && (

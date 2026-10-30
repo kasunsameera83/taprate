@@ -33,7 +33,7 @@ export function ResendConfirmation({ email, startWaiting = true }: { email: stri
           <span>You can send it again in {left}s.</span>
         ) : (
           <button type="button" className="link" disabled={busy} onClick={send}>
-            {busy ? "Sending…" : "Send the email again"}
+            {busy ? <Busy>Sending…</Busy> : "Send the email again"}
           </button>
         )}
       </p>

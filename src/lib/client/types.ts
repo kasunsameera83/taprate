@@ -30,7 +30,7 @@ export type ResponseItem = {
   drivers: string[];
   channel: string;
   location: { id: string; name: string } | null;
-  testimonial: { displayName: string | null; featured: boolean } | null;
+  testimonial: { displayName: string | null; featured: boolean; social: boolean } | null;
   followup: { status: "open" | "in_progress" | "resolved"; assigneeId: string | null; dueAt: string | null; resolvedAt: string | null } | null;
   createdAt: string;
   confirmedAt: string | null;

@@ -161,7 +161,7 @@ function Languages({ id, name, enabled, onDone }: { id: string; name: string; en
       <div className="flex flex-wrap items-center gap-3">
         {enabled ? <Badge tone="pos">On for {name}</Badge> : <Badge tone="plain">Off</Badge>}
         <button type="button" className="btn btn-secondary" disabled={busy} onClick={toggle}>
-          {busy ? "Saving…" : enabled ? "Switch off" : "Switch on"}
+          {busy ? <Busy>Saving…</Busy> : enabled ? "Switch off" : "Switch on"}
         </button>
         {enabled && <p className="w-full text-[13px] text-muted">Switching off keeps existing Sinhala or Tamil surveys as they are; it only stops new ones.</p>}
       </div>
@@ -218,7 +218,7 @@ function Credits({ id, onDone }: { id: string; onDone: () => void }) {
           </Field>
         </div>
         <button className="btn btn-primary" disabled={busy}>
-          {busy ? "Saving…" : "Apply"}
+          {busy ? <Busy>Saving…</Busy> : "Apply"}
         </button>
       </form>
     </SettingsSection>

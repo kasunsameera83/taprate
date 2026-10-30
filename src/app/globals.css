@@ -561,3 +561,41 @@ html {
 /* Loader label breathes gently (also fine with reduced motion: no movement, only a soft fade). */
 @keyframes fl-breathe { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
 .fl-label { animation: fl-breathe 2.6s ease-in-out infinite; }
+
+/* Happy loader (FaceLoader): hop with a squash on landing, shadow shrinks in the air, sparkles pop at the top. */
+@keyframes tl-hop {
+  0%   { transform: translateY(0) scale(1.08, 0.9); }
+  12%  { transform: translateY(0) scale(0.96, 1.05); }
+  40%  { transform: translateY(-14px) scale(1, 1); }
+  50%  { transform: translateY(-15px) scale(1, 1) rotate(-4deg); }
+  62%  { transform: translateY(-12px) scale(1, 1) rotate(3deg); }
+  84%  { transform: translateY(0) scale(0.98, 1.03); }
+  92%  { transform: translateY(0) scale(1.08, 0.9); }
+  100% { transform: translateY(0) scale(1.08, 0.9); }
+}
+@keyframes tl-shadow {
+  0%, 92%, 100% { transform: scaleX(1); opacity: 1; }
+  45%, 55% { transform: scaleX(0.6); opacity: 0.5; }
+}
+@keyframes tl-spark {
+  0%, 30%, 70%, 100% { transform: scale(0) rotate(0deg); opacity: 0; }
+  42% { transform: scale(1.15) rotate(45deg); opacity: 1; }
+  58% { transform: scale(0.9) rotate(90deg); opacity: 0.9; }
+}
+@keyframes tl-mini {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  30% { transform: translateY(-3px) rotate(-8deg); }
+  60% { transform: translateY(0) rotate(6deg); }
+}
+.tl-hop, .tl-shadow, .tl-spark, .tl-mini { transform-box: fill-box; }
+.tl-hop { transform-origin: 50% 100%; }
+.tl-shadow, .tl-spark, .tl-mini { transform-origin: 50% 50%; }
+.tl-spark { opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .tl-hop { animation: tl-hop 1.8s cubic-bezier(0.45, 0, 0.3, 1) infinite; }
+  .tl-shadow { animation: tl-shadow 1.8s ease-in-out infinite; }
+  .tl-spark { animation: tl-spark 1.8s ease-out infinite; }
+  .tl-spark-2 { animation-delay: 0.08s; }
+  .tl-spark-3 { animation-delay: 0.16s; }
+  .tl-mini { animation: tl-mini 0.9s ease-in-out infinite; }
+}

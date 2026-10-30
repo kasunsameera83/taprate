@@ -351,7 +351,7 @@ function ReplyDraft({ responseId, email }: { responseId: string; email: string |
               {state === "copied" ? "Copied" : "Copy"}
             </button>
             <button type="button" className="btn btn-ghost btn-sm" disabled={state === "busy"} onClick={make}>
-              {state === "busy" ? "Writing…" : "Try another"}
+              {state === "busy" ? <Busy>Writing…</Busy> : "Try another"}
             </button>
           </div>
         </>

@@ -72,7 +72,7 @@ export default function ResetPasswordPage() {
           <PasswordInput name="confirm" autoComplete="new-password" maxLength={128} required error={errors.confirm} />
         </Field>
         <button className="btn btn-primary w-full" disabled={busy}>
-          {busy ? "Saving…" : "Save new password"}
+          {busy ? <Busy>Saving…</Busy> : "Save new password"}
         </button>
       </form>
     </AuthShell>

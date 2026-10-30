@@ -124,7 +124,7 @@ export function TvScreens() {
             </span>
           </label>
           <button className="btn btn-primary" disabled={busy}>
-            {busy ? "Creating…" : "Create TV link"}
+            {busy ? <Busy>Creating…</Busy> : "Create TV link"}
           </button>
         </form>
       </div>

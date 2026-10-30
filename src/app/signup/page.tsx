@@ -112,7 +112,7 @@ export default function SignupPage() {
           )}
         </div>
         <button className="btn btn-primary w-full" disabled={busy}>
-          {busy ? "Creating account…" : "Create account"}
+          {busy ? <Busy>Creating account…</Busy> : "Create account"}
         </button>
       </form>
     </AuthShell>

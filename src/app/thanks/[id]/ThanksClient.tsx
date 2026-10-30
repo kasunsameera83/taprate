@@ -4,6 +4,7 @@ import { api } from "@/lib/client/api";
 import { publicCommentSchema, fieldErrors } from "@/lib/validation/schemas";
 import { readableTextOn } from "@/lib/surveys/color";
 import { IconAlert, IconCheck } from "@/components/icons";
+import { Busy } from "@/components/FaceLoader";
 
 type Props = {
   responseId: string;
@@ -212,7 +213,7 @@ export function ThanksClient({ responseId, token, allowComment, existingComment,
               style={{ background: brandColor, color: buttonText }}
               disabled={commentState.kind === "saving" || comment.trim().length === 0}
             >
-              {commentState.kind === "saving" ? t.sending : t.sendComment}
+              {commentState.kind === "saving" ? <Busy>{t.sending}</Busy> : t.sendComment}
             </button>
           </div>
           {commentState.kind === "error" && commentState.text && (

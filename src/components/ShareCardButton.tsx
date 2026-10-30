@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { api } from "@/lib/client/api";
 import { useAllows } from "@/components/PlanContext";
+import { FaceLoader } from "@/components/FaceLoader";
 
 type Card = { page: string; image: string; square: string; text: string };
 
@@ -104,7 +105,7 @@ export function ShareCardButton({ responseId }: { responseId: string }) {
                   Close
                 </button>
               </div>
-              {busy && <p className="text-sm text-muted">Making the card…</p>}
+              {busy && <div className="py-6"><FaceLoader label="Making your card" /></div>}
               {err && <p className="text-sm font-medium text-neg-text">{err}</p>}
               {card && (
                 <>

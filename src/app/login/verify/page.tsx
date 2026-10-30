@@ -55,7 +55,7 @@ function VerifyForm() {
         />
       </Field>
       <button className="btn btn-primary w-full" disabled={busy}>
-        {busy ? "Checking…" : "Verify"}
+        {busy ? <Busy>Checking…</Busy> : "Verify"}
       </button>
     </form>
   );

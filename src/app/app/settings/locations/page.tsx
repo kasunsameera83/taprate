@@ -97,7 +97,7 @@ function AddBranch({ onAdded }: { onAdded: () => void }) {
           </Field>
         </div>
         <button className="btn btn-primary" disabled={busy}>
-          {busy ? "Adding…" : "Add branch"}
+          {busy ? <Busy>Adding…</Busy> : "Add branch"}
         </button>
       </div>
       {done && <Notice kind="success">{done}</Notice>}

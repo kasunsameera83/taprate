@@ -390,7 +390,7 @@ function Composer({ survey, credits, onSent }: { survey: Survey; credits: number
               </button>
             )}
             <button className="btn btn-primary min-h-11" disabled={busy}>
-              {busy ? "Sending…" : count ? `Send to ${n(count)} ${count === 1 ? "person" : "people"}` : "Send"}
+              {busy ? <Busy>Sending…</Busy> : count ? `Send to ${n(count)} ${count === 1 ? "person" : "people"}` : "Send"}
             </button>
             {progress && (
               <div className="min-w-[12rem] flex-1" role="progressbar" aria-label="Sending" aria-valuemin={0} aria-valuemax={progress.total} aria-valuenow={progress.done}>
@@ -534,7 +534,7 @@ function SendRow({ s, canSend, onChanged }: { s: SendItem; canSend: boolean; onC
         {canSend && going && (
           <div className="flex gap-2">
             <button type="button" className="btn btn-secondary btn-sm min-h-10" disabled={busy} onClick={resume}>
-              {busy ? "Sending…" : "Continue sending"}
+              {busy ? <Busy>Sending…</Busy> : "Continue sending"}
             </button>
             <button type="button" className="btn btn-ghost btn-sm min-h-10" disabled={busy} onClick={stop}>
               Stop

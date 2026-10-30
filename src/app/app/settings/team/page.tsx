@@ -152,7 +152,7 @@ function InviteForm({ myRole, onInvited }: { myRole: Role; onInvited: () => void
           </Field>
         )}
         <button className="btn btn-primary" disabled={busy}>
-          {busy ? "Sending invite…" : "Send invite"}
+          {busy ? <Busy>Sending invite…</Busy> : "Send invite"}
         </button>
       </form>
     </SettingsSection>

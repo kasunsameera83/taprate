@@ -113,7 +113,7 @@ function Logo({ current, onChanged }: { current: string | null; onChanged: () =>
           </div>
           <div className="flex flex-wrap gap-2">
             <label className={`btn btn-secondary ${busy ? "pointer-events-none opacity-55" : ""}`}>
-              {busy ? "Uploading…" : current ? "Replace logo" : "Upload logo"}
+              {busy ? <Busy>Uploading…</Busy> : current ? "Replace logo" : "Upload logo"}
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
@@ -166,7 +166,7 @@ function Rename({ current, onSaved }: { current: string; onSaved: () => void }) 
         <TextInput name="name" defaultValue={current} maxLength={80} autoComplete="organization" error={errors.name} hasHint />
       </Field>
       <button className="btn btn-primary" disabled={busy}>
-        {busy ? "Saving…" : "Save"}
+        {busy ? <Busy>Saving…</Busy> : "Save"}
       </button>
     </form>
   );
@@ -202,7 +202,7 @@ function EraseCustomer() {
           <TextInput name="eraseEmail" type="email" inputMode="email" autoComplete="off" maxLength={254} error={errors.eraseEmail || undefined} />
         </Field>
         <button className="btn btn-danger" disabled={busy}>
-          {busy ? "Deleting…" : "Delete their data"}
+          {busy ? <Busy>Deleting…</Busy> : "Delete their data"}
         </button>
       </form>
     </SettingsSection>
@@ -234,7 +234,7 @@ function Leave({ name }: { name: string }) {
           }
         }}
       >
-        {busy ? "Leaving…" : "Leave business"}
+        {busy ? <Busy>Leaving…</Busy> : "Leave business"}
       </button>
     </SettingsSection>
   );
@@ -279,7 +279,7 @@ function DeleteAccount({ name }: { name: string }) {
           <PasswordInput name="deletePassword" autoComplete="current-password" maxLength={128} error={errors.deletePassword || undefined} />
         </Field>
         <button className="btn btn-danger" disabled={busy}>
-          {busy ? "Deleting…" : "Delete business permanently"}
+          {busy ? <Busy>Deleting…</Busy> : "Delete business permanently"}
         </button>
       </form>
     </SettingsSection>
