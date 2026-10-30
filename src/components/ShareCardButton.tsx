@@ -38,10 +38,10 @@ export function ShareCardButton({ responseId }: { responseId: string }) {
   const enc = encodeURIComponent;
   const links = card
     ? [
-        { label: "WhatsApp", href: `https://wa.me/?text=${enc(`${card.text} ${card.page}`)}` },
-        { label: "Facebook", href: `https://www.facebook.com/sharer/sharer.php?u=${enc(card.page)}` },
-        { label: "LinkedIn", href: `https://www.linkedin.com/sharing/share-offsite/?url=${enc(card.page)}` },
-        { label: "X", href: `https://twitter.com/intent/tweet?text=${enc(card.text)}&url=${enc(card.page)}` },
+        { label: "WhatsApp", color: "#25D366", href: `https://wa.me/?text=${enc(`${card.text} ${card.page}`)}` },
+        { label: "Facebook", color: "#1877F2", href: `https://www.facebook.com/sharer/sharer.php?u=${enc(card.page)}` },
+        { label: "LinkedIn", color: "#0A66C2", href: `https://www.linkedin.com/sharing/share-offsite/?url=${enc(card.page)}` },
+        { label: "X", color: "#0f172a", href: `https://twitter.com/intent/tweet?text=${enc(card.text)}&url=${enc(card.page)}` },
       ]
     : [];
 
@@ -77,7 +77,7 @@ export function ShareCardButton({ responseId }: { responseId: string }) {
 
   return (
     <>
-      <button type="button" className="ml-2 inline-flex min-h-9 items-center gap-1.5 rounded-full border border-line-strong px-3 text-[12px] font-semibold text-muted hover:border-ink hover:text-ink" onClick={start}>
+      <button type="button" className="ml-2 inline-flex min-h-9 items-center gap-1.5 rounded-full bg-gradient-to-r from-[var(--color-brand-from)] to-[var(--color-brand-to)] px-3.5 text-[12px] font-bold text-white shadow-[0_6px_14px_-6px_rgba(79,70,229,0.7)] transition-transform hover:-translate-y-px hover:shadow-[0_10px_18px_-8px_rgba(79,70,229,0.8)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand" onClick={start}>
         <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v14" />
         </svg>
@@ -110,16 +110,21 @@ export function ShareCardButton({ responseId }: { responseId: string }) {
               {card && (
                 <>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={card.image} alt="Preview of the share card" className="w-full rounded-[12px] border border-line" />
+                  <img
+                    src={card.image}
+                    alt="Preview of the share card"
+                    className="aspect-[1200/630] w-full rounded-[12px] border border-line bg-canvas object-cover"
+                    onError={() => setErr("The picture couldn't be made just now. The links still work; try again in a minute.")}
+                  />
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {links.map((l) => (
-                      <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
+                      <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" className="btn border-0 text-white hover:opacity-90" style={{ backgroundColor: l.color }}>
                         {l.label}
                       </a>
                     ))}
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <button type="button" className="btn btn-primary" onClick={download}>
+                    <button type="button" className="btn border-0 bg-[linear-gradient(45deg,#f58529,#dd2a7b,#8134af)] text-white hover:opacity-90" onClick={download}>
                       Download for Instagram
                     </button>
                     <button
