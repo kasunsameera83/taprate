@@ -41,3 +41,16 @@ export type Location = { id: string; name: string; archived: boolean; createdAt:
 export type ResponsesPage = { items: ResponseItem[]; page: number; limit: number; total: number };
 
 export type SnippetResponse = { html: string; links: Array<{ rating: number; label: string; url: string }>; active: boolean };
+
+/** One line in the notification bell (GET /api/notifications). */
+export type NotificationItem = {
+  id: string;
+  kind: "rating" | "unhappy" | "followups" | "credits" | "billing" | "team";
+  title: string;
+  body: string | null;
+  href: string;
+  at: string | null;
+  unread: boolean;
+};
+
+export type NotificationsData = { unread: number; latestId: string | null; items: NotificationItem[] };

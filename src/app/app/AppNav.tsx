@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "@/lib/client/api";
 import { ROLE_LABEL, type Role } from "@/lib/security/authz";
 import { IconDashboard, IconFollowUp, IconLogout, IconResponses, IconSettings, IconSparkle, IconSurveys, IconTrophy, Logo } from "@/components/icons";
+import { NotificationBell } from "@/components/Notifications";
 
 const NAV: Array<{ href: string; label: string; icon: (p: { className?: string }) => React.ReactElement; exact?: boolean; hideFor?: Role[] }> = [
   { href: "/app", label: "Dashboard", icon: IconDashboard, exact: true },
@@ -101,9 +102,12 @@ export function AppNav({ isPlatformAdmin = false, email, accountId, accountName,
 
       {/* Desktop sidebar */}
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-line bg-surface px-4 py-6 lg:flex">
-        <Link href="/app" className="px-2" aria-label="TapTruly dashboard">
-          <Logo />
-        </Link>
+        <div className="flex items-center justify-between gap-2 pl-2">
+          <Link href="/app" aria-label="TapTruly dashboard">
+            <Logo />
+          </Link>
+          <NotificationBell align="left" />
+        </div>
         <nav aria-label="Main" className="mt-8 flex flex-col gap-1">
           {NAV.filter((n) => !n.hideFor?.includes(role)).map(({ href, label, icon: Icon, exact }) => {
             const active = isActive(href, exact);
@@ -167,6 +171,7 @@ export function AppNav({ isPlatformAdmin = false, email, accountId, accountName,
           </Link>
           <div className="flex min-w-0 items-center gap-2">
             <span className="min-w-0 truncate text-sm font-semibold text-muted">{accountName}</span>
+            <NotificationBell align="right" />
             {showCredits &&
               (role === "owner" ? (
                 <Link

@@ -2,6 +2,7 @@ import { requirePageSession } from "@/lib/session";
 import { AppNav } from "./AppNav";
 import { ConfirmHost } from "@/components/ConfirmDialog";
 import { PlanProvider } from "@/components/PlanContext";
+import { NotificationsProvider } from "@/components/Notifications";
 
 // Server-side guard for the whole signed-in area: verified session, 2FA step done, real membership.
 // (Middleware also redirects, and every API route checks again.)
@@ -14,6 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   ]);
 
   return (
+    <NotificationsProvider>
     <div className="min-h-screen lg:flex">
       <AppNav
         isPlatformAdmin={adminStatus === "ok" || adminStatus === "needs_mfa"}
@@ -38,5 +40,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </main>
       <ConfirmHost />
     </div>
+    </NotificationsProvider>
   );
 }

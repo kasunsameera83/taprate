@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api, qs } from "@/lib/client/api";
 import type { BranchStat, Location, ResponseItem, ResponsesPage, StatsResponse, Survey } from "@/lib/client/types";
 import { isIconSetId, ratingOption } from "@/lib/surveys/iconSets";
@@ -10,6 +10,7 @@ import { IconPlus } from "@/components/icons";
 import { Checklist } from "./Checklist";
 import { sampleStats } from "@/lib/onboarding/sample";
 import { PageLoader } from "@/components/FaceLoader";
+import { useOnResponsesChanged } from "@/components/Notifications";
 
 type Days = 7 | 30 | 90;
 const PERIODS: ReadonlyArray<{ value: Days; label: string }> = [
@@ -39,10 +40,17 @@ export default function Dashboard() {
   }, []);
 
   const load = useCallback(() => setReload((n) => n + 1), []);
+  // New ratings arrived: refresh the numbers quietly (no loading face).
+  const quiet = useRef(false);
+  useOnResponsesChanged(() => {
+    quiet.current = true;
+    load();
+  });
 
   useEffect(() => {
     let live = true;
-    setStats(null);
+    if (!quiet.current) setStats(null);
+    quiet.current = false;
     setError("");
     const filter = { surveyId: surveyId || undefined, locationId: locationId || undefined };
     Promise.all([

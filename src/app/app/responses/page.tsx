@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { CustomerTimelineButton } from "@/components/CustomerTimeline";
 import { ShareCardButton } from "@/components/ShareCardButton";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { api, qs } from "@/lib/client/api";
 import type { Location, ResponseItem, ResponsesPage, Survey } from "@/lib/client/types";
@@ -10,6 +10,7 @@ import { ratingOption, isIconSetId, type Sentiment } from "@/lib/surveys/iconSet
 import { responsesQuerySchema, fieldErrors } from "@/lib/validation/schemas";
 import { EmptyState, LoadError, Notice, Segmented, SentimentDot, Skeleton } from "@/components/ui";
 import { IconDownload, IconResponses, IconUpload } from "@/components/icons";
+import { useOnResponsesChanged } from "@/components/Notifications";
 
 type SentimentFilter = "" | Sentiment;
 type Filters = {
@@ -64,6 +65,7 @@ function fromParams(sp: URLSearchParams): Filters {
 }
 
 function ResponsesView() {
+  const quiet = useRef(false); // true when new ratings arrive: reload without the loading face
   const search = useSearchParams();
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -121,7 +123,8 @@ function ResponsesView() {
     );
 
     let live = true;
-    setData(null);
+    if (!quiet.current) setData(null);
+    quiet.current = false;
     const t = setTimeout(() => {
       api<ResponsesPage>(`/api/responses${qs(query)}`).then((r) => {
         if (!live) return;
@@ -143,6 +146,10 @@ function ResponsesView() {
   const pages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1;
   const exportHref = `/api/responses/export${qs({ surveyId: filters.surveyId || undefined, locationId: filters.locationId || undefined, from: filters.from || undefined, to: filters.to || undefined })}`;
   const load = useCallback(() => setReload((n) => n + 1), []);
+  useOnResponsesChanged(() => {
+    quiet.current = true;
+    load();
+  });
 
   return (
     <div className="space-y-6">

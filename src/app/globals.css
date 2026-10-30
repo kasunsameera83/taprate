@@ -599,3 +599,15 @@ html {
   .tl-spark-3 { animation-delay: 0.16s; }
   .tl-mini { animation: tl-mini 0.9s ease-in-out infinite; }
 }
+
+/* Notifications: pop-ups slide in; the bell gives a little ring while there's something new. */
+@keyframes nt-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
+@keyframes nt-ring {
+  0%, 70%, 100% { transform: rotate(0); }
+  74% { transform: rotate(14deg); } 78% { transform: rotate(-12deg); } 82% { transform: rotate(8deg); } 86% { transform: rotate(-5deg); }
+}
+.nt-ring { transform-origin: 50% 10%; }
+@media (prefers-reduced-motion: no-preference) {
+  .nt-toast { animation: nt-in 0.25s ease-out; }
+  .nt-ring { animation: nt-ring 4s ease-in-out infinite; }
+}
