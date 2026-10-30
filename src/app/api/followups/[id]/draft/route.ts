@@ -8,6 +8,7 @@ import { buildReplyPrompt, parseReplyAnswer, replySystemPrompt } from "@/lib/ins
 import { isIconSetId } from "@/lib/surveys/iconSets";
 import { labelsFor } from "@/lib/surveys/customIcons";
 import { isLang, standardLabel } from "@/lib/i18n/public";
+import { planAllows, upgradeMessage } from "@/lib/billing/features";
 
 const params = z.object({ id: uuidSchema }).strict();
 export const maxDuration = 60;
@@ -21,7 +22,7 @@ export const POST = secureRoute<z.infer<typeof params>>(
     const e = env();
     if (!e.ANTHROPIC_API_KEY) return fail("unavailable", "AI isn't set up on this server yet.", undefined, requestId);
     const [{ data: acct }, { data: r, error }] = await Promise.all([
-      supabase.from("accounts").select("name, ai_insights_enabled").eq("id", membership.accountId).maybeSingle(),
+      supabase.from("accounts").select("name, ai_insights_enabled, plan").eq("id", membership.accountId).maybeSingle(),
       supabase
         .from("responses")
         .select("id, rating, comment, drivers, agent, followup_status, surveys(question, icon_set, option_labels, language)")
@@ -30,6 +31,7 @@ export const POST = secureRoute<z.infer<typeof params>>(
         .maybeSingle(),
     ]);
     if (error) throw dbError(error);
+    if (acct && !planAllows(acct.plan as string, "ai")) return fail("forbidden", upgradeMessage("ai"), undefined, requestId);
     if (!acct?.ai_insights_enabled) return fail("forbidden", "An owner needs to turn on AI in Insights first.", undefined, requestId);
     const s = (r?.surveys ?? null) as unknown as { question: string; icon_set: string; option_labels: unknown; language: string } | null;
     if (!r || !s || !r.followup_status || r.rating === null || !isIconSetId(s.icon_set)) return fail("not_found", undefined, undefined, requestId);

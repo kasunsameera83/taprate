@@ -9,6 +9,7 @@ import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
 import { IconDownload, IconSparkle } from "@/components/icons";
 import { PageLoader } from "@/components/FaceLoader";
+import { PaidFeatureNotice, useAllows } from "@/components/PlanContext";
 
 type Item = { id: string; surveyId: string | null; surveyName: string | null; days: number; periodStart: string; periodEnd: string; commentCount: number; ratingCount: number; result: InsightResult; createdAt: string };
 type List = { enabled: boolean; configured: boolean; items: Item[] };
@@ -18,6 +19,7 @@ const TONE: Record<string, "pos" | "neg" | "neu"> = { positive: "pos", negative:
 const fmt = (iso: string) => new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 export default function InsightsPage() {
+  const aiAllowed = useAllows("ai");
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [role, setRole] = useState<string | null>(null);
   const [surveyId, setSurveyId] = useState("");
@@ -103,7 +105,9 @@ export default function InsightsPage() {
 
       {list && (
         <SettingsSection title="AI summary" description="Themes, real quotes and suggested actions from your customers' comments.">
-          {!list.configured ? (
+          {!aiAllowed ? (
+            <PaidFeatureNotice feature="ai" />
+          ) : !list.configured ? (
             <Notice kind="info">AI summaries aren&rsquo;t set up on this server yet (ANTHROPIC_API_KEY).</Notice>
           ) : !list.enabled ? (
             <div className="space-y-3">
@@ -208,6 +212,7 @@ function Summary({ item }: { item: Item }) {
 }
 
 function ReportSettings({ surveys, aiAvailable }: { surveys: Survey[]; aiAvailable: boolean }) {
+  const reportsAllowed = useAllows("reports");
   const [s, setS] = useState<{ frequency: "off" | "weekly" | "monthly"; surveyId: string | null; includeAi: boolean; email: string | null } | null>(null);
   const [msg, setMsg] = useState<{ kind: "error" | "success"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -225,6 +230,9 @@ function ReportSettings({ surveys, aiAvailable }: { surveys: Survey[]; aiAvailab
   }
   return (
     <SettingsSection title="Email me a report" description="A summary of your ratings in your inbox: weekly reports arrive on Monday mornings, monthly ones on the 1st.">
+      {!reportsAllowed ? (
+        <PaidFeatureNotice feature="reports" />
+      ) : (
       <div className="space-y-3">
         <Segmented
           label="How often"
@@ -255,6 +263,7 @@ function ReportSettings({ surveys, aiAvailable }: { surveys: Survey[]; aiAvailab
         )}
         {msg && <Notice kind={msg.kind}>{msg.text}</Notice>}
       </div>
+      )}
     </SettingsSection>
   );
 }

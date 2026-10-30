@@ -11,6 +11,7 @@ import { generateInsight } from "@/lib/insights/generate";
 import { buildReportEmail, periodLabel, reportDue, UNSUB_PURPOSE } from "@/lib/insights/reportEmail";
 import type { InsightResult } from "@/lib/insights/ai";
 import { sendAgentWins } from "@/lib/insights/wins";
+import { planAllows } from "@/lib/billing/features";
 
 // Daily job: sends weekly reports on Mondays and monthly reports on the 1st (Sri Lanka time).
 // Needs "Authorization: Bearer <CRON_SECRET>". Before each email it re-checks that the person is still
@@ -50,11 +51,11 @@ export async function GET(req: NextRequest) {
     // Still allowed? (membership + role + business not suspended), and their email.
     const [{ data: m }, { data: acct }, { data: u }] = await Promise.all([
       db.from("memberships").select("role").eq("account_id", s.account_id).eq("user_id", s.user_id).maybeSingle(),
-      db.from("accounts").select("name, suspended_at").eq("id", s.account_id).maybeSingle(),
+      db.from("accounts").select("name, suspended_at, plan").eq("id", s.account_id).maybeSingle(),
       db.auth.admin.getUserById(s.user_id),
     ]);
     const email = u?.user?.email;
-    if (!m || !["owner", "admin", "viewer"].includes(m.role) || !acct || acct.suspended_at || !email) {
+    if (!m || !["owner", "admin", "viewer"].includes(m.role) || !acct || acct.suspended_at || !planAllows(acct.plan as string, "reports") || !email) {
       skipped++;
       continue;
     }

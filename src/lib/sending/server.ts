@@ -9,6 +9,7 @@ import { iconUrlMap, labelsFor, resolveOptions } from "@/lib/surveys/customIcons
 import { logoUrl } from "@/lib/branding";
 import { buildSurveyEmail, safeFromName } from "@/lib/sending/emailTemplate";
 import { isLang } from "@/lib/i18n/public";
+import { planAllows } from "@/lib/billing/features";
 
 // The sending engine. Called by the app right after a send is created (and while its page is open),
 // by the public API for single emails, and by the daily job for leftovers and reminders.
@@ -67,11 +68,12 @@ class Cache {
   async account(id: string) {
     if (!this.accounts.has(id)) {
       const [{ data }, { data: dom }] = await Promise.all([
-        this.db.from("accounts").select("name, logo_path").eq("id", id).maybeSingle(),
+        this.db.from("accounts").select("name, logo_path, plan").eq("id", id).maybeSingle(),
         // Only a domain the email provider has verified.
         this.db.from("sending_domains").select("domain, from_local").eq("account_id", id).eq("status", "verified").maybeSingle(),
       ]);
-      this.accounts.set(id, data ? { name: data.name as string, logo_path: (data.logo_path as string | null) ?? null, fromAddress: dom ? `${dom.from_local}@${dom.domain}` : null } : null);
+      this.accounts.set(id, data ? { name: data.name as string, logo_path: (data.logo_path as string | null) ?? null, // Own domain only while on the Scale plan; otherwise our normal address.
+          fromAddress: dom && planAllows(data.plan as string, "own_domain") ? `${dom.from_local}@${dom.domain}` : null } : null);
     }
     return this.accounts.get(id) ?? null;
   }

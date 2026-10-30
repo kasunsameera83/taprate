@@ -37,6 +37,7 @@ insert into auth.users (id, email, raw_user_meta_data) values
   ('dddddddd-0000-0000-0000-000000000003', 'viewer-d@example.com', '{"account_name":"x"}');
 create temp table d as select account_id as acc from public.memberships where user_id = 'dddddddd-0000-0000-0000-000000000001';
 grant select on d to authenticated, service_role;
+update public.accounts set plan = 'growth' where id = (select acc from d); -- later suites use paid features
 insert into public.memberships (account_id, user_id, role, agent_name)
   select acc, 'dddddddd-0000-0000-0000-000000000002', 'agent', 'Nimal' from d;
 insert into public.memberships (account_id, user_id, role)

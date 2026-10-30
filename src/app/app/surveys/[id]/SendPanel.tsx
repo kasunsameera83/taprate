@@ -12,6 +12,7 @@ import { EmailButtonsPreview } from "@/components/SurveyPreview";
 import { IconUpload } from "@/components/icons";
 import { confirmDialog } from "@/components/ConfirmDialog";
 import { PageLoader } from "@/components/FaceLoader";
+import { useAllows } from "@/components/PlanContext";
 
 // "Send by email": TapTruly emails the survey to a list of customers, with an optional reminder.
 
@@ -80,6 +81,7 @@ export function SendPanel({ survey, canSend }: { survey: Survey; canSend: boolea
 // ---------------------------------------------------------------------------
 
 function Composer({ survey, credits, onSent }: { survey: Survey; credits: number | null; onSent: () => void }) {
+  const repeatsAllowed = useAllows("repeats");
   const [raw, setRaw] = useState("");
   const [fileName, setFileName] = useState("");
   const [name, setName] = useState(`Survey email · ${today()}`);
@@ -355,12 +357,13 @@ function Composer({ survey, credits, onSent }: { survey: Survey; credits: number
                 </select>
               </Field>
               <Field label="Send it again" name="repeat" hint="To the same list, so you can track how people feel over time.">
-                <select id="repeat" className="input" value={repeat} onChange={(e) => setRepeat(e.target.value as typeof repeat)} aria-describedby="repeat-hint">
+                <select id="repeat" className="input" value={repeat} disabled={!repeatsAllowed} onChange={(e) => setRepeat(e.target.value as typeof repeat)} aria-describedby="repeat-hint">
                   <option value="">Just once</option>
                   <option value="30">Every month</option>
                   <option value="60">Every 2 months</option>
                   <option value="90">Every 3 months</option>
                 </select>
+                {!repeatsAllowed && <p className="mt-1 text-[13px] text-muted">Repeat sends come with any paid plan.</p>}
               </Field>
               <Field label="Replies go to" name="replyTo" optional error={errors.replyTo} hint="Your support or sales inbox.">
                 <TextInput name="replyTo" type="email" inputMode="email" autoComplete="email" placeholder="help@yourbusiness.lk" value={replyTo} onChange={(e) => setReplyTo(e.target.value)} maxLength={254} error={errors.replyTo} hasHint />

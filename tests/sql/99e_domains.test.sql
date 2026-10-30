@@ -25,6 +25,7 @@ grant execute on function pg_temp.as_user(text) to authenticated, service_role;
 
 create temp table a20 as select account_id as acc from public.memberships where user_id = 'dddddddd-0000-0000-0000-000000000001' and role = 'owner';
 grant select on a20 to authenticated, service_role;
+update public.accounts set plan = 'scale' where id = (select acc from a20); -- own domain is Scale only (0031)
 
 set role service_role;
 insert into public.sending_domains (account_id, domain, provider_id) values ((select acc from a20), 'mail.kova.lk', 'res_1');

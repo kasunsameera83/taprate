@@ -6,6 +6,7 @@ import { fieldErrors, tvScreenCreateSchema } from "@/lib/validation/schemas";
 import { Field, Notice, Skeleton, TextInput } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
+import { PaidFeatureNotice } from "@/components/PlanContext";
 
 type Screen = { id: string; name: string; survey: string | null; location: string | null; showComments: boolean; createdAt: string; lastSeenAt: string | null };
 
@@ -58,6 +59,7 @@ export function TvScreens() {
   return (
     <SettingsSection title="Office TV screens" description="A live screen for your office wall: today's satisfaction, the latest ratings and kind words from customers. It never shows emails or names.">
       <div className="space-y-4">
+        <PaidFeatureNotice feature="tv" />
         {msg && <Notice kind="error">{msg}</Notice>}
         {created && (
           <Notice kind="success">

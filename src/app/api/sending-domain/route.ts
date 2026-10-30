@@ -5,8 +5,8 @@ import { adminClient } from "@/lib/supabase/server";
 import { sendingDomainSchema } from "@/lib/sending/domainRules";
 import { createProviderDomain, deleteProviderDomain } from "@/lib/sending/domains";
 import { audit } from "@/lib/audit";
+import { planAllows, upgradeMessage } from "@/lib/billing/features";
 
-const PLANS_WITH_DOMAINS = ["scale"];
 
 // The business's own sending domain (owners and admins can see it; owners change it).
 export const GET = secureRoute(
@@ -17,7 +17,7 @@ export const GET = secureRoute(
       supabase.from("accounts").select("plan").eq("id", membership.accountId).maybeSingle(),
     ]);
     if (error) throw dbError(error);
-    return ok({ allowed: PLANS_WITH_DOMAINS.includes(acct?.plan ?? ""), domain: data ?? null });
+    return ok({ allowed: planAllows(acct?.plan, "own_domain"), domain: data ?? null });
   },
 );
 
@@ -25,7 +25,7 @@ export const POST = secureRoute<undefined, undefined, z.infer<typeof sendingDoma
   { auth: "user", action: "account:write", ipLimit: LIMITS.userWrite, userLimit: LIMITS.integrationTest, body: sendingDomainSchema, maxBodyBytes: 512 },
   async ({ supabase, membership, user, body, ipHash, requestId }) => {
     const { data: acct } = await supabase.from("accounts").select("plan").eq("id", membership.accountId).maybeSingle();
-    if (!PLANS_WITH_DOMAINS.includes(acct?.plan ?? "")) return fail("forbidden", "Sending from your own domain is part of the Scale plan.", undefined, requestId);
+    if (!planAllows(acct?.plan, "own_domain")) return fail("forbidden", upgradeMessage("own_domain"), undefined, requestId);
     const db = adminClient();
     const { data: existing } = await db.from("sending_domains").select("id").eq("account_id", membership.accountId).maybeSingle();
     if (existing) return fail("conflict", "Remove your current domain first.", undefined, requestId);

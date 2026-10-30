@@ -9,6 +9,7 @@ import { resolveMembership, mfaState, ACCOUNT_COOKIE, type Membership } from "@/
 import { hitRateLimit, type RateLimitRule } from "@/lib/security/rateLimit";
 import { getClientIp, hashIp, isJsonRequest, isSameOriginRequest } from "@/lib/security/request";
 import { fieldErrors } from "@/lib/validation/schemas";
+import { upgradeMessage } from "@/lib/billing/features";
 
 // ---------------------------------------------------------------------------
 // Responses. Errors never include stack traces, SQL messages or internal ids.
@@ -249,6 +250,16 @@ export function secureRoute<P = undefined, Q = undefined, B = undefined, A exten
 /** Turn a Supabase/Postgres error into a safe ApiError (never leaks SQL details). */
 // Messages raised by our own database functions that are safe and useful to show.
 const DB_MESSAGES: Array<[RegExp, ErrorCode, string]> = [
+  // Free plan limits (0031); wording kept in step with src/lib/billing/features.ts.
+  [/upgrade required: integrations/, "forbidden", upgradeMessage("integrations")],
+  [/upgrade required: api/, "forbidden", upgradeMessage("api")],
+  [/upgrade required: tv/, "forbidden", upgradeMessage("tv")],
+  [/upgrade required: ai/, "forbidden", upgradeMessage("ai")],
+  [/upgrade required: reports/, "forbidden", upgradeMessage("reports")],
+  [/upgrade required: repeats/, "forbidden", upgradeMessage("repeats")],
+  [/upgrade required: own_domain/, "forbidden", upgradeMessage("own_domain")],
+  [/plan limit: locations/, "forbidden", "The free plan has 1 location. Choose a plan in Settings → Billing to add more."],
+  [/plan limit: members/, "forbidden", "The free plan has 2 team members (including you). Choose a plan in Settings → Billing to invite more."],
   [/already a member/, "conflict", "That person is already on your team."],
   [/an account needs at least one owner/, "conflict", "Every account needs at least one owner. Make someone else an owner first."],
   [/only owners can invite admins/, "forbidden", "Only owners can invite admins."],

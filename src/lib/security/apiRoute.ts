@@ -9,6 +9,7 @@ import { hitRateLimit, LIMITS } from "@/lib/security/rateLimit";
 import { getClientIp, hashIp, isJsonRequest } from "@/lib/security/request";
 import { bearerToken, keyIsUsable, parseApiKey, secretMatches, type ApiScope } from "@/lib/security/apiKeys";
 import { fieldErrors } from "@/lib/validation/schemas";
+import { planAllows, upgradeMessage } from "@/lib/billing/features";
 
 // ---------------------------------------------------------------------------
 // The wrapper for the PUBLIC API (/api/v1/*). Every v1 route goes through this, in this order:
@@ -82,6 +83,9 @@ export function apiRoute<P = undefined, Q = undefined, B = undefined>(config: Co
       const matches = secretMatches(row?.token_hash ?? "0".repeat(64), parsedKey.secret);
       if (!row || !matches) return badKey();
       if (!keyIsUsable(row)) return unauthorized(requestId, "This API key has been revoked or has expired.");
+      // The API is a paid feature (0031): keys stop working while the business is on the free plan.
+      const { data: acct } = await db.from("accounts").select("plan").eq("id", row.account_id).maybeSingle();
+      if (!planAllows(acct?.plan as string | undefined, "api")) return fail("forbidden", upgradeMessage("api"), undefined, requestId);
 
       const scopes = (row.scopes as string[]).filter((s): s is ApiScope => s === "read" || s === "write");
       if (!scopes.includes(config.scope)) return fail("forbidden", `This API key doesn't have "${config.scope}" access.`, undefined, requestId);

@@ -20,6 +20,7 @@ import {
 } from "@/lib/helpdesk";
 import { isIconSetId, ratingOption } from "@/lib/surveys/iconSets";
 import { signWebhook } from "@/lib/security/webhookSignature";
+import { planAllows } from "@/lib/billing/features";
 
 export type RatingEvent = {
   id: string;
@@ -236,6 +237,9 @@ export async function deliverTo(row: IntegrationRow, e: RatingEvent): Promise<"o
 const wants = (i: IntegrationRow, e: RatingEvent) => i.events.includes("all") || (i.events.includes("negative") && e.sentiment === "negative");
 
 async function enabledIntegrations(accountId: string): Promise<IntegrationRow[]> {
+  // Connections are a paid feature (0031): nothing is delivered while the business is on the free plan.
+  const { data: acct } = await adminClient().from("accounts").select("plan").eq("id", accountId).maybeSingle();
+  if (!planAllows(acct?.plan as string | undefined, "integrations")) return [];
   const { data } = await adminClient()
     .from("integrations")
     .select("id, kind, url_encrypted, secret_encrypted, events")

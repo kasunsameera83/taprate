@@ -8,6 +8,7 @@ import { SettingsSection } from "@/components/SettingsSection";
 import { IconCopy } from "@/components/icons";
 import { confirmDialog } from "@/components/ConfirmDialog";
 import { PageLoader } from "@/components/FaceLoader";
+import { PlanLimitNotice } from "@/components/PlanContext";
 
 type Member = { userId: string; email: string; role: string; agentName: string | null; joinedAt: string };
 type Invite = { id: string; email: string; role: string; agentName: string | null; createdAt: string; expiresAt: string };
@@ -36,6 +37,7 @@ export default function TeamPage() {
 
   return (
     <div className="space-y-6">
+      <PlanLimitNotice what="members" used={team.members.length + team.invites.length} />
       <InviteForm myRole={team.myRole} onInvited={load} />
       <SettingsSection title={`Members (${team.members.length})`}>
         <ul className="divide-y divide-line">

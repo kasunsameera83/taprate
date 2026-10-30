@@ -6,6 +6,7 @@ import { Badge, EmptyState, Field, LoadError, Notice, PasswordInput, Skeleton, T
 import { SettingsSection } from "@/components/SettingsSection";
 import { IconCopy } from "@/components/icons";
 import { confirmDialog } from "@/components/ConfirmDialog";
+import { PaidFeatureNotice, useAllows } from "@/components/PlanContext";
 
 type ApiKey = {
   id: string;
@@ -21,6 +22,7 @@ type ApiKey = {
 const fmt = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 
 export default function ApiKeysPage() {
+  const allowed = useAllows("api");
   const [keys, setKeys] = useState<ApiKey[] | null>(null);
   const [error, setError] = useState("");
   const load = useCallback(() => {
@@ -32,7 +34,8 @@ export default function ApiKeysPage() {
 
   return (
     <div className="space-y-6">
-      <CreateKey onCreated={load} />
+      <PaidFeatureNotice feature="api" />
+      {allowed && <CreateKey onCreated={load} />}
       <SettingsSection title="Your keys">
         {error && <LoadError message={error} onRetry={load} />}
         {!keys && !error && <Skeleton className="h-24 w-full" />}

@@ -172,3 +172,7 @@ select pg_temp.expect_fail($q$delete from public.responses$q$, 'owner deletes re
 reset role;
 
 select 'ALL DATABASE SECURITY TESTS PASSED' as result;
+
+-- Later suites test paid features; the free plan's limits are tested in 99o_plan_features.
+reset role;
+update public.accounts set plan = 'growth';

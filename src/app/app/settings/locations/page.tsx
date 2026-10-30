@@ -7,6 +7,7 @@ import { fieldErrors, locationCreateSchema, locationUpdateSchema } from "@/lib/v
 import { Badge, EmptyState, Field, LoadError, Notice, Skeleton, TextInput } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
+import { PlanLimitNotice } from "@/components/PlanContext";
 
 // Branches: shops, counters, clinics or regions. Each gets its own QR codes and kiosks, and the
 // dashboard compares them.
@@ -29,6 +30,7 @@ export default function LocationsPage() {
 
   return (
     <div className="space-y-6">
+      {items && <PlanLimitNotice what="locations" used={active.length} />}
       <SettingsSection
         title="Branches"
         description={

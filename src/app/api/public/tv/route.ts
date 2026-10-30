@@ -5,6 +5,7 @@ import { LIMITS } from "@/lib/security/rateLimit";
 import { parseKioskToken } from "@/lib/security/signing";
 import { adminClient } from "@/lib/supabase/server";
 import { isIconSetId, sentimentOf, type Sentiment } from "@/lib/surveys/iconSets";
+import { planAllows } from "@/lib/billing/features";
 
 const body = z.object({ token: z.string().max(100) }).strict();
 
@@ -40,11 +41,13 @@ export const POST = secureRoute<undefined, undefined, z.infer<typeof body>, "pub
     if (screen.location_id) q = q.eq("location_id", screen.location_id);
     const [{ data: rows }, { data: acct }, { data: locs }, { count: openFollowups }] = await Promise.all([
       q.order("created_at", { ascending: false }).limit(5000),
-      db.from("accounts").select("name, logo_path, suspended_at").eq("id", screen.account_id).maybeSingle(),
+      db.from("accounts").select("name, logo_path, suspended_at, plan").eq("id", screen.account_id).maybeSingle(),
       db.from("locations").select("id, name").eq("account_id", screen.account_id).limit(200),
       db.from("responses").select("id", { count: "exact", head: true }).eq("account_id", screen.account_id).in("followup_status", ["open", "in_progress"]),
     ]);
     if (!acct || acct.suspended_at) return fail("not_found", undefined, undefined, requestId);
+    // TV screens are a paid feature: a screen made on a paid plan pauses if the business drops to free.
+    if (!planAllows(acct.plan as string, "tv")) return fail("forbidden", "This screen is paused. TV screens are part of the paid plans.", undefined, requestId);
 
     const list = ((rows ?? []) as unknown as Row[]).filter((r) => r.rating !== null && r.surveys && isIconSetId(r.surveys.icon_set));
     const sent = (r: Row): Sentiment => r.sentiment ?? sentimentOf(r.surveys!.icon_set as never, r.rating!);

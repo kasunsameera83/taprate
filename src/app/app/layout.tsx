@@ -1,6 +1,7 @@
 import { requirePageSession } from "@/lib/session";
 import { AppNav } from "./AppNav";
 import { ConfirmHost } from "@/components/ConfirmDialog";
+import { PlanProvider } from "@/components/PlanContext";
 
 // Server-side guard for the whole signed-in area: verified session, 2FA step done, real membership.
 // (Middleware also redirects, and every API route checks again.)
@@ -32,7 +33,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               TapTruly support.
             </div>
           )}
-          {children}
+          <PlanProvider plan={account?.plan ?? "trial"}>{children}</PlanProvider>
         </div>
       </main>
       <ConfirmHost />

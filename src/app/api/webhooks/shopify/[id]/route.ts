@@ -8,6 +8,7 @@ import { isUuid } from "@/lib/security/signing";
 import { open } from "@/lib/security/secretBox";
 import { isShopifyTopic, readShopifyOrder, verifyShopifyHmac } from "@/lib/shopify";
 import { processQueue } from "@/lib/sending/server";
+import { planAllows } from "@/lib/billing/features";
 
 // Order notifications from a shop (a webhook the business made in Shopify admin). The address names
 // one connection; the notification must be signed with that shop's signing key, come from the shop
@@ -51,6 +52,9 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     db.from("integrations").update({ last_status: status, last_delivery_at: new Date().toISOString() }).eq("id", conn.id).eq("account_id", conn.account_id);
 
   if (!conn.enabled) return json({ ok: true, ignored: "switched off" });
+  // Connections are a paid feature (0031): paused while the business is on the free plan.
+  const { data: acct } = await db.from("accounts").select("plan").eq("id", conn.account_id).maybeSingle();
+  if (!planAllows(acct?.plan as string | undefined, "integrations")) return json({ ok: true, ignored: "plan" });
   const topic = req.headers.get("x-shopify-topic");
   if (!isShopifyTopic(topic)) return json({ ok: true, ignored: "topic" });
   if (!(await hitRateLimit(LIMITS.shopifyPerConnection, conn.id))) return json({ ok: false }, 429);

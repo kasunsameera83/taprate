@@ -24,6 +24,7 @@ grant execute on function pg_temp.as_user(text) to authenticated, service_role;
 
 create temp table d10 as select account_id as acc from public.memberships where user_id = 'dddddddd-0000-0000-0000-000000000001' and role = 'owner';
 grant select on d10 to authenticated, service_role;
+update public.accounts set plan = 'growth' where id = (select acc from d10); -- AI is a paid feature (0031)
 
 -- AI switch: owner only.
 set role authenticated;

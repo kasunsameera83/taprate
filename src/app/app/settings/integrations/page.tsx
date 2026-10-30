@@ -6,6 +6,7 @@ import { Badge, EmptyState, Field, LoadError, Notice, Skeleton, TextInput } from
 import { SettingsSection } from "@/components/SettingsSection";
 import { IconCopy } from "@/components/icons";
 import { confirmDialog } from "@/components/ConfirmDialog";
+import { PaidFeatureNotice, useAllows } from "@/components/PlanContext";
 
 type Integration = {
   id: string;
@@ -74,6 +75,7 @@ const isHelpdeskKind = (k: Integration["kind"]): k is HelpdeskUiKind => k === "z
 const webhookUrl = (id: string) => `${typeof window === "undefined" ? "" : window.location.origin}/api/webhooks/shopify/${id}`;
 
 export default function IntegrationsPage() {
+  const allowed = useAllows("integrations");
   const [items, setItems] = useState<Integration[] | null>(null);
   const [error, setError] = useState("");
   const load = useCallback(() => {
@@ -84,7 +86,8 @@ export default function IntegrationsPage() {
 
   return (
     <div className="space-y-6">
-      <AddIntegration onAdded={load} />
+      <PaidFeatureNotice feature="integrations" />
+      {allowed && <AddIntegration onAdded={load} />}
       <SettingsSection title="Connected">
         {error && <LoadError message={error} onRetry={load} />}
         {!items && !error && <Skeleton className="h-24 w-full" />}

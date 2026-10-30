@@ -5,6 +5,7 @@ import { adminClient } from "@/lib/supabase/server";
 import { hitRateLimit, LIMITS } from "@/lib/security/rateLimit";
 import { loadPeriod, type PeriodData } from "@/lib/insights/data";
 import { INSIGHT_SYSTEM_PROMPT, askClaude, buildInsightPrompt, parseInsightAnswer, type InsightResult } from "@/lib/insights/ai";
+import { planAllows } from "@/lib/billing/features";
 
 export const MIN_COMMENTS = 3;
 
@@ -20,8 +21,9 @@ export type GenerateOutcome =
 export async function generateInsight(db: SupabaseClient, args: { accountId: string; surveyId: string | null; surveyName: string | null; days: 7 | 30 | 90; userId: string | null; now?: number }): Promise<GenerateOutcome> {
   const e = env();
   if (!e.ANTHROPIC_API_KEY) return { ok: false, code: "not_configured" };
-  const { data: acct } = await adminClient().from("accounts").select("name, ai_insights_enabled").eq("id", args.accountId).maybeSingle();
-  if (!acct?.ai_insights_enabled) return { ok: false, code: "disabled" };
+  const { data: acct } = await adminClient().from("accounts").select("name, ai_insights_enabled, plan").eq("id", args.accountId).maybeSingle();
+  // AI is a paid feature (0031): an account that dropped to free behaves as if AI were off.
+  if (!acct?.ai_insights_enabled || !planAllows(acct.plan as string, "ai")) return { ok: false, code: "disabled" };
 
   const now = args.now ?? Date.now();
   const period = await loadPeriod(db, args.accountId, { surveyId: args.surveyId, days: args.days, now });

@@ -27,7 +27,12 @@ export function PricingTable({ catalog, defaultCurrency = "LKR" }: { catalog: Ca
             </p>
             <p className="mt-2 text-sm font-semibold">{free.responses.toLocaleString("en")} responses to start</p>
             {free.dailyEmails > 0 && <p className="text-[13px] text-muted">Send up to {free.dailyEmails.toLocaleString("en")} survey emails a day</p>}
-            <p className="mt-1 flex-1 text-sm text-muted">No card needed. Upgrade any time.</p>
+            <ul className="mt-3 flex-1 space-y-1 text-[13px] text-muted">
+              <li>✓ Email, QR, WhatsApp &amp; kiosk surveys</li>
+              <li>✓ Dashboard, follow-ups &amp; alerts</li>
+              <li>✓ 1 location, 2 team members</li>
+              <li>No card needed</li>
+            </ul>
             <Link href="/signup" className="btn btn-secondary mt-5">
               Start free
             </Link>
@@ -45,7 +50,14 @@ export function PricingTable({ catalog, defaultCurrency = "LKR" }: { catalog: Ca
             </p>
             <p className="mt-2 text-sm font-semibold">{p.monthlyResponses.toLocaleString("en")} responses a month</p>
             <p className="text-[13px] text-muted">Send up to {SEND_LIMITS[p.id].toLocaleString("en")} survey emails a day</p>
-            <p className="mt-1 flex-1 text-sm text-muted">{p.blurb}</p>
+            <p className="mt-1 text-sm text-muted">{p.blurb}</p>
+            <ul className="mt-3 flex-1 space-y-1 text-[13px] text-muted">
+              <li>✓ Everything in Free, plus:</li>
+              <li>✓ Unlimited team &amp; locations</li>
+              <li>✓ Helpdesk, Shopify &amp; Slack, API</li>
+              <li>✓ TV screens, AI replies, email reports</li>
+              {p.id === "scale" && <li className="font-semibold text-ink">✓ Emails from your own domain</li>}
+            </ul>
             <Link href="/signup" className={`btn mt-5 ${p.id === "growth" ? "btn-primary" : "btn-secondary"}`}>
               Choose {p.name}
             </Link>
