@@ -390,7 +390,10 @@ function Buy({ data }: { data: Summary }) {
           />
         </div>
         <p className="mb-4 text-[13px] text-muted">
-          {currency === "LKR" ? "Prices in Sri Lankan rupees, paid with PayHere." : provider === "payhere" ? "Prices in US dollars, paid by card with PayHere." : "Prices in US dollars, paid by card with Stripe."}
+          {currency === "LKR" ? "Prices in Sri Lankan rupees, paid with PayHere." : provider === "payhere" ? "Prices in US dollars, paid by card with PayHere." : "Prices in US dollars, paid by card with Stripe."}{" "}
+          <Link href="/refund-policy" target="_blank" className="link">
+            Refund Policy
+          </Link>
           {otherCurrency && (
             <>
               {" "}

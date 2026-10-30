@@ -97,7 +97,7 @@ export default function PrivacyPage() {
 
       <h2>Contact</h2>
       <p>
-        {c.legalName}, {c.address}. Privacy questions: {c.privacyEmail}.
+        {c.legalName}, {c.address}. Privacy questions: {c.privacyEmail}. Phone: {c.phone}.
       </p>
     </LegalPage>
   );

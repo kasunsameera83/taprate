@@ -65,7 +65,10 @@ export function PricingTable({ catalog, defaultCurrency = "LKR" }: { catalog: Ca
         ))}
       </div>
       <p className="mt-5 text-sm text-muted">
-        {currency === "LKR" ? "Prices in Sri Lankan rupees. Pay securely with PayHere." : "Prices in US dollars. Pay securely by card with Stripe."}
+        {currency === "LKR" ? "Prices in Sri Lankan rupees. Pay securely with PayHere." : "Prices in US dollars. Pay securely by card with Stripe."}{" "}
+        <Link href="/refund-policy" className="underline underline-offset-2 hover:text-ink">
+          Refund Policy
+        </Link>
       </p>
       {packs.length > 0 && (
         <p className="mt-1 text-sm text-muted">

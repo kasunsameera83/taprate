@@ -23,6 +23,7 @@ export default function TermsPage() {
 
       <h2>2. Your account</h2>
       <ul>
+        <li>You must be at least 18 years old and able to enter a binding contract to create an account or buy a plan.</li>
         <li>Give accurate details and keep your password and two-step verification safe. You&rsquo;re responsible for what happens in your account.</li>
         <li>Account owners decide who joins their team and what they can see.</li>
         <li>Tell us straight away at {c.securityEmail} if you think your account has been misused.</li>
@@ -52,7 +53,15 @@ export default function TermsPage() {
       <h2>5. Plans, payments and responses</h2>
       <ul>
         <li>Paid plans renew automatically each month or year until you cancel. Each paid period adds the plan&rsquo;s responses to your balance; unused responses roll over.</li>
-        <li>You can cancel at any time in Settings → Billing. Your plan stays active until the end of the period you&rsquo;ve paid for. We don&rsquo;t refund part-used periods, unless the law requires it.</li>
+        <li>You can cancel at any time in Settings → Billing. Your plan stays active until the end of the period you&rsquo;ve paid for.</li>
+        <li>
+          Refunds follow our{" "}
+          <Link href="/refund-policy" className="link">
+            Refund Policy
+          </Link>
+          . Every refund is paid back to the same payment method (card, bank account or wallet) used for the original payment.
+        </li>
+        <li>Prices are shown, and charged, in Sri Lankan rupees (LKR) or US dollars (USD), including any taxes that apply.</li>
         <li>Top-up responses never expire, but they can&rsquo;t be exchanged for money or moved to another account.</li>
         <li>Payments are handled by PayHere (LKR) or Stripe (USD); their terms apply to the payment itself. Prices may change; changes apply to new purchases, and we&rsquo;ll give notice before a price change affects a renewing plan.</li>
         <li>Promo codes have the conditions shown with them and can be withdrawn at any time before they&rsquo;re used.</li>
@@ -92,7 +101,8 @@ export default function TermsPage() {
 
       <h2>12. Contact</h2>
       <p>
-        {c.legalName} (registration {c.registrationNo}), {c.address}. Email: {c.supportEmail}.
+        {c.legalName}
+        {c.registrationNo ? ` (registration ${c.registrationNo})` : ""}, {c.address}. Email: {c.supportEmail}. Phone: {c.phone}.
       </p>
     </LegalPage>
   );

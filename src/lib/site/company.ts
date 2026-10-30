@@ -2,15 +2,17 @@
 // >>> Fill these in before going live (anything in [square brackets] is a placeholder). <<<
 export const COMPANY = {
   productName: "TapTruly",
-  legalName: "[Your company name (Pvt) Ltd]",
-  registrationNo: "[Company registration number]",
-  address: "[Registered address], Sri Lanka",
+  legalName: "TapTruly",
+  /** Leave empty until the business registration is complete; it's hidden while empty. */
+  registrationNo: "",
+  address: "Sri Lanka",
+  phone: "+94 71 307 4888",
   supportEmail: "support@taptruly.com",
   privacyEmail: "privacy@taptruly.com",
   securityEmail: "security@taptruly.com",
   governingLaw: "the laws of the Democratic Socialist Republic of Sri Lanka",
   courts: "the courts of Colombo, Sri Lanka",
-  /** Change this date whenever the Terms or Privacy Policy change; people agree to this version. */
+  /** Change this date whenever the Terms, Privacy or Refund Policy change; people agree to this version. */
   termsVersion: "2026-11-01",
   effectiveDate: "1 November 2026",
 };

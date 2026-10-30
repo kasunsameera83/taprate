@@ -30,6 +30,7 @@ export function SiteFooter({ tagline, sriLanka = false }: { tagline?: string; sr
       links: [
         { href: "/terms", label: "Terms of Service" },
         { href: "/privacy", label: "Privacy Policy" },
+        { href: "/refund-policy", label: "Refund Policy" },
         { href: "/.well-known/security.txt", label: "Report a security issue" },
       ],
     },
@@ -43,6 +44,11 @@ export function SiteFooter({ tagline, sriLanka = false }: { tagline?: string; sr
           <a href={`mailto:${email}`} className="mt-4 inline-block text-sm font-semibold text-white underline-offset-4 hover:underline">
             {email}
           </a>
+          {COMPANY.phone && (
+            <a href={`tel:${COMPANY.phone.replace(/[^+\d]/g, "")}`} className="mt-1 block text-sm font-semibold text-white underline-offset-4 hover:underline">
+              {COMPANY.phone}
+            </a>
+          )}
         </div>
         {columns.map((c) => (
           <nav key={c.title} aria-label={c.title}>
