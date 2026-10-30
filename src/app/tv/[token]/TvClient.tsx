@@ -9,19 +9,28 @@ type TvData = {
   week: { total: number; pct: number | null };
   today: { total: number; pct: number | null; negative: number };
   recent: Array<{ sentiment: Sentiment }>;
+  latest: Array<{ sentiment: Sentiment; label: string; symbol: string | null; at: string }>;
   byLocation: Array<{ name: string; total: number; pct: number | null }>;
   openFollowups: number;
   kudos: Array<{ text: string; at: string }>;
   updatedAt: string;
 };
 
-const REFRESH_MS = 60_000;
+const REFRESH_MS = 30_000;
 const ROTATE_MS = 12_000;
 const FILL: Record<Sentiment, string> = { positive: "#22c55e", neutral: "#f59e0b", negative: "#ef4444" };
 const H: Record<Sentiment, string> = { positive: "100%", neutral: "66%", negative: "40%" };
 
+function ago(iso: string, nowIso: string) {
+  const m = Math.max(0, Math.round((Date.parse(nowIso) - Date.parse(iso)) / 60000));
+  if (m < 1) return "just now";
+  if (m < 60) return `${m} min ago`;
+  const h = Math.round(m / 60);
+  return h < 24 ? `${h} h ago` : `${Math.round(h / 24)} d ago`;
+}
+
 // Designed to be read from across a room: very large numbers, high contrast on a dark background,
-// updates every minute. Kind words rotate slowly (static with reduced motion).
+// updates every 30 seconds. Kind words rotate slowly (static with reduced motion).
 export function TvClient({ token }: { token: string }) {
   const [data, setData] = useState<TvData | null>(null);
   const [error, setError] = useState("");
@@ -65,6 +74,13 @@ export function TvClient({ token }: { token: string }) {
       <header className="flex items-baseline justify-between gap-6">
         <h1 className="font-display text-3xl font-bold lg:text-4xl">{data.business}</h1>
         <p className="text-lg text-[#9aa1c7]">
+          <span className="mr-3 inline-flex items-center gap-2 font-semibold text-[#86efac]">
+            <span className="relative flex h-3 w-3" aria-hidden>
+              <span className="absolute inline-flex h-full w-full rounded-full bg-[#22c55e] opacity-70 motion-safe:animate-ping" />
+              <span className="relative inline-flex h-3 w-3 rounded-full bg-[#22c55e]" />
+            </span>
+            Live
+          </span>
           {data.screen} · updated {new Date(data.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           {error && <span className="ml-3 text-[#fbbf24]">{error}</span>}
         </p>
@@ -122,9 +138,25 @@ export function TvClient({ token }: { token: string }) {
                 &ldquo;{kudo.text}&rdquo;
               </blockquote>
             </figure>
+          ) : data.latest.length > 0 ? (
+            <div className="flex flex-1 flex-col rounded-[28px] bg-[#171c36] p-8">
+              <p className="text-xl text-[#9aa1c7]">Latest ratings</p>
+              <ul className="mt-4 flex-1 space-y-3">
+                {data.latest.map((r, k) => (
+                  <li key={`${r.at}-${k}`} className={`flex items-center gap-4 rounded-[16px] bg-[#0f1326]/60 px-5 py-3 ${k === 0 ? "motion-safe:animate-[kt-fade_0.8s_ease-out_both]" : ""}`}>
+                    <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: FILL[r.sentiment] }} aria-hidden />
+                    {r.symbol && <span className="text-3xl" aria-hidden>{r.symbol}</span>}
+                    <span className="flex-1 truncate text-2xl font-semibold">{r.label}</span>
+                    <span className="text-lg text-[#9aa1c7]">{ago(r.at, data.updatedAt)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ) : data.byLocation.length > 0 ? null : (
-            <div className="flex flex-1 items-center justify-center rounded-[28px] border-2 border-dashed border-[#262c4d] p-8 text-xl text-[#9aa1c7]">
-              Every tap shows up here within a minute.
+            <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-[28px] border-2 border-dashed border-[#262c4d] p-8 text-center text-xl text-[#9aa1c7]">
+              <span className="text-5xl" aria-hidden>👋</span>
+              Waiting for the first rating in the last 7 days.
+              <span className="text-lg">New ratings appear here automatically.</span>
             </div>
           )}
 

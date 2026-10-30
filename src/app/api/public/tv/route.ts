@@ -4,7 +4,8 @@ import { secureRoute, ok, fail } from "@/lib/security/route";
 import { LIMITS } from "@/lib/security/rateLimit";
 import { parseKioskToken } from "@/lib/security/signing";
 import { adminClient } from "@/lib/supabase/server";
-import { isIconSetId, sentimentOf, type Sentiment } from "@/lib/surveys/iconSets";
+import { isIconSetId, ratingOption, sentimentOf, type IconSetId, type Sentiment } from "@/lib/surveys/iconSets";
+import { standardLabel } from "@/lib/i18n/public";
 import { planAllows } from "@/lib/billing/features";
 
 const body = z.object({ token: z.string().max(100) }).strict();
@@ -74,6 +75,11 @@ export const POST = secureRoute<undefined, undefined, z.infer<typeof body>, "pub
       week: { total: list.length, pct: pct(list) },
       today: { total: todays.length, pct: pct(todays), negative: todays.filter((r) => sent(r) === "negative").length },
       recent: list.slice(0, 60).map((r) => ({ sentiment: sent(r) })),
+      // The newest few ratings as a live feed: the face/label and when, never who.
+      latest: list.slice(0, 6).map((r) => {
+        const set = r.surveys!.icon_set as IconSetId;
+        return { sentiment: sent(r), label: standardLabel(set, r.rating!), symbol: ratingOption(set, r.rating!)?.symbol ?? null, at: r.created_at };
+      }),
       byLocation,
       openFollowups: openFollowups ?? 0,
       // Kind words only, and only text: no names, emails or ticket numbers on an office screen.
