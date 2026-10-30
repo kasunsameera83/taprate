@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/client/api";
 import type { Sentiment } from "@/lib/surveys/iconSets";
+import { Logo } from "@/components/icons";
 
 type TvData = {
   business: string;
@@ -81,7 +82,8 @@ export function TvClient({ token }: { token: string }) {
               <img src={data.logo} alt="" className="max-h-12 max-w-[220px] object-contain lg:max-h-14" />
             </span>
           )}
-          {data.business}
+          {/* With a logo, the name is only for screen readers (the logo already says who it is). */}
+          <span className={data.logo ? "sr-only" : undefined}>{data.business}</span>
         </h1>
         <p className="text-lg text-[#9aa1c7]">
           <span className="mr-3 inline-flex items-center gap-2 font-semibold text-[#86efac]">
@@ -188,6 +190,12 @@ export function TvClient({ token }: { token: string }) {
           )}
         </div>
       </section>
+
+      <footer className="flex items-center justify-center gap-3 text-base text-[#6b7299]">
+        <span>Powered by</span>
+        <Logo variant="white" height={22} className="opacity-80" />
+        <span>· taptruly.com</span>
+      </footer>
     </main>
   );
 }
