@@ -474,7 +474,7 @@ function Buy({ data }: { data: Summary }) {
                   <Price item={p.id} list={p.price[currency][interval]} per={interval === "year" ? "year" : "month"} />
                 </p>
                 <p className="mt-1 text-sm">{p.monthlyResponses.toLocaleString()} responses a month</p>
-                <p className="text-[13px] text-muted">Up to {SEND_LIMITS[p.id].toLocaleString()} survey emails a day</p>
+                <p className="text-[13px] text-muted">We send up to {SEND_LIMITS[p.id].toLocaleString()} survey emails a day for you (unlimited from your own emails &amp; helpdesk)</p>
                 <p className="mt-1 flex-1 text-[13px] text-muted">{p.blurb}</p>
                 <button
                   type="button"

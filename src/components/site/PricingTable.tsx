@@ -26,9 +26,10 @@ export function PricingTable({ catalog, defaultCurrency = "LKR" }: { catalog: Ca
               <span className="text-base font-normal text-muted"> forever</span>
             </p>
             <p className="mt-2 text-sm font-semibold">{free.responses.toLocaleString("en")} responses to start</p>
-            {free.dailyEmails > 0 && <p className="text-[13px] text-muted">Send up to {free.dailyEmails.toLocaleString("en")} survey emails a day</p>}
             <ul className="mt-3 flex-1 space-y-1 text-[13px] text-muted">
               <li>✓ Email, QR, WhatsApp &amp; kiosk surveys</li>
+              <li>✓ Rating buttons for your own emails, no limit</li>
+              {free.dailyEmails > 0 && <li>✓ We send surveys for you: {free.dailyEmails.toLocaleString("en")} emails a day</li>}
               <li>✓ Dashboard, follow-ups &amp; alerts</li>
               <li>✓ 1 location, 2 team members</li>
               <li>No card needed</li>
@@ -49,10 +50,10 @@ export function PricingTable({ catalog, defaultCurrency = "LKR" }: { catalog: Ca
               <span className="text-base font-normal text-muted"> / {interval === "year" ? "year" : "month"}</span>
             </p>
             <p className="mt-2 text-sm font-semibold">{p.monthlyResponses.toLocaleString("en")} responses a month</p>
-            <p className="text-[13px] text-muted">Send up to {SEND_LIMITS[p.id].toLocaleString("en")} survey emails a day</p>
             <p className="mt-1 text-sm text-muted">{p.blurb}</p>
             <ul className="mt-3 flex-1 space-y-1 text-[13px] text-muted">
               <li>✓ Everything in Free, plus:</li>
+              <li>✓ We send surveys for you: {SEND_LIMITS[p.id].toLocaleString("en")} emails a day</li>
               <li>✓ Unlimited team &amp; locations</li>
               <li>✓ Helpdesk, Shopify &amp; Slack, API</li>
               <li>✓ TV screens, AI replies, email reports</li>
