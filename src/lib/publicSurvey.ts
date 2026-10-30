@@ -7,6 +7,8 @@ import { logoUrl } from "@/lib/branding";
 import type { Channel } from "@/lib/validation/schemas";
 import { iconUrlMap, labelsFor, resolveOptions, type ResolvedOption } from "@/lib/surveys/customIcons";
 import { isLang, type Lang } from "@/lib/i18n/public";
+import { showBranding } from "@/lib/billing/features";
+import { publicOriginFor } from "@/lib/surveyDomains";
 
 export type PublicSurvey = {
   id: string;
@@ -20,16 +22,21 @@ export type PublicSurvey = {
   options: ResolvedOption[];
   /** Language of what customers see. */
   lang: Lang;
+  /** Show "Feedback by TapTruly" (hidden on Growth/Scale when the business chooses). */
+  branding: boolean;
+  /** Where this business's public links live: its own verified web address (Scale), or ours. */
+  origin: string;
+  accountId: string;
 };
 
 /** Survey details for public pages. Service role, scoped to one survey id the caller already verified. */
 export async function loadPublicSurvey(surveyId: string): Promise<PublicSurvey | null> {
   const { data } = await adminClient()
     .from("surveys")
-    .select("id, question, icon_set, brand_color, status, icon_images, option_labels, language, accounts(name, logo_path)")
+    .select("id, account_id, question, icon_set, brand_color, status, icon_images, option_labels, language, accounts(name, logo_path, plan, hide_branding)")
     .eq("id", surveyId)
     .maybeSingle();
-  const acct = (data?.accounts ?? null) as unknown as { name: string; logo_path: string | null } | null;
+  const acct = (data?.accounts ?? null) as unknown as { name: string; logo_path: string | null; plan: string; hide_branding: boolean } | null;
   if (!data || !isIconSetId(data.icon_set) || data.status === "archived") return null;
   const lang: Lang = isLang(data.language) ? data.language : "en";
   return {
@@ -40,6 +47,9 @@ export async function loadPublicSurvey(surveyId: string): Promise<PublicSurvey |
     brandColor: data.brand_color,
     active: data.status === "active",
     business: acct?.name ?? "",
+    branding: showBranding(acct?.plan, acct?.hide_branding),
+    origin: await publicOriginFor(data.account_id as string),
+    accountId: data.account_id as string,
     logo: logoUrl(acct?.logo_path),
     options: resolveOptions(data.icon_set, { images: iconUrlMap(data.icon_set, data.icon_images), labels: labelsFor(data.icon_set, data.option_labels) }, lang),
   };
@@ -49,25 +59,25 @@ export async function loadPublicSurvey(surveyId: string): Promise<PublicSurvey |
  * Signed one-tap links for every rating option, tagged with the channel they were shared through and,
  * for a branch's QR code or link, the branch (an already verified location id).
  */
-export function ratingLinks(surveyId: string, options: ResolvedOption[], channel: Exclude<Channel, "kiosk" | "email">, locationId?: string | null) {
+export function ratingLinks(surveyId: string, options: ResolvedOption[], channel: Exclude<Channel, "kiosk" | "email">, locationId?: string | null, origin?: string) {
   const e = env();
   const loc = locationId ? `&l=${buildLocationTag(e.LINK_SIGNING_SECRET, surveyId, locationId)}` : "";
   return options.map((o) => ({
     ...o,
-    href: `${e.appOrigin}/r/${buildLinkToken(e.LINK_SIGNING_SECRET, surveyId, o.value)}?c=${channel}${loc}`,
+    href: `${origin ?? e.appOrigin}/r/${buildLinkToken(e.LINK_SIGNING_SECRET, surveyId, o.value)}?c=${channel}${loc}`,
   }));
 }
 
-export function shareUrl(surveyId: string, channel?: Exclude<Channel, "kiosk" | "email">, locationId?: string | null): string {
+export function shareUrl(surveyId: string, channel?: Exclude<Channel, "kiosk" | "email">, locationId?: string | null, origin?: string): string {
   const e = env();
   const sp = new URLSearchParams();
   if (channel) sp.set("c", channel);
   if (locationId) sp.set("l", buildLocationTag(e.LINK_SIGNING_SECRET, surveyId, locationId));
   const q = sp.toString();
-  return `${e.appOrigin}/s/${buildShareToken(e.LINK_SIGNING_SECRET, surveyId)}${q ? `?${q}` : ""}`;
+  return `${origin ?? e.appOrigin}/s/${buildShareToken(e.LINK_SIGNING_SECRET, surveyId)}${q ? `?${q}` : ""}`;
 }
 
-export function widgetUrl(surveyId: string): string {
+export function widgetUrl(surveyId: string, origin?: string): string {
   const e = env();
-  return `${e.appOrigin}/w/${buildShareToken(e.LINK_SIGNING_SECRET, surveyId)}`;
+  return `${origin ?? e.appOrigin}/w/${buildShareToken(e.LINK_SIGNING_SECRET, surveyId)}`;
 }

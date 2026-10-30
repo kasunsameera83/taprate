@@ -6,6 +6,7 @@ import { LINK_CHANNELS, type Channel } from "@/lib/validation/schemas";
 import { loadPublicSurvey, ratingLinks } from "@/lib/publicSurvey";
 import { PublicRatingButtons } from "@/components/PublicRatingButtons";
 import { HTML_LANG, pt } from "@/lib/i18n/public";
+import { enforceSurveyHost } from "@/lib/surveyDomains";
 
 export const metadata: Metadata = { title: "Rate us", robots: { index: false, follow: false } };
 
@@ -26,6 +27,11 @@ export default async function SharePage({
   if (!surveyId) notFound();
   const survey = await loadPublicSurvey(surveyId);
   if (!survey) notFound();
+  {
+    const q = new URLSearchParams();
+    for (const key of ["c", "l"]) if (typeof sp[key] === "string") q.set(key, sp[key] as string);
+    await enforceSurveyHost(survey.accountId, `/s/${token}${q.size ? `?${q}` : ""}`);
+  }
   const channel = (typeof c === "string" && (LINK_CHANNELS as readonly string[]).includes(c) ? c : "link") as Exclude<Channel, "kiosk" | "email">;
   // A branch's QR code: the tag is signed for this survey, and the database checks the branch again.
   const locationId = typeof sp.l === "string" ? verifyLocationTag(env().linkSecrets, surveyId, sp.l) : null;
@@ -45,7 +51,7 @@ export default async function SharePage({
             <>
               <p className="mt-1 text-sm text-muted">{pt(survey.lang, "tapOne")}</p>
               <div className="mt-6">
-                <PublicRatingButtons iconSet={survey.iconSet} links={ratingLinks(survey.id, survey.options, channel, locationId)} lang={survey.lang} />
+                <PublicRatingButtons iconSet={survey.iconSet} links={ratingLinks(survey.id, survey.options, channel, locationId, survey.origin)} lang={survey.lang} />
               </div>
             </>
           ) : (
@@ -53,7 +59,11 @@ export default async function SharePage({
           )}
         </div>
         <p className="mt-10 text-center text-[12px] text-muted">
-          {pt(survey.lang, "feedbackBy")} <span className="font-semibold">TapTruly</span> ·{" "}
+          {survey.branding && (
+            <>
+              {pt(survey.lang, "feedbackBy")} <span className="font-semibold">TapTruly</span> ·{" "}
+            </>
+          )}
           <a href="/privacy" className="underline underline-offset-2">
             {pt(survey.lang, "privacy")}
           </a>

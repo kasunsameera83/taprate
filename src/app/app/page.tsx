@@ -11,6 +11,7 @@ import { Checklist } from "./Checklist";
 import { sampleStats } from "@/lib/onboarding/sample";
 import { PageLoader } from "@/components/FaceLoader";
 import { useOnResponsesChanged } from "@/components/Notifications";
+import { BenchmarkCard, HighlightsButton } from "./DashboardExtras";
 
 type Days = 7 | 30 | 90;
 const PERIODS: ReadonlyArray<{ value: Days; label: string }> = [
@@ -32,11 +33,16 @@ export default function Dashboard() {
   // Sample data preview for new accounts (never saved; clearly labelled).
   const [sample, setSample] = useState(false);
   const [accountId, setAccountId] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
     api<Survey[]>("/api/surveys").then((r) => setSurveys(r.ok ? r.data : []));
     api<Location[]>("/api/locations").then((r) => r.ok && setLocations(r.data));
-    api<{ account: { id: string } | null }>("/api/account").then((r) => r.ok && setAccountId(r.data.account?.id ?? null));
+    api<{ account: { id: string } | null; role: string | null }>("/api/account").then((r) => {
+      if (!r.ok) return;
+      setAccountId(r.data.account?.id ?? null);
+      setRole(r.data.role ?? null);
+    });
   }, []);
 
   const load = useCallback(() => setReload((n) => n + 1), []);
@@ -114,6 +120,13 @@ export default function Dashboard() {
       {error && <LoadError message={error} onRetry={load} />}
 
       <Checklist accountId={accountId} />
+
+      {!noSurveys && !sample && (
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          <BenchmarkCard canSetIndustry={role === "owner"} />
+          <HighlightsButton />
+        </div>
+      )}
 
       {sample && (
         <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-neu-fill bg-neu-soft px-4 py-3 text-sm text-neu-text">

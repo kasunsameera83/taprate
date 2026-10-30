@@ -3,12 +3,13 @@ import { Suspense, useCallback, useEffect, useState, type FormEvent } from "reac
 import { CustomerTimelineButton } from "@/components/CustomerTimeline";
 import { useSearchParams } from "next/navigation";
 import { api, qs } from "@/lib/client/api";
-import { followupNoteSchema, fieldErrors } from "@/lib/validation/schemas";
+import { followupNoteSchema, followupReplySchema, fieldErrors } from "@/lib/validation/schemas";
 import { isIconSetId, ratingOption } from "@/lib/surveys/iconSets";
 import type { ResponseItem } from "@/lib/client/types";
 import { Badge, EmptyState, LoadError, Notice, Skeleton } from "@/components/ui";
 import { IconFollowUp, IconSparkle } from "@/components/icons";
 import { Busy } from "@/components/FaceLoader";
+import { useAllows } from "@/components/PlanContext";
 
 type Status = "active" | "overdue" | "open" | "in_progress" | "resolved";
 type Item = ResponseItem & { noteCount: number };
@@ -256,9 +257,12 @@ function FollowUpCard({
         )}
         <div className="ml-auto flex flex-wrap gap-2">
           {f.status !== "resolved" && (
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowDraft((s) => !s)} aria-expanded={showDraft}>
-              <IconSparkle className="h-4 w-4" />
-              Draft a reply
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowDraft((s) => !s)} aria-expanded={showDraft}>
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M4 6h16v12H4z" />
+                <path d="m4 7 8 6 8-6" />
+              </svg>
+              Reply
             </button>
           )}
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowNotes((s) => !s)} aria-expanded={showNotes}>
@@ -286,89 +290,171 @@ function FollowUpCard({
           <Notice kind="error">{error}</Notice>
         </div>
       )}
-      {showDraft && <ReplyDraft responseId={item.id} email={item.email} />}
+      {showDraft && (
+        <ReplyComposer
+          responseId={item.id}
+          email={item.email}
+          canSend={canAct}
+          onSent={() => {
+            setShowNotes(true);
+            onChanged();
+          }}
+          onResolve={canChangeStatus ? () => patch({ status: "resolved" }) : undefined}
+        />
+      )}
       {showNotes && <Notes responseId={item.id} canWrite={canAct} onAdded={onChanged} />}
     </li>
   );
 }
 
-/** AI-written first draft of a reply. Shown only to the team member, who edits and sends it themselves. */
-function ReplyDraft({ responseId, email }: { responseId: string; email: string | null }) {
-  const [draft, setDraft] = useState<{ subject: string; body: string } | null>(null);
-  const [state, setState] = useState<"idle" | "busy" | "copied">("idle");
+/**
+ * Reply to the customer: write it yourself or start from an AI draft, then send it from TapTruly (paid
+ * plans; the reply is kept on the follow-up) or open it in your own email app.
+ */
+function ReplyComposer({
+  responseId,
+  email,
+  canSend,
+  onSent,
+  onResolve,
+}: {
+  responseId: string;
+  email: string | null;
+  canSend: boolean;
+  onSent: () => void;
+  onResolve?: () => void;
+}) {
+  const sendAllowed = useAllows("replies");
+  const aiAllowed = useAllows("ai");
+  const [subject, setSubject] = useState("Re: your feedback");
+  const [body, setBody] = useState("");
+  const [state, setState] = useState<"idle" | "writing" | "sending" | "copied">("idle");
   const [error, setError] = useState("");
+  const [sentTo, setSentTo] = useState<string | null>(null);
 
-  const make = useCallback(async () => {
-    setState("busy");
+  async function writeWithAi() {
+    setState("writing");
     setError("");
     const r = await api<{ subject: string; body: string }>(`/api/followups/${encodeURIComponent(responseId)}/draft`, { method: "POST" });
     setState("idle");
-    if (r.ok) setDraft(r.data);
-    else setError(r.message);
-  }, [responseId]);
-  useEffect(() => {
-    make();
-  }, [make]);
+    if (r.ok) {
+      setSubject(r.data.subject);
+      setBody(r.data.body);
+    } else setError(r.message);
+  }
 
-  const mailto = email && draft ? `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(draft.body)}` : null;
+  async function send() {
+    const parsed = followupReplySchema.safeParse({ subject, message: body });
+    if (!parsed.success) return setError(Object.values(fieldErrors(parsed.error))[0] ?? "Check the message");
+    setState("sending");
+    setError("");
+    const r = await api<{ sent: boolean; to: string }>(`/api/followups/${encodeURIComponent(responseId)}/reply`, { method: "POST", body: parsed.data });
+    setState("idle");
+    if (r.ok) {
+      setSentTo(r.data.to);
+      setBody("");
+      onSent();
+    } else setError(r.message);
+  }
+
+  const mailto = email && body ? `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}` : null;
+
+  if (sentTo) {
+    return (
+      <div className="mt-4 space-y-3 rounded-[12px] border border-pos-fill/40 bg-pos-soft p-4">
+        <p className="text-sm font-semibold text-pos-text">✓ Reply sent to {sentTo}. It&rsquo;s saved in the notes.</p>
+        <p className="text-[13px] text-muted">When they reply, it goes straight to your inbox.</p>
+        <div className="flex flex-wrap gap-2">
+          {onResolve && (
+            <button type="button" className="btn btn-primary btn-sm" onClick={onResolve}>
+              Mark as resolved
+            </button>
+          )}
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setSentTo(null)}>
+            Write another
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-4 space-y-3 rounded-[12px] border border-line bg-canvas p-4">
-      <p className="text-[13px] text-muted">A first draft written by AI from the rating, reasons and comment. Check and change it before you send it. Nothing is sent automatically.</p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm font-semibold">{email ? <>Reply to {email}</> : "Reply to the customer"}</p>
+        {aiAllowed && (
+          <button type="button" className="btn btn-ghost btn-sm" disabled={state !== "idle"} onClick={writeWithAi}>
+            <IconSparkle className="h-4 w-4" />
+            {state === "writing" ? <Busy>Writing…</Busy> : body ? "Rewrite with AI" : "Write with AI"}
+          </button>
+        )}
+      </div>
+      {!email && <Notice kind="info">We don&rsquo;t have this customer&rsquo;s email address. You can still write a reply and copy it.</Notice>}
       {error && <Notice kind="error">{error}</Notice>}
-      {!draft && state === "busy" && <Skeleton className="h-32 w-full" />}
-      {draft && (
-        <>
-          <div className="space-y-1.5">
-            <label htmlFor={`subj-${responseId}`} className="block text-[13px] font-semibold">
-              Subject
-            </label>
-            <input id={`subj-${responseId}`} className="input" value={draft.subject} maxLength={150} onChange={(e) => setDraft({ ...draft, subject: e.target.value })} />
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor={`body-${responseId}`} className="block text-[13px] font-semibold">
-              Message
-            </label>
-            <textarea id={`body-${responseId}`} className="input" rows={8} value={draft.body} maxLength={3000} onChange={(e) => setDraft({ ...draft, body: e.target.value })} />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {mailto && (
-              <a className="btn btn-primary btn-sm" href={mailto}>
-                Open in your email app
-              </a>
-            )}
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(`${draft.subject}\n\n${draft.body}`);
-                  setState("copied");
-                  setTimeout(() => setState("idle"), 2000);
-                } catch {
-                  /* clipboard blocked: the text is on screen to copy by hand */
-                }
-              }}
-            >
-              {state === "copied" ? "Copied" : "Copy"}
-            </button>
-            <button type="button" className="btn btn-ghost btn-sm" disabled={state === "busy"} onClick={make}>
-              {state === "busy" ? <Busy>Writing…</Busy> : "Try another"}
-            </button>
-          </div>
-        </>
-      )}
+      <div className="space-y-1.5">
+        <label htmlFor={`subj-${responseId}`} className="block text-[13px] font-semibold">
+          Subject
+        </label>
+        <input id={`subj-${responseId}`} className="input" value={subject} maxLength={150} onChange={(e) => setSubject(e.target.value)} />
+      </div>
+      <div className="space-y-1.5">
+        <label htmlFor={`body-${responseId}`} className="block text-[13px] font-semibold">
+          Message
+        </label>
+        <textarea
+          id={`body-${responseId}`}
+          className="input"
+          rows={7}
+          value={body}
+          maxLength={2000}
+          placeholder="Hi, thank you for telling us. I'm sorry about… Here's what we've done…"
+          onChange={(e) => setBody(e.target.value)}
+        />
+        <p className="text-right text-[12px] text-muted">{body.length}/2000</p>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {email && canSend && sendAllowed && (
+          <button type="button" className="btn btn-primary btn-sm" disabled={state !== "idle" || !body.trim()} onClick={send}>
+            {state === "sending" ? <Busy>Sending…</Busy> : "Send from TapTruly"}
+          </button>
+        )}
+        {mailto && (
+          <a className="btn btn-secondary btn-sm" href={mailto}>
+            Open in your email app
+          </a>
+        )}
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          disabled={!body}
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(`${subject}\n\n${body}`);
+              setState("copied");
+              setTimeout(() => setState("idle"), 2000);
+            } catch {
+              /* clipboard blocked: the text is on screen to copy by hand */
+            }
+          }}
+        >
+          {state === "copied" ? "Copied" : "Copy"}
+        </button>
+        {email && canSend && !sendAllowed && <span className="text-[12px] text-muted">Sending from TapTruly comes with any paid plan.</span>}
+      </div>
     </div>
   );
 }
 
+type NoteItem = { id: string; author: string; body: string; createdAt: string; kind: "note" | "reply"; subject: string | null; sentTo: string | null; sendStatus: string | null };
+
 function Notes({ responseId, canWrite, onAdded }: { responseId: string; canWrite: boolean; onAdded: () => void }) {
-  const [notes, setNotes] = useState<Array<{ id: string; author: string; body: string; createdAt: string }> | null>(null);
+  const [notes, setNotes] = useState<NoteItem[] | null>(null);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(() => {
-    api<Array<{ id: string; author: string; body: string; createdAt: string }>>(`/api/followups/${encodeURIComponent(responseId)}/notes`).then((r) =>
+    api<NoteItem[]>(`/api/followups/${encodeURIComponent(responseId)}/notes`).then((r) =>
       r.ok ? setNotes(r.data) : setError(r.message),
     );
   }, [responseId]);
@@ -398,7 +484,12 @@ function Notes({ responseId, canWrite, onAdded }: { responseId: string; canWrite
       ) : (
         <ul className="space-y-2">
           {notes.map((n) => (
-            <li key={n.id} className="text-sm">
+            <li key={n.id} className={`text-sm ${n.kind === "reply" ? "rounded-[8px] border border-line bg-surface p-2.5" : ""}`}>
+              {n.kind === "reply" && (
+                <p className="mb-1 text-[12px] font-semibold text-brand">
+                  ✉ Reply {n.sendStatus === "sent" ? "sent" : n.sendStatus === "failed" ? "not sent (saved only)" : "sending"} to {n.sentTo}: {n.subject}
+                </p>
+              )}
               <p className="whitespace-pre-wrap break-words">{n.body}</p>
               <p className="text-[12px] text-muted">
                 {n.author}, {new Date(n.createdAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}

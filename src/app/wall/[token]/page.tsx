@@ -6,6 +6,7 @@ import { verifyWallToken } from "@/lib/security/signing";
 import { isIconSetId, ratingOption } from "@/lib/surveys/iconSets";
 import { HTML_LANG, isLang, pt, standardLabel, type Lang } from "@/lib/i18n/public";
 import { labelsFor } from "@/lib/surveys/customIcons";
+import { enforceSurveyHost } from "@/lib/surveyDomains";
 
 export const metadata: Metadata = { title: "What our customers say", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -35,6 +36,7 @@ export default async function WallPage({ params, searchParams }: { params: Promi
       .limit(12),
   ]);
   if (!acct || acct.suspended_at) notFound();
+  await enforceSurveyHost(accountId, `/wall/${token}${isLang(sp.lang) ? `?lang=${sp.lang}` : ""}`);
   const items = (rows ?? []) as unknown as Row[];
 
   return (

@@ -10,6 +10,7 @@ import { logoUrl } from "@/lib/branding";
 import { buildSurveyEmail, safeFromName } from "@/lib/sending/emailTemplate";
 import { isLang } from "@/lib/i18n/public";
 import { planAllows } from "@/lib/billing/features";
+import { publicOriginFor } from "@/lib/surveyDomains";
 
 // The sending engine. Called by the app right after a send is created (and while its page is open),
 // by the public API for single emails, and by the daily job for leftovers and reminders.
@@ -22,7 +23,7 @@ const BATCH = 100;
 type RecipientRow = { id: string; send_id: string; account_id: string; survey_id: string; email: string; name: string | null; agent: string | null; ticket: string | null; recovery_of?: string | null };
 type SendInfo = { subject: string; intro: string; reply_to: string | null };
 type SurveyInfo = { id: string; question: string; icon_set: string; brand_color: string; icon_images: unknown; option_labels: unknown; language: string };
-type AccountInfo = { name: string; logo_path: string | null; fromAddress: string | null };
+type AccountInfo = { name: string; logo_path: string | null; fromAddress: string | null; origin: string };
 
 export function unsubscribeLinks(recipientId: string, now = Math.floor(Date.now() / 1000)) {
   const e = env();
@@ -32,7 +33,7 @@ export function unsubscribeLinks(recipientId: string, now = Math.floor(Date.now(
 }
 
 /** Rating links that carry this customer's details, signed so they can't be altered. */
-export function recipientLinks(surveyId: string, r: Pick<RecipientRow, "email" | "agent" | "ticket" | "recovery_of">) {
+export function recipientLinks(surveyId: string, r: Pick<RecipientRow, "email" | "agent" | "ticket" | "recovery_of">, origin?: string) {
   const e = env();
   const meta = { email: r.email, agent: r.agent, ticket: r.ticket };
   const sp = new URLSearchParams();
@@ -43,7 +44,7 @@ export function recipientLinks(surveyId: string, r: Pick<RecipientRow, "email" |
   // "Did we fix it?" emails link the answer to the original rating.
   if (r.recovery_of) sp.set("rv", buildRecoveryTag(e.LINK_SIGNING_SECRET, surveyId, r.recovery_of));
   const qs = sp.toString();
-  return (rating: number) => `${e.appOrigin}/r/${buildLinkToken(e.LINK_SIGNING_SECRET, surveyId, rating)}?${qs}`;
+  return (rating: number) => `${origin ?? e.appOrigin}/r/${buildLinkToken(e.LINK_SIGNING_SECRET, surveyId, rating)}?${qs}`;
 }
 
 class Cache {
@@ -67,13 +68,15 @@ class Cache {
   }
   async account(id: string) {
     if (!this.accounts.has(id)) {
-      const [{ data }, { data: dom }] = await Promise.all([
+      const [{ data }, { data: dom }, origin] = await Promise.all([
         this.db.from("accounts").select("name, logo_path, plan").eq("id", id).maybeSingle(),
         // Only a domain the email provider has verified.
         this.db.from("sending_domains").select("domain, from_local").eq("account_id", id).eq("status", "verified").maybeSingle(),
+        // Survey links on the business's own web address when it has one (Scale).
+        publicOriginFor(id),
       ]);
       this.accounts.set(id, data ? { name: data.name as string, logo_path: (data.logo_path as string | null) ?? null, // Own domain only while on the Scale plan; otherwise our normal address.
-          fromAddress: dom && planAllows(data.plan as string, "own_domain") ? `${dom.from_local}@${dom.domain}` : null } : null);
+          fromAddress: dom && planAllows(data.plan as string, "own_domain") ? `${dom.from_local}@${dom.domain}` : null, origin } : null);
     }
     return this.accounts.get(id) ?? null;
   }
@@ -85,10 +88,10 @@ async function buildFor(cache: Cache, r: RecipientRow, reminder: boolean, overri
   const iconSet = survey.icon_set;
   const lang = isLang(survey.language) ? survey.language : "en";
   const options = resolveOptions(iconSet, { images: iconUrlMap(iconSet, survey.icon_images), labels: labelsFor(iconSet, survey.option_labels) }, lang);
-  const urlFor = recipientLinks(survey.id, r);
+  const urlFor = recipientLinks(survey.id, r, account.origin);
   const e = env();
   const buttonsHtml = buildSnippetHtml({
-    appUrl: e.appOrigin,
+    appUrl: account.origin,
     surveyId: survey.id,
     iconSet,
     question: survey.question,

@@ -11,7 +11,7 @@ export const GET = secureRoute<z.infer<typeof params>>(
     // RLS returns notes only for ratings this user may see.
     const { data, error } = await supabase
       .from("followup_notes")
-      .select("id, author, body, created_at")
+      .select("id, author, body, created_at, kind, subject, sent_to, send_status")
       .eq("account_id", membership.accountId)
       .eq("response_id", params.id)
       .order("created_at", { ascending: true })
@@ -30,6 +30,11 @@ export const GET = secureRoute<z.infer<typeof params>>(
         author: n.author ? (emails.get(n.author as string) ?? "Teammate") : "Former member",
         body: n.body as string,
         createdAt: n.created_at as string,
+        // Replies emailed to the customer from the follow-up (0035) are shown differently from notes.
+        kind: (n.kind as string) === "reply" ? ("reply" as const) : ("note" as const),
+        subject: (n.subject as string | null) ?? null,
+        sentTo: (n.sent_to as string | null) ?? null,
+        sendStatus: (n.send_status as string | null) ?? null,
       })),
     );
   },

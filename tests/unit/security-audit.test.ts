@@ -97,3 +97,7 @@ test("service-role database access in API routes is always scoped", () => {
     }
   }
 });
+
+test("no empty source files (a half-written file would break the build)", () => {
+  for (const f of files) assert.ok(readFileSync(f, "utf8").trim().length > 0, `${rel(f)} is empty`);
+});

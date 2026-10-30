@@ -6,6 +6,8 @@ import { detectBot } from "@/lib/security/bot";
 import { getClientIp, hashIp, buildDedupeKey } from "@/lib/security/request";
 import { hitRateLimit, LIMITS } from "@/lib/security/rateLimit";
 import { parseClickParams } from "@/lib/validation/schemas";
+import { hostAllowedFor, isAppHost } from "@/lib/surveyDomains";
+import { requestHost } from "@/lib/surveyDomainRules";
 
 // THE ONE-CLICK ENDPOINT. Public (customers aren't logged in), so it checks everything itself:
 //   1. link format + HMAC signature     -> nobody can forge or alter a rating link
@@ -46,6 +48,17 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ token: stri
     const parsed = parseLinkToken(token);
     if (!parsed || !verifyLinkToken(e.linkSecrets, parsed)) {
       return page(404, "Link not valid", "This feedback link isn't valid. Please use the buttons in your email.");
+    }
+
+    // 1b. On a business's own web address, only that business's surveys (otherwise continue on ours).
+    const host = requestHost(req.headers);
+    let origin = e.appOrigin;
+    if (host && !isAppHost(host)) {
+      const { data: sv } = await adminClient().from("surveys").select("account_id").eq("id", parsed.surveyId).maybeSingle();
+      if (!sv || !(await hostAllowedFor(req.headers, sv.account_id as string))) {
+        return NextResponse.redirect(`${e.appOrigin}${req.nextUrl.pathname}${req.nextUrl.search}`, { status: 307, headers: NO_STORE });
+      }
+      origin = `https://${host}`;
     }
 
     // 2. Bots and scanners
@@ -106,7 +119,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ token: stri
 
     // 6. Thank-you page (confirms the click from a real browser)
     const k = createResponseToken(e.RESPONSE_TOKEN_SECRET, responseId);
-    return NextResponse.redirect(`${e.appOrigin}/thanks/${responseId}?k=${encodeURIComponent(k)}`, { status: 303, headers: NO_STORE });
+    return NextResponse.redirect(`${origin}/thanks/${responseId}?k=${encodeURIComponent(k)}`, { status: 303, headers: NO_STORE });
   } catch (err) {
     console.error("[click] unhandled", { err });
     return page(500, "Please try again", "Something went wrong. Please click the button in your email again.");

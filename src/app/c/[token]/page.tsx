@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { env } from "@/lib/env";
 import { verifyCardToken } from "@/lib/security/signing";
 import { loadShareCard } from "@/lib/share/card";
+import { enforceSurveyHost } from "@/lib/surveyDomains";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,7 @@ export default async function SharedCardPage({ params }: Props) {
   const { token } = await params;
   const card = await load(token);
   if (!card) notFound();
+  await enforceSurveyHost(card.accountId, `/c/${token}`);
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-4 py-10" style={{ background: card.color }}>
       <figure className="w-full max-w-2xl rounded-[28px] bg-white p-8 shadow-xl sm:p-10">
@@ -57,6 +59,7 @@ export default async function SharedCardPage({ params }: Props) {
           {card.logo && <img src={card.logo} alt={card.businessName} className="max-h-14 max-w-[160px] object-contain" />}
         </figcaption>
       </figure>
+      {card.branding && (
       <p className="mt-8 text-center text-sm text-white/90">
         Collected with{" "}
         <Link href="/" className="font-semibold text-white underline-offset-4 hover:underline">
@@ -67,6 +70,7 @@ export default async function SharedCardPage({ params }: Props) {
           Try it free
         </Link>
       </p>
+      )}
     </main>
   );
 }

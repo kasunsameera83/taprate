@@ -5,6 +5,7 @@ import { shareQuerySchema, uuidSchema } from "@/lib/validation/schemas";
 import { shareUrl, widgetUrl } from "@/lib/publicSurvey";
 import { qrSvg } from "@/lib/qr";
 import { escapeHtml } from "@/lib/security/html";
+import { publicOriginFor } from "@/lib/surveyDomains";
 
 const params = z.object({ id: uuidSchema }).strict();
 
@@ -40,9 +41,11 @@ export const GET = secureRoute<z.infer<typeof params>, z.infer<typeof shareQuery
     }
     const locId = location?.id ?? null;
 
-    const qrLink = shareUrl(survey.id, "qr", locId);
-    const waLink = shareUrl(survey.id, "whatsapp", locId);
-    const smsLink = shareUrl(survey.id, "sms", locId);
+    // On the business's own web address when it has a verified one (Scale).
+    const origin = await publicOriginFor(membership.accountId);
+    const qrLink = shareUrl(survey.id, "qr", locId, origin);
+    const waLink = shareUrl(survey.id, "whatsapp", locId, origin);
+    const smsLink = shareUrl(survey.id, "sms", locId, origin);
     const message = (link: string) => `Hi! Thanks for choosing ${business}. ${survey.question} Tap here to rate us (takes a second): ${link}`;
 
     let kiosks: Array<{ id: string; name: string; createdAt: string; lastUsedAt: string | null; location: string | null }> = [];
@@ -63,11 +66,11 @@ export const GET = secureRoute<z.infer<typeof params>, z.infer<typeof shareQuery
       }));
     }
 
-    const wUrl = widgetUrl(survey.id);
+    const wUrl = widgetUrl(survey.id, origin);
     return ok({
       active: survey.status === "active",
       location,
-      link: shareUrl(survey.id, "link", locId),
+      link: shareUrl(survey.id, "link", locId, origin),
       qr: { link: qrLink, svg: qrSvg(qrLink, { scale: 10, title: `Rate ${survey.name}${location ? ` (${location.name})` : ""}` }) },
       whatsapp: { text: message(waLink), url: `https://wa.me/?text=${encodeURIComponent(message(waLink))}` },
       sms: { text: message(smsLink), url: `sms:?&body=${encodeURIComponent(message(smsLink))}` },

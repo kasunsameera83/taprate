@@ -13,9 +13,12 @@ test("free and unpaid businesses get no paid features", () => {
   }
 });
 
-test("paid plans get everything; own domain is Scale only", () => {
+test("paid plans get their features by tier", () => {
   for (const plan of ["starter", "growth", "scale"]) {
-    for (const f of FEATURES) assert.equal(planAllows(plan, f), f === "own_domain" ? plan === "scale" : true, `${plan} ${f}`);
+    for (const f of FEATURES) {
+      const expected = FEATURE_PLAN[f] === "scale" ? plan === "scale" : FEATURE_PLAN[f] === "growth" ? plan !== "starter" : true;
+      assert.equal(planAllows(plan, f), expected, `${plan} ${f}`);
+    }
     assert.ok(planLimits(plan).members >= 1000 && planLimits(plan).locations >= 1000);
   }
 });

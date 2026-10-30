@@ -12,6 +12,8 @@ import { DoNotEmail } from "./DoNotEmail";
 import { TvScreens } from "./TvScreens";
 import { OwnDomain } from "./OwnDomain";
 import { DropAlerts } from "./DropAlerts";
+import { BrandingSetting, IndustrySetting } from "./Extras";
+import { SurveyDomain } from "./SurveyDomain";
 import { PageLoader, Busy } from "@/components/FaceLoader";
 
 type Me = { account: { id: string; name: string; plan: string; credits: number; role: string; logoUrl: string | null } | null };
@@ -51,9 +53,15 @@ export default function BusinessSettingsPage() {
         </SettingsSection>
       )}
 
+      <IndustrySetting canChange={canPerform(role, "account:write")} />
+
       <DropAlerts canChange={canPerform(role, "account:write")} />
 
+      {canPerform(role, "account:write") && <BrandingSetting canChange />}
+
       {canPerform(role, "sends:write") && <OwnDomain canChange={canPerform(role, "account:write")} />}
+
+      {canPerform(role, "sends:write") && <SurveyDomain canChange={canPerform(role, "account:write")} />}
 
       {canPerform(role, "sends:write") && <DoNotEmail />}
 

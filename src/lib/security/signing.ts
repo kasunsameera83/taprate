@@ -278,3 +278,25 @@ export function verifyCardToken(secrets: readonly string[], token: string): stri
   }
   return ok ? m[1] : null;
 }
+
+// ---------------------------------------------------------------------------
+// Monthly highlights: /h/<accountId>.<YYYY-MM>.<sig>, a public picture of one business's month.
+// ---------------------------------------------------------------------------
+
+const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+export function buildHighlightsToken(secret: string, accountId: string, month: string): string {
+  if (!isUuid(accountId) || !MONTH_RE.test(month)) throw new Error("invalid highlights token input");
+  return `${accountId}.${month}.${hmac(secret, `highlights:v1|${accountId}|${month}`)}`;
+}
+
+export function verifyHighlightsToken(secrets: readonly string[], token: string): { accountId: string; month: string } | null {
+  if (typeof token !== "string" || token.length > 90) return null;
+  const m = /^([0-9a-f-]{36})\.(\d{4}-\d{2})\.([A-Za-z0-9_-]{22})$/.exec(token);
+  if (!m || !m[1] || !m[2] || !m[3] || !isUuid(m[1]) || !MONTH_RE.test(m[2])) return null;
+  let ok = false;
+  for (const secret of secrets) {
+    if (secret && safeEqual(hmac(secret, `highlights:v1|${m[1]}|${m[2]}`), m[3])) ok = true;
+  }
+  return ok ? { accountId: m[1], month: m[2] } : null;
+}

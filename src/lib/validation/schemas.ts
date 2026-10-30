@@ -449,6 +449,21 @@ export const followupNoteSchema = z
   })
   .strict();
 
+export const followupReplySchema = z
+  .object({
+    subject: z
+      .string({ error: "Add a subject" })
+      .max(600)
+      .transform((v) => cleanText(v))
+      .pipe(z.string().min(1, "Add a subject").max(150, "Subjects must be at most 150 characters")),
+    message: z
+      .string({ error: "Write a message" })
+      .max(8000)
+      .transform((v) => cleanText(v, { multiline: true }))
+      .pipe(z.string().min(1, "Write a message").max(2000, "Messages must be at most 2000 characters")),
+  })
+  .strict();
+
 export const leaderboardQuerySchema = z
   .object({
     surveyId: uuidSchema.optional(),

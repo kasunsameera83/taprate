@@ -8,6 +8,7 @@ import { ICON_SETS, type IconSetId } from "@/lib/surveys/iconSets";
 import { env } from "@/lib/env";
 import { iconUrlMap, labelsFor, resolveOptions } from "@/lib/surveys/customIcons";
 import { isLang } from "@/lib/i18n/public";
+import { publicOriginFor } from "@/lib/surveyDomains";
 
 const params = z.object({ id: uuidSchema }).strict();
 
@@ -35,8 +36,9 @@ export const GET = secureRoute<z.infer<typeof params>, z.infer<typeof snippetQue
     const lang = isLang(data.language) ? data.language : "en";
     const options = resolveOptions(iconSet, { images: iconUrlMap(iconSet, data.icon_images), labels: labelsFor(iconSet, data.option_labels) }, lang);
 
+    const origin = await publicOriginFor(membership.accountId);
     const html = buildSnippetHtml({
-      appUrl: e.appOrigin,
+      appUrl: origin,
       surveyId: data.id,
       iconSet,
       question: data.question,
@@ -49,7 +51,7 @@ export const GET = secureRoute<z.infer<typeof params>, z.infer<typeof snippetQue
     const links = options.map((o) => ({
       rating: o.value,
       label: o.label,
-      url: buildClickUrl(e.appOrigin, sign(data.id, o.value), tags),
+      url: buildClickUrl(origin, sign(data.id, o.value), tags),
     }));
 
     return ok({ html, links, active: data.status === "active" });

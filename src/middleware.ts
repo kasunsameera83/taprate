@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { SIGNED_IN_HINT, signedInHintCookie } from "@/lib/site/signedInHint";
+import { SURVEY_DOMAIN_PATHS, requestHost } from "@/lib/surveyDomainRules";
 
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 
@@ -39,6 +40,16 @@ function buildCsp(nonce: string, framable: boolean): string {
 const NEEDS_SESSION = /^\/(app|admin|login|signup|welcome|forgot-password|reset-password)(\/|$)/;
 
 export async function middleware(request: NextRequest) {
+  // A business's own survey address (e.g. feedback.kova.lk) only serves survey pages; anything else
+  // (sign-in, the app, marketing pages) goes to the main site. Which business it belongs to is checked
+  // by each survey page.
+  const host = requestHost(request.headers);
+  const appHost = new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").host;
+  const isOurHost = host === appHost || host.endsWith(".vercel.app") || host.startsWith("localhost") || host.startsWith("127.0.0.1");
+  if (host && !isOurHost && !SURVEY_DOMAIN_PATHS.test(request.nextUrl.pathname)) {
+    return NextResponse.redirect(new URL(`${request.nextUrl.pathname}${request.nextUrl.search}`, `https://${appHost}`), 308);
+  }
+
   const nonce = btoa(crypto.randomUUID()); // Edge runtime: no Buffer
   const csp = buildCsp(nonce, request.nextUrl.pathname.startsWith("/w/") || request.nextUrl.pathname.startsWith("/wall/"));
 

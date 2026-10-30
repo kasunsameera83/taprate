@@ -5,6 +5,7 @@ import { apiLinksSchema, uuidSchema, type ApiLinksInput } from "@/lib/validation
 import { buildLinkToken, buildLocationTag, signMetadata } from "@/lib/security/signing";
 import { ICON_SETS, isIconSetId } from "@/lib/surveys/iconSets";
 import { env } from "@/lib/env";
+import { publicOriginFor } from "@/lib/surveyDomains";
 
 const params = z.object({ id: uuidSchema }).strict();
 
@@ -38,6 +39,7 @@ export const POST = apiRoute<z.infer<typeof params>, undefined, ApiLinksInput>(
     if (meta.email || meta.agent || meta.ticket) sp.set("s", signMetadata(e.LINK_SIGNING_SECRET, survey.id, meta));
     if (body.location_id) sp.set("l", buildLocationTag(e.LINK_SIGNING_SECRET, survey.id, body.location_id));
     const qs = sp.toString();
+    const origin = await publicOriginFor(key.accountId);
 
     return ok(
       {
@@ -45,7 +47,7 @@ export const POST = apiRoute<z.infer<typeof params>, undefined, ApiLinksInput>(
         links: ICON_SETS[survey.icon_set].options.map((o) => ({
           rating: o.value,
           label: o.label,
-          url: `${e.appOrigin}/r/${buildLinkToken(e.LINK_SIGNING_SECRET, survey.id, o.value)}${qs ? `?${qs}` : ""}`,
+          url: `${origin}/r/${buildLinkToken(e.LINK_SIGNING_SECRET, survey.id, o.value)}${qs ? `?${qs}` : ""}`,
         })),
       },
       201,

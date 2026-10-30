@@ -82,7 +82,7 @@ function draw(card: ShareCard, { square, logo, plain }: Opts) {
           </div>
         </div>
         <div style={{ display: "flex", justifyContent: "center", marginTop: square ? 28 : 18, color: "#ffffff", fontSize: square ? 26 : 20 }}>
-          Collected with TapTruly · taptruly.com
+          {card.branding ? "Collected with TapTruly · taptruly.com" : " "}
         </div>
       </div>
     ),

@@ -3,8 +3,8 @@ import { z } from "zod";
 import { secureRoute, ok, dbError } from "@/lib/security/route";
 import { LIMITS } from "@/lib/security/rateLimit";
 import { kioskCreateSchema, uuidSchema } from "@/lib/validation/schemas";
-import { env } from "@/lib/env";
 import { audit } from "@/lib/audit";
+import { publicOriginFor } from "@/lib/surveyDomains";
 
 const params = z.object({ id: uuidSchema }).strict();
 
@@ -25,6 +25,6 @@ export const POST = secureRoute<z.infer<typeof params>, undefined, z.infer<typeo
     if (error) throw dbError(error);
     const kioskId = data as string;
     await audit({ accountId: membership.accountId, userId: user.id, action: "kiosk.created", targetType: "kiosk", targetId: kioskId, ipHash });
-    return ok({ id: kioskId, url: `${env().appOrigin}/k/${kioskId}.${secret}` }, 201);
+    return ok({ id: kioskId, url: `${await publicOriginFor(membership.accountId)}/k/${kioskId}.${secret}` }, 201);
   },
 );

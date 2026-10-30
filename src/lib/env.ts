@@ -35,6 +35,10 @@ const schema = z.object({
   VAPID_PUBLIC_KEY: z.string().regex(/^[A-Za-z0-9_-]{86,88}$/, "VAPID_PUBLIC_KEY looks wrong (run node scripts/vapid-keys.mjs)").optional().or(z.literal("")),
   VAPID_PRIVATE_KEY: z.string().regex(/^[A-Za-z0-9_-]{42,44}$/, "VAPID_PRIVATE_KEY looks wrong (run node scripts/vapid-keys.mjs)").optional().or(z.literal("")),
   VAPID_SUBJECT: z.string().regex(/^(mailto:[^\s@]+@[^\s@]+|https:\/\/\S+)$/, "VAPID_SUBJECT must be mailto:you@domain or an https URL").optional().or(z.literal("")),
+  // Survey pages on a business's own web address (Scale plan). Optional: the feature is off without these.
+  VERCEL_API_TOKEN: z.string().regex(/^[A-Za-z0-9_-]{20,100}$/, "VERCEL_API_TOKEN looks wrong").optional().or(z.literal("")),
+  VERCEL_PROJECT_ID: z.string().regex(/^prj_[A-Za-z0-9]{10,60}$/, "VERCEL_PROJECT_ID must start with prj_").optional().or(z.literal("")),
+  VERCEL_TEAM_ID: z.string().regex(/^team_[A-Za-z0-9]{10,60}$/, "VERCEL_TEAM_ID must start with team_").optional().or(z.literal("")),
   RESEND_WEBHOOK_SECRET: z.string().regex(/^whsec_[A-Za-z0-9+/=]+$/, "RESEND_WEBHOOK_SECRET must start with whsec_").optional().or(z.literal("")),
 });
 

@@ -6,6 +6,7 @@ import { parseKioskToken } from "@/lib/security/signing";
 import { loadPublicSurvey } from "@/lib/publicSurvey";
 import { ICON_SETS } from "@/lib/surveys/iconSets";
 import { KioskClient } from "./KioskClient";
+import { enforceSurveyHost } from "@/lib/surveyDomains";
 
 export const metadata: Metadata = { title: "Rate us", robots: { index: false, follow: false } };
 
@@ -22,6 +23,7 @@ export default async function KioskPage({ params }: { params: Promise<{ token: s
 
   const survey = await loadPublicSurvey(kiosk.survey_id);
   if (!survey) notFound();
+  await enforceSurveyHost(survey.accountId, `/k/${token}`);
 
   const { data: s } = await adminClient()
     .from("surveys")

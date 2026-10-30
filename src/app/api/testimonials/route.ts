@@ -3,6 +3,7 @@ import { LIMITS } from "@/lib/security/rateLimit";
 import { buildWallToken } from "@/lib/security/signing";
 import { escapeHtml } from "@/lib/security/html";
 import { env } from "@/lib/env";
+import { publicOriginFor } from "@/lib/surveyDomains";
 
 // The business's testimonial wall: its link, the code to embed it, and how many comments are shown.
 export const GET = secureRoute(
@@ -15,7 +16,7 @@ export const GET = secureRoute(
       .not("featured_at", "is", null);
     if (error) throw dbError(error);
     const e = env();
-    const url = `${e.appOrigin}/wall/${buildWallToken(e.LINK_SIGNING_SECRET, membership.accountId)}`;
+    const url = `${await publicOriginFor(membership.accountId)}/wall/${buildWallToken(e.LINK_SIGNING_SECRET, membership.accountId)}`;
     return ok({
       featured: count ?? 0,
       url,

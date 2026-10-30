@@ -2,7 +2,7 @@ import "server-only";
 import { env } from "@/lib/env";
 import { adminClient } from "@/lib/supabase/server";
 import { buildCardToken } from "@/lib/security/signing";
-import { planAllows } from "@/lib/billing/features";
+import { planAllows, showBranding } from "@/lib/billing/features";
 import { logoUrl } from "@/lib/branding";
 import { isIconSetId } from "@/lib/surveys/iconSets";
 import { labelsFor } from "@/lib/surveys/customIcons";
@@ -19,6 +19,8 @@ export type ShareCard = {
   /** 1-5 stars when the survey uses stars, otherwise null (the label is shown instead). */
   stars: number | null;
   label: string | null;
+  /** "Collected with TapTruly" (hidden on Growth/Scale when the business chooses). */
+  branding: boolean;
 };
 
 const MAX_COMMENT = 280;
@@ -40,7 +42,7 @@ export async function loadShareCard(responseId: string): Promise<ShareCard | nul
   if (!r || !r.share_consent || !r.share_social || r.sentiment !== "positive" || r.status !== "confirmed" || r.rating === null) return null;
   const comment = typeof r.comment === "string" ? r.comment.trim() : "";
   if (!comment) return null;
-  const { data: acct } = await db.from("accounts").select("name, logo_path, suspended_at, plan").eq("id", r.account_id).maybeSingle();
+  const { data: acct } = await db.from("accounts").select("name, logo_path, suspended_at, plan, hide_branding").eq("id", r.account_id).maybeSingle();
   if (!acct || acct.suspended_at || !planAllows(acct.plan as string, "social")) return null;
 
   const s = (r.surveys ?? null) as unknown as { icon_set: string; option_labels: unknown; brand_color: string; language: string } | null;
@@ -60,6 +62,7 @@ export async function loadShareCard(responseId: string): Promise<ShareCard | nul
     color: s && HEX.test(s.brand_color) ? s.brand_color : "#4f46e5",
     stars,
     label,
+    branding: showBranding(acct.plan as string, acct.hide_branding as boolean),
   };
 }
 

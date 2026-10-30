@@ -31,6 +31,7 @@ export function PricingTable({ catalog, defaultCurrency = "LKR" }: { catalog: Ca
               <li>✓ Rating buttons for your own emails, no limit</li>
               {free.dailyEmails > 0 && <li>✓ We send surveys for you: {free.dailyEmails.toLocaleString("en")} emails a day</li>}
               <li>✓ Dashboard, follow-ups &amp; alerts</li>
+              <li>✓ Compare with your industry</li>
               <li>✓ 1 location, 2 team members</li>
               <li>No card needed</li>
             </ul>
@@ -56,8 +57,11 @@ export function PricingTable({ catalog, defaultCurrency = "LKR" }: { catalog: Ca
               <li>✓ We send surveys for you: {SEND_LIMITS[p.id].toLocaleString("en")} emails a day</li>
               <li>✓ Unlimited team &amp; locations</li>
               <li>✓ Helpdesk, Shopify &amp; Slack, API</li>
+              <li>✓ Reply to customers from TapTruly</li>
               <li>✓ TV screens, AI replies, email reports</li>
-              <li>✓ Social media share cards</li>
+              <li>✓ Share cards &amp; monthly highlights</li>
+              {(p.id === "growth" || p.id === "scale") && <li className="font-semibold text-ink">✓ Remove TapTruly branding</li>}
+              {p.id === "scale" && <li className="font-semibold text-ink">✓ Your own survey web address</li>}
               {p.id === "scale" && <li className="font-semibold text-ink">✓ Emails from your own domain</li>}
             </ul>
             <Link href="/signup" className={`btn mt-5 ${p.id === "growth" ? "btn-primary" : "btn-secondary"}`}>

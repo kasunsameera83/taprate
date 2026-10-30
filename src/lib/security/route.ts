@@ -10,6 +10,7 @@ import { hitRateLimit, type RateLimitRule } from "@/lib/security/rateLimit";
 import { getClientIp, hashIp, isJsonRequest, isSameOriginRequest } from "@/lib/security/request";
 import { fieldErrors } from "@/lib/validation/schemas";
 import { upgradeMessage } from "@/lib/billing/features";
+import { isSurveyDomainSameOrigin } from "@/lib/surveyDomains";
 
 // ---------------------------------------------------------------------------
 // Responses. Errors never include stack traces, SQL messages or internal ids.
@@ -149,7 +150,10 @@ export function secureRoute<P = undefined, Q = undefined, B = undefined, A exten
 
       // 1. CSRF
       if (!isSameOriginRequest(req.method, req.headers, e.appOrigin)) {
-        return fail("forbidden", "Cross-site request blocked.", undefined, requestId);
+        // Public survey endpoints may also be called from a business's own verified survey address
+        // (same-origin on that address). Signed-in endpoints never accept another origin.
+        const fromSurveyDomain = config.auth === "public" && req.nextUrl.pathname.startsWith("/api/public/") && (await isSurveyDomainSameOrigin(req.headers));
+        if (!fromSurveyDomain) return fail("forbidden", "Cross-site request blocked.", undefined, requestId);
       }
 
       // 2. IP rate limit (before anything expensive; also protects login and public endpoints)
@@ -258,6 +262,13 @@ const DB_MESSAGES: Array<[RegExp, ErrorCode, string]> = [
   [/upgrade required: reports/, "forbidden", upgradeMessage("reports")],
   [/upgrade required: repeats/, "forbidden", upgradeMessage("repeats")],
   [/upgrade required: social/, "forbidden", upgradeMessage("social")],
+  [/upgrade required: replies/, "forbidden", upgradeMessage("replies")],
+  [/upgrade required: white_label/, "forbidden", upgradeMessage("white_label")],
+  [/upgrade required: custom_domain/, "forbidden", upgradeMessage("custom_domain")],
+  [/no customer email/, "conflict", "We don't have this customer's email address, so you can't reply from TapTruly. Call them or use another way to reach them."],
+  [/customer email blocked/, "conflict", "Emails to this customer bounced or were marked as spam before, so we won't send to this address."],
+  [/invalid subject/, "validation_failed", "Check the subject: one line, up to 150 characters."],
+  [/daily reply limit reached/, "rate_limited", "You've sent a lot of replies today. You can send more tomorrow."],
   [/upgrade required: own_domain/, "forbidden", upgradeMessage("own_domain")],
   [/plan limit: locations/, "forbidden", "The free plan has 1 location. Choose a plan in Settings → Billing to add more."],
   [/plan limit: members/, "forbidden", "The free plan has 2 team members (including you). Choose a plan in Settings → Billing to invite more."],

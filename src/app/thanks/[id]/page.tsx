@@ -8,6 +8,8 @@ import { ThanksClient } from "./ThanksClient";
 import { logoUrl } from "@/lib/branding";
 import { iconUrlMap, labelsFor, resolveOptions } from "@/lib/surveys/customIcons";
 import { HTML_LANG, isLang, pt, type Lang, type PublicKey } from "@/lib/i18n/public";
+import { showBranding } from "@/lib/billing/features";
+import { enforceSurveyHost } from "@/lib/surveyDomains";
 
 export const metadata: Metadata = { title: "Thank you", robots: { index: false, follow: false } };
 
@@ -31,7 +33,7 @@ export default async function ThanksPage({
   // Service role, scoped to this one response id (proven by the signed token above).
   const { data } = await adminClient()
     .from("responses")
-    .select("id, rating, pending_rating, comment, drivers, share_consent, display_name, surveys(question, icon_set, brand_color, thank_you_message, allow_comment, website_url, status, drivers_positive, drivers_negative, review_cta_label, review_cta_url, icon_images, option_labels, language, reasons_question_positive, reasons_question_negative, accounts(name, logo_path))")
+    .select("id, account_id, rating, pending_rating, comment, drivers, share_consent, display_name, surveys(question, icon_set, brand_color, thank_you_message, allow_comment, website_url, status, drivers_positive, drivers_negative, review_cta_label, review_cta_url, icon_images, option_labels, language, reasons_question_positive, reasons_question_negative, accounts(name, logo_path, plan, hide_branding))")
     .eq("id", id)
     .maybeSingle();
   const survey = (data?.surveys ?? null) as unknown as {
@@ -51,9 +53,10 @@ export default async function ThanksPage({
     language: string;
     reasons_question_positive: string | null;
     reasons_question_negative: string | null;
-    accounts: { name: string; logo_path: string | null } | null;
+    accounts: { name: string; logo_path: string | null; plan: string; hide_branding: boolean } | null;
   } | null;
   if (!data || !survey || !isIconSetId(survey.icon_set)) notFound();
+  await enforceSurveyHost(data.account_id as string, `/thanks/${id}?k=${encodeURIComponent(k)}`);
 
   const lang: Lang = isLang(survey.language) ? survey.language : "en";
   const rating = (data.pending_rating ?? data.rating) as number | null;
@@ -132,7 +135,11 @@ export default async function ThanksPage({
           </a>
         )}
         <p className="mt-10 text-center text-[12px] text-muted">
-          {pt(lang, "feedbackBy")} <span className="font-semibold">TapTruly</span> ·{" "}
+          {showBranding(survey.accounts?.plan, survey.accounts?.hide_branding) && (
+            <>
+              {pt(lang, "feedbackBy")} <span className="font-semibold">TapTruly</span> ·{" "}
+            </>
+          )}
           <a href="/privacy" className="underline underline-offset-2">
             {pt(lang, "privacy")}
           </a>

@@ -36,6 +36,10 @@ const FEATURES: Array<{ label: string; cells: [Cell, Cell, Cell, Cell] }> = [
   { label: "Office TV screen", cells: [true, null, null, null] },
   { label: "AI comment summaries", cells: [true, null, null, null] },
   { label: "Social media share cards for reviews", cells: [true, null, null, null] },
+  { label: "Reply to customers from the app", cells: [true, null, null, null] },
+  { label: "Compare with your industry", cells: [true, null, null, null] },
+  { label: "Survey pages on your own web address", cells: [true, null, null, null] },
+  { label: "Live notifications in the app", cells: [true, null, null, null] },
   { label: "Surveys in Sinhala and Tamil", cells: [true, null, null, null] },
   { label: "Pay in Sri Lankan rupees", cells: [true, false, false, false] },
 ];

@@ -156,3 +156,17 @@ private and encrypted (they contain customer data). Restore into a **test** proj
 - Rotate a leaked key immediately in the provider's dashboard, update Vercel, redeploy.
 - Suspend a misbehaving business in `/admin` → Businesses.
 - Every admin action is in `/admin` → Admin log; every business action in Settings → Activity.
+
+## Survey pages on a customer's own web address (Scale plan, optional)
+
+Lets Scale customers use an address like `feedback.theirbusiness.com` for survey pages, QR codes and links.
+TapTruly adds the address to your Vercel project automatically, so it needs a Vercel API token:
+
+1. Vercel → Account settings → **Tokens** → create a token with access to the TapTruly team.
+2. Vercel → your project → **Settings → General**: copy the **Project ID** (`prj_…`). The team ID (`team_…`) is under Team settings.
+3. Add to Environment Variables (mark them Sensitive) and redeploy:
+   - `VERCEL_API_TOKEN`
+   - `VERCEL_PROJECT_ID`
+   - `VERCEL_TEAM_ID`
+
+Without these, the setting shows "not switched on yet" and nothing else changes.

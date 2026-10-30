@@ -83,6 +83,81 @@ const CARDS: Card[] = [
     ),
   },
   {
+    icon: "💬",
+    title: "Reply right from TapTruly",
+    body: "Write back to an unhappy customer from the follow-up, or let AI draft it. Their answer lands in your inbox, and the reply is saved on their history.",
+    visual: (
+      <div className="space-y-1.5 text-[12px]">
+        <p className="rounded-[10px] rounded-bl-[3px] bg-[#f1f5f9] px-3 py-1.5">&ldquo;Delivery took two weeks.&rdquo;</p>
+        <p className="ml-6 rounded-[10px] rounded-br-[3px] bg-brand px-3 py-1.5 text-white">So sorry! Your refund is on its way.</p>
+      </div>
+    ),
+    wide: true,
+  },
+  {
+    icon: "📊",
+    title: "See how you compare",
+    body: "Your happy customers against the average for businesses like yours. Only averages are shared, never anyone's own numbers.",
+    visual: (
+      <div className="space-y-1.5 text-[12px]">
+        {[
+          ["You", 92, "bg-pos-fill"],
+          ["Restaurants", 85, "bg-[#cbd5e1]"],
+        ].map(([n, p, c]) => (
+          <p key={n as string} className="flex items-center gap-2">
+            <span className="w-20 font-semibold">{n}</span>
+            <span className="h-2 flex-1 overflow-hidden rounded-full bg-[#f1f5f9]">
+              <span className={`block h-full rounded-full ${c}`} style={{ width: `${p}%` }} />
+            </span>
+            <span className="tabular w-9 text-right text-muted">{p}%</span>
+          </p>
+        ))}
+      </div>
+    ),
+  },
+  {
+    icon: "✨",
+    title: "Share your best month",
+    body: "One tap makes a picture of your month: ratings, % happy and a kind word from a customer, ready for Facebook, Instagram and WhatsApp.",
+    visual: (
+      <p className="inline-flex items-baseline gap-2 rounded-[12px] bg-gradient-to-r from-[var(--color-brand-from)] to-[var(--color-brand-to)] px-3 py-2 text-white">
+        <span className="text-[20px] font-bold">94%</span>
+        <span className="text-[12px]">happy in October · 312 ratings</span>
+      </p>
+    ),
+  },
+  {
+    icon: "📣",
+    title: "Happy reviews, ready to post",
+    body: "When a customer agrees, turn their comment into a branded picture card for social media in one click.",
+    visual: (
+      <p className="rounded-[10px] border border-line bg-white px-3 py-2 text-[12px]">
+        <span className="text-[#f59e0b]">★★★★★</span> &ldquo;Best service in town!&rdquo; <span className="text-muted">— Janaka</span>
+      </p>
+    ),
+  },
+  {
+    icon: "🌐",
+    title: "Your own web address",
+    body: "On the Scale plan, survey pages, QR codes and links use your address, like feedback.yourbusiness.com. On Growth and Scale you can remove our name too.",
+    visual: (
+      <p className="truncate rounded-[8px] border border-line bg-[#f8fafc] px-2.5 py-1.5 font-mono text-[12px]">
+        🔒 feedback.lankabakes.lk/thanks
+      </p>
+    ),
+    wide: true,
+  },
+  {
+    icon: "🔔",
+    title: "Live, without refreshing",
+    body: "New ratings pop up while you work, the dashboard updates by itself, and the bell shows what needs you.",
+    visual: (
+      <p className="inline-flex items-center gap-2 rounded-[10px] border border-line bg-white px-3 py-2 text-[12px] shadow-sm">
+        <span className="h-2 w-2 rounded-full bg-pos-fill" aria-hidden /> New rating: Excellent · just now
+      </p>
+    ),
+  },
+  {
     icon: "🎁",
     title: "Invite a business, both get 250",
     body: "Share your link. When a business you invite makes its first payment, you each get 250 bonus responses.",
