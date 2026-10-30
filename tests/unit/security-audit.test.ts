@@ -90,7 +90,7 @@ test("service-role database access in API routes is always scoped", () => {
     for (const m of src.matchAll(/adminClient\(\)\s*\.from\("(\w+)"\)([\s\S]{0,400}?);/g)) {
       const table = m[1]!;
       const stmt = m[2]!;
-      if (["billing_catalog", "platform_audit_log", "audit_log"].includes(table)) continue;
+      if (["billing_catalog", "platform_settings", "platform_audit_log", "audit_log"].includes(table)) continue;
       if (/\.insert\(\{[^}]*account_id/.test(stmt) || /\.upsert\(\{[^}]*account_id/.test(stmt)) continue;
       const scoped = /account_id/.test(stmt) || (table === "accounts" && /\.eq\("id", (accountId|membership\.accountId)\)/.test(stmt)) || /\.eq\("id", b\.s\)/.test(stmt);
       assert.ok(scoped, `${rel(f)}: service-role query on "${table}" without an account filter`);

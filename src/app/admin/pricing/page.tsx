@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/client/api";
 import { catalogItemSchema } from "@/lib/site/content";
 import { fieldErrors } from "@/lib/validation/schemas";
-import type { Catalog, Pack, Plan } from "@/lib/billing/catalog";
+import type { Catalog, FreePlan, Pack, Plan } from "@/lib/billing/catalog";
 import { LoadError, Notice } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
@@ -40,6 +40,7 @@ export default function PricingAdmin() {
         <h1 className="text-[28px] font-bold leading-tight">Pricing</h1>
         <p className="text-sm text-muted">Changes apply to new purchases straight away, and show on the landing page and the billing page. Existing subscriptions keep the price they signed up at.</p>
       </div>
+      <FreeForm free={catalog.free} onSaved={load} />
       {catalog.plans.map((p) => (
         <PlanForm key={p.id} plan={p} onSaved={load} />
       ))}
@@ -58,7 +59,7 @@ function useSave(onSaved: () => void) {
     const parsed = catalogItemSchema.safeParse(raw);
     if (!parsed.success) return setErrors(fieldErrors(parsed.error));
     setErrors({});
-    if (!(await confirmDialog({ title: "Save new prices?", body: summary, confirmLabel: "Save" }))) return;
+    if (!(await confirmDialog({ title: "Save changes?", body: summary, confirmLabel: "Save" }))) return;
     setBusy(true);
     // The server parses the same strings again; amounts are sent as typed.
     const r = await api("/api/admin/pricing", { method: "PUT", body: raw });
@@ -170,6 +171,49 @@ function PackForm({ pack, onSaved }: { pack: Pack; onSaved: () => void }) {
             save(
               { kind: "topup", item: pack.id, name: v.name, responses: /^\d+$/.test(v.responses) ? Number(v.responses) : NaN, lkrPrice: v.lkrPrice, usdPrice: v.usdPrice, active: v.active },
               `${v.name}: ${v.responses} responses for Rs ${v.lkrPrice} or $${v.usdPrice}.`,
+            )
+          }
+        >
+          {busy ? "Saving…" : "Save"}
+        </button>
+      </div>
+    </SettingsSection>
+  );
+}
+
+function FreeForm({ free, onSaved }: { free: FreePlan; onSaved: () => void }) {
+  const [v, setV] = useState({ responses: String(free.responses), dailyEmails: String(free.dailyEmails) });
+  const { errors, msg, busy, save } = useSave(onSaved);
+  const num = (x: string) => (/^\d{1,4}$/.test(x.trim()) ? Number(x.trim()) : NaN);
+  return (
+    <SettingsSection title="Free plan">
+      <div className="space-y-4">
+        {msg && <Notice kind={msg.kind}>{msg.text}</Notice>}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block space-y-1 text-sm">
+            <span className="font-semibold">Free responses for a new business</span>
+            <input className="input" inputMode="numeric" value={v.responses} maxLength={4} onChange={(e) => setV({ ...v, responses: e.target.value })} aria-invalid={errors.responses ? "true" : undefined} />
+            <span className="block text-[13px] text-muted">Given once, when a business signs up. Businesses that already exist keep what they have.</span>
+            {errors.responses && <span className="block text-[13px] font-medium text-neg-text">{errors.responses}</span>}
+          </label>
+          <label className="block space-y-1 text-sm">
+            <span className="font-semibold">Survey emails a day (free businesses)</span>
+            <input className="input" inputMode="numeric" value={v.dailyEmails} maxLength={4} onChange={(e) => setV({ ...v, dailyEmails: e.target.value })} aria-invalid={errors.dailyEmails ? "true" : undefined} />
+            <span className="block text-[13px] text-muted">Each email costs you to send. Paid plans: Starter 500, Growth 2,000, Scale 5,000.</span>
+            {errors.dailyEmails && <span className="block text-[13px] font-medium text-neg-text">{errors.dailyEmails}</span>}
+          </label>
+        </div>
+        <p className="text-[13px] text-muted">
+          On the landing page, write <code className="rounded bg-canvas px-1">{"{free}"}</code> where the number of free responses should go, and it updates by itself.
+        </p>
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={busy}
+          onClick={() =>
+            save(
+              { kind: "free", responses: num(v.responses), dailyEmails: num(v.dailyEmails) },
+              `New businesses get ${v.responses} free responses, and free businesses can send ${v.dailyEmails} survey emails a day.`,
             )
           }
         >

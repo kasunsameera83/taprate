@@ -12,8 +12,9 @@ export type BillingInterval = "month" | "year";
 export const PLAN_IDS: readonly PlanId[] = ["starter", "growth", "scale"];
 
 /** Survey emails a business can send per day (UTC). Enforced in the database by
- *  private.daily_send_limit (migration 0029); keep the two in step. */
-export const SEND_LIMITS = { trial: 100, free: 100, starter: 500, growth: 2000, scale: 5000, paused: 0 } as const;
+ *  private.daily_send_limit (migrations 0029/0030); keep the two in step. */
+export const SEND_LIMITS = { starter: 500, growth: 2000, scale: 5000, paused: 0 } as const;
+// Free and new businesses: catalog.free.dailyEmails (set in /admin → Pricing, migration 0030).
 export const PACK_IDS: readonly PackId[] = ["pack_250", "pack_1000", "pack_5000"];
 
 /** PayHere is for Sri Lankan payments in rupees; Stripe for international cards in dollars. */
@@ -48,7 +49,10 @@ export type Plan = {
 
 export type Pack = { id: PackId; name: string; responses: number; price: Record<Currency, number>; active: boolean };
 
-export type Catalog = { plans: Plan[]; packs: Pack[] };
+/** The free plan: responses a new business starts with, and survey emails a free business can send a day. */
+export type FreePlan = { responses: number; dailyEmails: number };
+export type Catalog = { plans: Plan[]; packs: Pack[]; free: FreePlan };
+export const DEFAULT_FREE: FreePlan = { responses: 50, dailyEmails: 100 };
 
 export const DEFAULT_CATALOG: Catalog = {
   plans: [
@@ -61,6 +65,7 @@ export const DEFAULT_CATALOG: Catalog = {
     { id: "pack_1000", name: "1,000 responses", responses: 1000, price: { LKR: 1190000, USD: 3900 }, active: true },
     { id: "pack_5000", name: "5,000 responses", responses: 5000, price: { LKR: 4990000, USD: 15900 }, active: true },
   ],
+  free: DEFAULT_FREE,
 };
 
 export const isPlanId = (v: unknown): v is PlanId => typeof v === "string" && (PLAN_IDS as readonly string[]).includes(v);
@@ -130,8 +135,14 @@ type CatalogRow = {
 };
 
 /** Database rows -> catalog. Anything missing or malformed falls back to the default for that item. */
-export function catalogFromRows(rows: CatalogRow[] | null | undefined): Catalog {
-  if (!rows || rows.length === 0) return DEFAULT_CATALOG;
+/** Free plan from the platform_settings row; anything missing or out of range falls back to the defaults. */
+export function freeFromRow(row: { free_responses?: unknown; free_daily_emails?: unknown } | null | undefined): FreePlan {
+  const ok = (v: unknown, d: number) => (typeof v === "number" && Number.isInteger(v) && v >= 0 && v <= 1000 ? v : d);
+  return { responses: ok(row?.free_responses, DEFAULT_FREE.responses), dailyEmails: ok(row?.free_daily_emails, DEFAULT_FREE.dailyEmails) };
+}
+
+export function catalogFromRows(rows: CatalogRow[] | null | undefined, free: FreePlan = DEFAULT_FREE): Catalog {
+  if (!rows || rows.length === 0) return { ...DEFAULT_CATALOG, free };
   const byId = new Map(rows.map((r) => [r.item, r]));
   const n = (v: unknown, fallback: number) => (typeof v === "number" && Number.isFinite(v) && v > 0 ? v : typeof v === "string" && /^\d+$/.test(v) ? Number(v) : fallback);
   const sortOf = (id: string) => Number(byId.get(id)?.sort ?? 0);
@@ -160,5 +171,6 @@ export function catalogFromRows(rows: CatalogRow[] | null | undefined): Catalog 
         return { id: d.id, name: r.name || d.name, responses: n(r.responses, d.responses), price: { LKR: n(r.lkr_price, d.price.LKR), USD: n(r.usd_price, d.price.USD) }, active: r.active !== false };
       })
       .sort((a, b) => sortOf(a.id) - sortOf(b.id)),
+    free,
   };
 }

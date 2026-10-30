@@ -6,6 +6,7 @@ import { SiteFooterAuto } from "@/components/site/SiteFooterAuto";
 import { PostBody } from "@/components/blog/PostBody";
 import { getPublishedPost, listPublishedPosts } from "@/lib/blog/server";
 import { JsonLd } from "@/components/JsonLd";
+import { loadCatalog } from "@/lib/billing/catalogServer";
 import { blogPosting, breadcrumbs, siteUrl } from "@/lib/site/structuredData";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -34,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 const fmt = (iso: string) => new Date(iso).toLocaleDateString("en", { day: "numeric", month: "long", year: "numeric" });
 
 export default async function BlogPost({ params }: Props) {
-  const post = await getPublishedPost((await params).slug);
+  const [post, { free }] = await Promise.all([getPublishedPost((await params).slug), loadCatalog()]);
   if (!post) notFound();
   const more = (await listPublishedPosts(4)).filter((p) => p.slug !== post.slug).slice(0, 3);
   const site = siteUrl();
@@ -77,7 +78,7 @@ export default async function BlogPost({ params }: Props) {
         <aside className="mx-auto mt-16 max-w-3xl px-5">
           <div className="rounded-[var(--radius-hero)] bg-ink p-8 text-white sm:p-10">
             <h2 className="text-[26px] leading-tight sm:text-[30px]">Hear from every customer, starting today</h2>
-            <p className="mt-3 text-[#cbd5e1]">One-tap ratings in your emails, QR codes and WhatsApp. 50 free responses, no card needed.</p>
+            <p className="mt-3 text-[#cbd5e1]">One-tap ratings in your emails, QR codes and WhatsApp. {free.responses.toLocaleString("en")} free responses, no card needed.</p>
             <Link href="/signup" className="btn mt-6 min-h-12 bg-white px-6 text-brand hover:bg-[#eef2ff]">
               Start free
             </Link>

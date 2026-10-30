@@ -4,11 +4,13 @@ import { loadCatalog } from "@/lib/billing/catalogServer";
 import { LandingView } from "@/components/site/LandingView";
 import { preferredCurrency } from "@/lib/site/geo";
 import { JsonLd } from "@/components/JsonLd";
+import { applyFree } from "@/lib/site/content";
 import { faqPage, organization, siteUrl, softwareApp, website } from "@/lib/site/structuredData";
 
 // The landing page is edited by the product owner in /admin/landing (only PUBLISHED content shows here).
 export async function generateMetadata(): Promise<Metadata> {
-  const c = await loadLanding();
+  const [raw, catalog] = await Promise.all([loadLanding(), loadCatalog()]);
+  const c = applyFree(raw, catalog.free.responses);
   return {
     title: { absolute: c.seo.title },
     description: c.seo.description,
@@ -19,7 +21,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Home() {
-  const [c, catalog, promotions, currency] = await Promise.all([loadLanding(), loadCatalog(), loadLivePromotions(), preferredCurrency()]);
+  const [raw, catalog, promotions, currency] = await Promise.all([loadLanding(), loadCatalog(), loadLivePromotions(), preferredCurrency()]);
+  const c = applyFree(raw, catalog.free.responses); // "{free}" in the text → the free plan's number
   const site = siteUrl();
   return (
     <>

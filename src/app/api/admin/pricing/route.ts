@@ -17,6 +17,19 @@ export const PUT = secureRoute<undefined, undefined, CatalogItemInput, "user-any
   { auth: "user-any", action: null, ipLimit: LIMITS.userWrite, userLimit: LIMITS.userWrite, body: catalogItemSchema, maxBodyBytes: 2048 },
   async ({ supabase, user, body, ipHash, requestId }) => {
     await assertPlatformAdmin(supabase);
+    if (body.kind === "free") {
+      // RLS + column grants: only platform admins (with 2-step verification), only these columns.
+      const { data, error } = await supabase
+        .from("platform_settings")
+        .update({ free_responses: body.responses, free_daily_emails: body.dailyEmails, updated_at: new Date().toISOString(), updated_by: user.id })
+        .eq("id", true)
+        .select("id")
+        .maybeSingle();
+      if (error) throw dbError(error);
+      if (!data) return fail("not_found", undefined, undefined, requestId);
+      await adminAudit({ adminId: user.id, action: "pricing.updated", targetType: "catalog", targetId: "free", metadata: { responses: body.responses, dailyEmails: body.dailyEmails }, ipHash });
+      return ok({ saved: true });
+    }
     const update =
       body.kind === "plan"
         ? { name: body.name, blurb: body.blurb, responses: body.responses, lkr_month: body.lkrMonth, lkr_year: body.lkrYear, usd_month: body.usdMonth, usd_year: body.usdYear, active: body.active, updated_at: new Date().toISOString() }

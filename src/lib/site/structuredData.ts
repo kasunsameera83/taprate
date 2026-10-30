@@ -30,7 +30,7 @@ export function softwareApp(site: string, description: string, catalog: Catalog,
     url: site,
     description,
     offers: [
-      { "@type": "Offer", name: "Free start", price: "0", priceCurrency: currency, description: "50 free responses, no card needed" },
+      { "@type": "Offer", name: "Free start", price: "0", priceCurrency: currency, description: `${catalog.free.responses} free responses, no card needed` },
       ...(low !== null ? [{ "@type": "Offer", name: "Paid plans", price: low.toFixed(2), priceCurrency: currency, url: `${site}/#pricing` }] : []),
     ],
   };

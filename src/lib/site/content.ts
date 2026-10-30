@@ -49,7 +49,7 @@ export const DEFAULT_LANDING: Landing = {
     title: "Know how every customer feels, the moment they tap.",
     subtitle: "One-tap ratings in your emails, on QR codes, WhatsApp, your website and a tablet at the counter. See who's happy and who needs a call back, right away.",
     primaryCta: "Start free",
-    note: "50 free responses. No card needed.",
+    note: "{free} free responses. No card needed.",
   },
   stepsTitle: "Set up in five minutes",
   steps: [
@@ -74,7 +74,7 @@ export const DEFAULT_LANDING: Landing = {
     title: "Only real customers are counted",
     body: "Corporate email scanners open every link in an email, which fills other tools with fake ratings. TapTruly holds each click until a real browser confirms it, so scanners are never counted and never use up your responses. Every link is signed, and your data is kept separate from every other business.",
   },
-  pricing: { show: true, title: "Simple pricing", subtitle: "Start free with 50 responses. Unused responses roll over, and you can cancel any time." },
+  pricing: { show: true, title: "Simple pricing", subtitle: "Start free with {free} responses. Unused responses roll over, and you can cancel any time." },
   faqTitle: "Questions",
   faq: [
     { q: "Do customers need to log in or fill a form?", a: "No. They tap a face or a number in your email and that's the answer. They can add a comment if they want." },
@@ -183,5 +183,22 @@ export const catalogItemSchema = z.discriminatedUnion("kind", [
       active: z.boolean(),
     })
     .strict(),
+  z
+    .object({
+      kind: z.literal("free"),
+      responses: z.number({ error: "Enter a whole number" }).int("Enter a whole number").min(0, "Can't be below 0").max(1000, "At most 1,000"),
+      dailyEmails: z.number({ error: "Enter a whole number" }).int("Enter a whole number").min(0, "Can't be below 0").max(1000, "At most 1,000"),
+    })
+    .strict(),
 ]);
+
+/** Landing text can say "{free}" where the number of free responses should go. */
+export const withFree = (text: string, free: number) => text.replaceAll("{free}", free.toLocaleString("en"));
+/** The same, for every piece of text in the landing content. */
+export function applyFree<T>(value: T, free: number): T {
+  if (typeof value === "string") return withFree(value, free) as T;
+  if (Array.isArray(value)) return value.map((v) => applyFree(v, free)) as T;
+  if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, applyFree(v, free)])) as T;
+  return value;
+}
 export type CatalogItemInput = z.infer<typeof catalogItemSchema>;
