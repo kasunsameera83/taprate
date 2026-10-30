@@ -56,6 +56,7 @@ export function PricingTable({ catalog, defaultCurrency = "LKR" }: { catalog: Ca
               <li>✓ Unlimited team &amp; locations</li>
               <li>✓ Helpdesk, Shopify &amp; Slack, API</li>
               <li>✓ TV screens, AI replies, email reports</li>
+              <li>✓ Social media share cards</li>
               {p.id === "scale" && <li className="font-semibold text-ink">✓ Emails from your own domain</li>}
             </ul>
             <Link href="/signup" className={`btn mt-5 ${p.id === "growth" ? "btn-primary" : "btn-secondary"}`}>

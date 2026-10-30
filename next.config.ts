@@ -42,6 +42,12 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // Share cards: social apps must be able to read them for link previews (so not blocked in robots.txt),
+        // but search engines shouldn't list them.
+        source: "/c/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
         source: "/(admin|reports)/:path*",
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
       },

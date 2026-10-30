@@ -257,3 +257,24 @@ export function verifyRecoveryTag(secrets: readonly string[], surveyId: string, 
   }
   return ok ? m[1] : null;
 }
+
+// ---------------------------------------------------------------------------
+// Share cards: /c/<responseId>.<sig>, a public picture of one happy, consented comment. Signed so ids can't
+// be guessed or swapped for another comment. The page re-checks consent, sentiment and plan on every load.
+// ---------------------------------------------------------------------------
+
+export function buildCardToken(secret: string, responseId: string): string {
+  if (!isUuid(responseId)) throw new Error("invalid response id");
+  return `${responseId}.${hmac(secret, `card:v1|${responseId}`)}`;
+}
+
+export function verifyCardToken(secrets: readonly string[], token: string): string | null {
+  if (typeof token !== "string" || token.length > 80) return null;
+  const m = /^([0-9a-f-]{36})\.([A-Za-z0-9_-]{22})$/.exec(token);
+  if (!m || !m[1] || !m[2] || !isUuid(m[1])) return null;
+  let ok = false;
+  for (const secret of secrets) {
+    if (secret && safeEqual(hmac(secret, `card:v1|${m[1]}`), m[2])) ok = true;
+  }
+  return ok ? m[1] : null;
+}

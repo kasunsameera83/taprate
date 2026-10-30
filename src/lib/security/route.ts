@@ -257,6 +257,7 @@ const DB_MESSAGES: Array<[RegExp, ErrorCode, string]> = [
   [/upgrade required: ai/, "forbidden", upgradeMessage("ai")],
   [/upgrade required: reports/, "forbidden", upgradeMessage("reports")],
   [/upgrade required: repeats/, "forbidden", upgradeMessage("repeats")],
+  [/upgrade required: social/, "forbidden", upgradeMessage("social")],
   [/upgrade required: own_domain/, "forbidden", upgradeMessage("own_domain")],
   [/plan limit: locations/, "forbidden", "The free plan has 1 location. Choose a plan in Settings → Billing to add more."],
   [/plan limit: members/, "forbidden", "The free plan has 2 team members (including you). Choose a plan in Settings → Billing to invite more."],

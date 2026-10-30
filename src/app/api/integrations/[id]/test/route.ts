@@ -5,6 +5,7 @@ import { uuidSchema } from "@/lib/validation/schemas";
 import { adminClient } from "@/lib/supabase/server";
 import { checkHelpdesk, deliverTo, type IntegrationRow, type RatingEvent } from "@/lib/integrations";
 import { isHelpdesk, type HelpdeskKind } from "@/lib/security/urlSafety";
+import { planAllows, upgradeMessage } from "@/lib/billing/features";
 
 const params = z.object({ id: uuidSchema }).strict();
 
@@ -20,6 +21,9 @@ export const POST = secureRoute<z.infer<typeof params>>(
       .maybeSingle();
     if (!row) return fail("not_found", undefined, undefined, requestId);
     const integration = row as IntegrationRow;
+    // Connections are a paid feature (0031): no test sends while the business is on the free plan.
+    const { data: acct } = await adminClient().from("accounts").select("plan").eq("id", membership.accountId).maybeSingle();
+    if (!planAllows(acct?.plan as string | undefined, "integrations")) return fail("forbidden", upgradeMessage("integrations"), undefined, requestId);
 
     // Shopify sends to us, not the other way round: the test happens on Shopify's side.
     if (integration.kind === "shopify") {

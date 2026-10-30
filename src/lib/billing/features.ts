@@ -2,7 +2,7 @@
 // gets the core product but not the extras below. The database enforces the same rules
 // (migration 0031: private.plan_allows / plan limits), so this file is for the UI and early, friendly checks.
 
-export type Feature = "integrations" | "api" | "tv" | "ai" | "reports" | "repeats" | "own_domain";
+export type Feature = "integrations" | "api" | "tv" | "ai" | "reports" | "repeats" | "social" | "own_domain";
 
 export const PAID_PLANS = ["starter", "growth", "scale"] as const;
 export const isPaidPlan = (plan: string | null | undefined): boolean => (PAID_PLANS as readonly string[]).includes(plan ?? "");
@@ -15,6 +15,7 @@ export const FEATURE_PLAN: Record<Feature, "starter" | "scale"> = {
   ai: "starter",
   reports: "starter",
   repeats: "starter",
+  social: "starter",
   own_domain: "scale",
 };
 
@@ -25,6 +26,7 @@ export const FEATURE_NAME: Record<Feature, string> = {
   ai: "AI reply drafts and insights",
   reports: "Weekly and monthly email reports",
   repeats: "Repeat sends",
+  social: "Social media share cards",
   own_domain: "Emails from your own domain",
 };
 

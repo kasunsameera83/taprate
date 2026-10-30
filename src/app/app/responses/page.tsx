@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { CustomerTimelineButton } from "@/components/CustomerTimeline";
+import { ShareCardButton } from "@/components/ShareCardButton";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { api, qs } from "@/lib/client/api";
@@ -430,6 +431,7 @@ function TestimonialToggle({ r, canFeature }: { r: ResponseItem; canFeature: boo
         {featured ? "Shown on your website" : "Show on website"}
       </button>
       <span className="ml-2 text-[12px] text-muted">as {r.testimonial.displayName ?? "A customer"}</span>
+      <ShareCardButton responseId={r.id} />
       {err && <span className="mt-1 block text-[12px] text-neg-text">{err}</span>}
     </span>
   );
