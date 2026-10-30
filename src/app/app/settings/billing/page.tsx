@@ -4,7 +4,7 @@ import { Suspense, useCallback, useEffect, useState, type FormEvent } from "reac
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/client/api";
 import { billingProfileSchema, fieldErrors } from "@/lib/validation/schemas";
-import { formatMoney, type BillingInterval, type Catalog, type Currency, type PackId, type PayWay, type PlanId, type Provider } from "@/lib/billing/catalog";
+import { formatMoney, SEND_LIMITS, type BillingInterval, type Catalog, type Currency, type PackId, type PayWay, type PlanId, type Provider } from "@/lib/billing/catalog";
 import { Badge, Field, LoadError, Notice, Segmented, TextInput } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
@@ -471,6 +471,7 @@ function Buy({ data }: { data: Summary }) {
                   <Price item={p.id} list={p.price[currency][interval]} per={interval === "year" ? "year" : "month"} />
                 </p>
                 <p className="mt-1 text-sm">{p.monthlyResponses.toLocaleString()} responses a month</p>
+                <p className="text-[13px] text-muted">Up to {SEND_LIMITS[p.id].toLocaleString()} survey emails a day</p>
                 <p className="mt-1 flex-1 text-[13px] text-muted">{p.blurb}</p>
                 <button
                   type="button"

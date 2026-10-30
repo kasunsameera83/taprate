@@ -266,7 +266,7 @@ const DB_MESSAGES: Array<[RegExp, ErrorCode, string]> = [
   [/invalid import (row|date)/, "validation_failed", "Some rows in the file aren't valid. Check the dates, ratings and emails."],
   [/survey is archived/, "conflict", "This survey is archived."],
   [/too many api keys/, "conflict", "You have 25 active keys. Revoke some first."],
-  [/daily send limit reached/, "rate_limited", "You've reached today's email limit. The rest can go out tomorrow (or upgrade your plan for a higher limit)."],
+  [/daily send limit reached/, "rate_limited", "You've reached today's email limit for your plan. The rest can go out tomorrow, or upgrade for a higher limit (Settings → Billing)."],
   [/survey is not active/, "conflict", "This survey is paused. Turn it back on to send it."],
   [/business is suspended/, "forbidden", "Sending is turned off for this business. Please contact support."],
   [/invalid recipients?/, "validation_failed", "Some of those email addresses aren't valid."],

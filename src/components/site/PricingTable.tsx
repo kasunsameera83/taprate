@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { formatMoney, type BillingInterval, type Catalog, type Currency } from "@/lib/billing/catalog";
+import { formatMoney, SEND_LIMITS, type BillingInterval, type Catalog, type Currency } from "@/lib/billing/catalog";
 import { Badge, Segmented } from "@/components/ui";
 
 // Prices are shown in ONE currency, picked from where the visitor is: rupees in Sri Lanka, US dollars
@@ -28,6 +28,7 @@ export function PricingTable({ catalog, defaultCurrency = "LKR" }: { catalog: Ca
               <span className="text-base font-normal text-muted"> / {interval === "year" ? "year" : "month"}</span>
             </p>
             <p className="mt-2 text-sm font-semibold">{p.monthlyResponses.toLocaleString("en")} responses a month</p>
+            <p className="text-[13px] text-muted">Send up to {SEND_LIMITS[p.id].toLocaleString("en")} survey emails a day</p>
             <p className="mt-1 flex-1 text-sm text-muted">{p.blurb}</p>
             <Link href="/signup" className={`btn mt-5 ${p.id === "growth" ? "btn-primary" : "btn-secondary"}`}>
               Start free

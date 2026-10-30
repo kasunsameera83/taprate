@@ -10,6 +10,10 @@ export type PackId = "pack_250" | "pack_1000" | "pack_5000";
 export type BillingInterval = "month" | "year";
 
 export const PLAN_IDS: readonly PlanId[] = ["starter", "growth", "scale"];
+
+/** Survey emails a business can send per day (UTC). Enforced in the database by
+ *  private.daily_send_limit (migration 0029); keep the two in step. */
+export const SEND_LIMITS = { trial: 100, free: 100, starter: 500, growth: 2000, scale: 5000, paused: 0 } as const;
 export const PACK_IDS: readonly PackId[] = ["pack_250", "pack_1000", "pack_5000"];
 
 /** PayHere is for Sri Lankan payments in rupees; Stripe for international cards in dollars. */
