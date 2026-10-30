@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/icons";
+import { hasSignedInHint } from "@/lib/site/signedInHint";
 
 const LINKS = [
   { href: "/#how", label: "How it works" },
@@ -19,6 +20,9 @@ export function SiteHeader({ cta = "Start free", showPricing = true }: { cta?: s
   const progress = useRef<HTMLSpanElement>(null);
   const [current, setCurrent] = useState<string | null>(null);
   const pathname = usePathname();
+  // Signed in? Swap "Sign in / Start free" for "Dashboard". Display only: /app checks the real session.
+  const [signedIn, setSignedIn] = useState(false);
+  useEffect(() => setSignedIn(hasSignedInHint(document.cookie)), []);
   // The Blog link is "current" anywhere under /blog; the others follow the section you're reading.
   const isOn = (href: string) => (href === "/blog" ? pathname.startsWith("/blog") : current === href.replace("/#", ""));
 
@@ -124,12 +128,20 @@ export function SiteHeader({ cta = "Start free", showPricing = true }: { cta?: s
           })}
         </nav>
         <div className="flex items-center gap-2">
-          <Link href="/login" className="btn btn-ghost hidden sm:inline-flex">
-            Sign in
-          </Link>
-          <Link href="/signup" className="btn btn-primary">
-            {cta}
-          </Link>
+          {signedIn ? (
+            <Link href="/app" className="btn btn-primary">
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" className="btn btn-ghost hidden sm:inline-flex">
+                Sign in
+              </Link>
+              <Link href="/signup" className="btn btn-primary">
+                {cta}
+              </Link>
+            </>
+          )}
           <button type="button" className="btn btn-ghost px-3 md:hidden" aria-label="Open menu" aria-haspopup="dialog" aria-controls="site-menu" onClick={openMenu}>
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden>
               <path d="M4 7h16M4 12h16M4 17h16" />
@@ -176,12 +188,20 @@ export function SiteHeader({ cta = "Start free", showPricing = true }: { cta?: s
             })}
           </nav>
           <div className="mt-5 grid gap-2">
-            <Link href="/signup" className="btn btn-primary min-h-12">
-              {cta}
-            </Link>
-            <Link href="/login" className="btn btn-secondary min-h-12">
-              Sign in
-            </Link>
+            {signedIn ? (
+              <Link href="/app" className="btn btn-primary min-h-12">
+                Go to dashboard
+              </Link>
+            ) : (
+              <>
+                <Link href="/signup" className="btn btn-primary min-h-12">
+                  {cta}
+                </Link>
+                <Link href="/login" className="btn btn-secondary min-h-12">
+                  Sign in
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </dialog>

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { SIGNED_IN_HINT, signedInHintCookie } from "@/lib/site/signedInHint";
 
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 
@@ -75,12 +76,23 @@ export async function middleware(request: NextRequest) {
     if (!user && (path.startsWith("/app") || path.startsWith("/admin"))) redirectTo = "/login";
     if (user && (path === "/login" || path === "/signup")) redirectTo = "/app";
 
+    // Keep the website header's "Dashboard" hint in step with the real session (display only).
+    const hasHint = request.cookies.get(SIGNED_IN_HINT)?.value === "1";
+    const setHint = (res: NextResponse) => {
+      if (Boolean(user) !== hasHint) {
+        const h = signedInHintCookie(Boolean(user));
+        res.cookies.set(h.name, h.value, h.options);
+      }
+    };
+
     if (redirectTo) {
       const redirect = NextResponse.redirect(new URL(redirectTo, request.url));
       for (const c of response.cookies.getAll()) redirect.cookies.set(c);
       redirect.headers.set("Content-Security-Policy", csp);
+      setHint(redirect);
       return redirect;
     }
+    setHint(response);
   }
 
   response.headers.set("Content-Security-Policy", csp);
