@@ -7,6 +7,7 @@ import { adminClient } from "@/lib/supabase/server";
 import { isIconSetId, ratingOption, sentimentOf, type IconSetId, type Sentiment } from "@/lib/surveys/iconSets";
 import { standardLabel } from "@/lib/i18n/public";
 import { planAllows } from "@/lib/billing/features";
+import { logoUrl } from "@/lib/branding";
 
 const body = z.object({ token: z.string().max(100) }).strict();
 
@@ -71,6 +72,7 @@ export const POST = secureRoute<undefined, undefined, z.infer<typeof body>, "pub
 
     return ok({
       business: acct.name,
+      logo: logoUrl(acct.logo_path as string | null),
       screen: screen.name,
       week: { total: list.length, pct: pct(list) },
       today: { total: todays.length, pct: pct(todays), negative: todays.filter((r) => sent(r) === "negative").length },
