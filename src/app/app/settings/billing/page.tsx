@@ -4,7 +4,7 @@ import { Suspense, useCallback, useEffect, useState, type FormEvent } from "reac
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/client/api";
 import { billingProfileSchema, fieldErrors } from "@/lib/validation/schemas";
-import { formatMoney, SEND_LIMITS, type BillingInterval, type Catalog, type Currency, type PackId, type PayWay, type PlanId, type Provider } from "@/lib/billing/catalog";
+import { formatMoney, SEND_LIMITS, withinPaymentLimit, type BillingInterval, type Catalog, type Currency, type PackId, type PayWay, type PlanId, type Provider } from "@/lib/billing/catalog";
 import { Badge, Field, LoadError, Notice, Segmented, TextInput } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
 import { confirmDialog } from "@/components/ConfirmDialog";
@@ -13,7 +13,7 @@ import { PageLoader, Busy } from "@/components/FaceLoader";
 type Summary = {
   plan: string;
   credits: number;
-  providers: { payhere: boolean; stripe: boolean; payhereUsd: boolean };
+  providers: { payhere: boolean; stripe: boolean; payhereUsd: boolean; payhereMaxLkrMinor: number | null };
   payWays: PayWay[];
   catalog: Catalog;
   suggestedProvider: Provider;
@@ -322,6 +322,12 @@ function Buy({ data }: { data: Summary }) {
     setWay(w);
     if (promo) applyCode(promo.code, w, interval);
   };
+  // Amounts above PayHere's single-payment limit (e.g. yearly plans in rupees) aren't offered.
+  const fits = (amountMinor: number) => withinPaymentLimit(way.provider, way.currency, amountMinor, data.providers.payhereMaxLkrMinor);
+  const yearlyOk = data.catalog.plans.some((p) => p.active && fits(p.price[way.currency].year));
+  useEffect(() => {
+    if (!yearlyOk && interval === "year") setBillingInterval("month");
+  }, [yearlyOk, interval]);
   const changeInterval = (i: BillingInterval) => {
     setBillingInterval(i);
     if (promo) applyCode(promo.code, way, i);
@@ -377,17 +383,22 @@ function Buy({ data }: { data: Summary }) {
 
   return (
     <>
-      <SettingsSection title="Plans" description="Cancel any time. Yearly plans cost the same as 10 months.">
+      <SettingsSection title="Plans" description={yearlyOk ? "Cancel any time. Yearly plans cost the same as 10 months." : "Cancel any time."}>
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <Segmented
             label="Billing period"
             value={interval}
             onChange={changeInterval}
-            options={[
-              { value: "month", label: "Monthly" },
-              { value: "year", label: "Yearly" },
-            ]}
+            options={
+              yearlyOk
+                ? [
+                    { value: "month", label: "Monthly" },
+                    { value: "year", label: "Yearly" },
+                  ]
+                : [{ value: "month", label: "Monthly" }]
+            }
           />
+          {!yearlyOk && <span className="text-[13px] text-muted">Yearly plans aren&rsquo;t available in rupees yet.</span>}
         </div>
         <p className="mb-4 text-[13px] text-muted">
           {currency === "LKR" ? "Prices in Sri Lankan rupees, paid with PayHere." : provider === "payhere" ? "Prices in US dollars, paid by card with PayHere." : "Prices in US dollars, paid by card with Stripe."}{" "}
@@ -479,7 +490,7 @@ function Buy({ data }: { data: Summary }) {
                 <button
                   type="button"
                   className={`btn mt-4 ${p.id === "growth" ? "btn-primary" : "btn-secondary"}`}
-                  disabled={busy !== null || hasLivePlan || !data.profile}
+                  disabled={busy !== null || hasLivePlan || !data.profile || !fits(p.price[currency][interval])}
                   onClick={() => checkout(p.id)}
                 >
                   {current ? "Current plan" : busy === p.id ? <Busy>Opening…</Busy> : `Choose ${p.name}`}
@@ -500,7 +511,7 @@ function Buy({ data }: { data: Summary }) {
                   <Price item={k.id} list={k.price[currency]} />
                 </p>
               </div>
-              <button type="button" className="btn btn-secondary btn-sm" disabled={busy !== null || !data.profile} onClick={() => checkout(k.id)}>
+              <button type="button" className="btn btn-secondary btn-sm" disabled={busy !== null || !data.profile || !fits(k.price[currency])} title={fits(k.price[currency]) ? undefined : "Above the largest single payment we can take in rupees right now"} onClick={() => checkout(k.id)}>
                 {busy === k.id ? <Busy>Opening…</Busy> : "Buy"}
               </button>
             </div>

@@ -2,7 +2,7 @@ import { secureRoute, ok, fail } from "@/lib/security/route";
 import { LIMITS } from "@/lib/security/rateLimit";
 import { checkoutSchema, type CheckoutInput } from "@/lib/validation/schemas";
 import { billingProviders } from "@/lib/env";
-import { PROVIDER_CURRENCY, isPayWayOn, payWays, quote } from "@/lib/billing/catalog";
+import { PROVIDER_CURRENCY, isPayWayOn, payWays, quote, withinPaymentLimit } from "@/lib/billing/catalog";
 import { loadCatalog } from "@/lib/billing/catalogServer";
 import { createOrder, liveSubscription, loadProfile, loadPromo, startPayhere, startStripe } from "@/lib/billing/server";
 import { applyPromo } from "@/lib/billing/promo";
@@ -30,6 +30,11 @@ export const POST = secureRoute<undefined, undefined, CheckoutInput>(
       if (!applied.ok) return fail("validation_failed", applied.reason, { promoCode: applied.reason }, requestId);
       q = applied.quote;
       promo = { promoId: applied.quote.promoId, listAmountMinor: applied.quote.listAmountMinor, bonusCredits: applied.quote.bonusCredits };
+    }
+
+    // PayHere accounts can have a largest single payment (e.g. Rs 50,000): refuse bigger amounts up front.
+    if (!withinPaymentLimit(body.provider, currency, q.amountMinor, billingProviders().payhereMaxLkrMinor)) {
+      return fail("validation_failed", "This amount is above the largest single payment we can take in rupees right now. Choose the monthly plan instead.", undefined, requestId);
     }
 
     const profile = await loadProfile(membership.accountId);

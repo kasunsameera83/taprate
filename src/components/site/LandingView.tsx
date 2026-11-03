@@ -120,12 +120,14 @@ export function LandingView({
   promotions = [],
   preview = false,
   currency = "LKR",
+  payhereMaxLkrMinor = null,
 }: {
   c: Landing;
   catalog: Catalog;
   promotions?: PublicPromotion[];
   preview?: boolean;
   currency?: Currency;
+  payhereMaxLkrMinor?: number | null;
 }) {
   const greeting = promotions.find((p) => p.kind === "greeting");
   const popup = promotions.find((p) => p.kind === "popup");
@@ -261,7 +263,7 @@ export function LandingView({
               <h2 className="text-[32px] font-bold leading-tight sm:text-[40px]">{c.pricing.title}</h2>
               {c.pricing.subtitle && <p className="mt-3 max-w-2xl text-[17px] text-muted">{c.pricing.subtitle}</p>}
               <div className="mt-8">
-                <PricingTable catalog={catalog} defaultCurrency={currency} />
+                <PricingTable catalog={catalog} defaultCurrency={currency} maxLkrMinor={payhereMaxLkrMinor} />
               </div>
             </div>
           </section>

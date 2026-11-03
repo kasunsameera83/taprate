@@ -6,16 +6,19 @@ import { Badge, Segmented } from "@/components/ui";
 
 // Prices are shown in ONE currency, picked from where the visitor is: rupees in Sri Lanka, US dollars
 // everywhere else. (A Sri Lankan price shown to an overseas visitor looks out of place.)
-export function PricingTable({ catalog, defaultCurrency = "LKR" }: { catalog: Catalog; defaultCurrency?: Currency }) {
+export function PricingTable({ catalog, defaultCurrency = "LKR", maxLkrMinor = null }: { catalog: Catalog; defaultCurrency?: Currency; maxLkrMinor?: number | null }) {
   const currency = defaultCurrency;
   const [interval, setInterval_] = useState<BillingInterval>("month");
+  // Yearly prices above the largest single rupee payment we can take aren't offered.
+  const yearlyOk = !(currency === "LKR" && maxLkrMinor && catalog.plans.some((p) => p.active && p.price.LKR.year > maxLkrMinor));
+  const shown: BillingInterval = yearlyOk ? interval : "month";
   const plans = catalog.plans.filter((p) => p.active);
   const packs = catalog.packs.filter((p) => p.active);
   const free = catalog.free ?? { responses: 0, dailyEmails: 0 };
   return (
     <div>
       <div className="flex flex-wrap items-center gap-3">
-        <Segmented label="Billing period" value={interval} onChange={setInterval_} options={[{ value: "month", label: "Monthly" }, { value: "year", label: "Yearly" }]} />
+        {yearlyOk && <Segmented label="Billing period" value={interval} onChange={setInterval_} options={[{ value: "month", label: "Monthly" }, { value: "year", label: "Yearly" }]} />}
       </div>
       <div className={`mt-6 grid gap-4 ${free.responses > 0 ? "sm:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-3"}`}>
         {free.responses > 0 && (
@@ -47,8 +50,8 @@ export function PricingTable({ catalog, defaultCurrency = "LKR" }: { catalog: Ca
               {p.id === "growth" && <Badge tone="brand">Popular</Badge>}
             </p>
             <p className="mt-3 text-3xl font-bold">
-              {formatMoney(p.price[currency][interval], currency)}
-              <span className="text-base font-normal text-muted"> / {interval === "year" ? "year" : "month"}</span>
+              {formatMoney(p.price[currency][shown], currency)}
+              <span className="text-base font-normal text-muted"> / {shown === "year" ? "year" : "month"}</span>
             </p>
             <p className="mt-2 text-sm font-semibold">{p.monthlyResponses.toLocaleString("en")} responses a month</p>
             <p className="mt-1 text-sm text-muted">{p.blurb}</p>

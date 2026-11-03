@@ -25,6 +25,9 @@ const schema = z.object({
   PAYHERE_APP_SECRET: z.string().max(200).optional().or(z.literal("")),
   PAYHERE_SANDBOX: z.enum(["true", "false"]).default("true"),
   PAYHERE_USD_ENABLED: z.enum(["true", "false", ""]).optional(),
+  // Your PayHere account's largest single payment in rupees (e.g. 50000). Bigger amounts (like yearly plans)
+  // are then not offered with PayHere in rupees. Leave empty for no limit.
+  PAYHERE_MAX_LKR: z.string().regex(/^\d{1,9}$/, "PAYHERE_MAX_LKR must be a whole number of rupees").optional().or(z.literal("")),
   STRIPE_SECRET_KEY: z.string().regex(/^(sk|rk)_(test|live)_[A-Za-z0-9]+$/, "STRIPE_SECRET_KEY must start with sk_test_ or sk_live_").optional().or(z.literal("")),
   // AI summaries (optional). Model defaults to the fast, low-cost Haiku.
   ANTHROPIC_API_KEY: z.string().regex(/^sk-ant-[A-Za-z0-9_-]+$/, "ANTHROPIC_API_KEY must start with sk-ant-").optional().or(z.literal("")),
@@ -66,7 +69,7 @@ export function env(): ServerEnv {
 }
 
 /** Which payment providers are fully configured. */
-export function billingProviders(): { payhere: boolean; stripe: boolean; payhereUsd: boolean } {
+export function billingProviders(): { payhere: boolean; stripe: boolean; payhereUsd: boolean; payhereMaxLkrMinor: number | null } {
   const e = env();
   const payhere = Boolean(e.PAYHERE_MERCHANT_ID && e.PAYHERE_MERCHANT_SECRET);
   return {
@@ -74,5 +77,6 @@ export function billingProviders(): { payhere: boolean; stripe: boolean; payhere
     stripe: Boolean(e.STRIPE_SECRET_KEY && e.STRIPE_WEBHOOK_SECRET),
     // Only once PayHere has switched on USD for your merchant account (otherwise their checkout refuses it).
     payhereUsd: payhere && e.PAYHERE_USD_ENABLED === "true",
+    payhereMaxLkrMinor: e.PAYHERE_MAX_LKR ? Number(e.PAYHERE_MAX_LKR) * 100 : null,
   };
 }

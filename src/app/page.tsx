@@ -3,6 +3,7 @@ import { loadLanding, loadLivePromotions } from "@/lib/site/server";
 import { loadCatalog } from "@/lib/billing/catalogServer";
 import { LandingView } from "@/components/site/LandingView";
 import { preferredCurrency } from "@/lib/site/geo";
+import { billingProviders } from "@/lib/env";
 import { JsonLd } from "@/components/JsonLd";
 import { applyFree } from "@/lib/site/content";
 import { faqPage, organization, siteUrl, softwareApp, website } from "@/lib/site/structuredData";
@@ -27,7 +28,7 @@ export default async function Home() {
   return (
     <>
       <JsonLd data={[organization(site), website(site), softwareApp(site, c.seo.description, catalog, currency), ...(c.faq.length ? [faqPage(c.faq)] : [])]} />
-      <LandingView c={c} catalog={catalog} promotions={promotions} currency={currency} />
+      <LandingView c={c} catalog={catalog} promotions={promotions} currency={currency} payhereMaxLkrMinor={billingProviders().payhereMaxLkrMinor} />
     </>
   );
 }

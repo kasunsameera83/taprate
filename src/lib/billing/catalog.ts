@@ -108,6 +108,12 @@ export function quote(catalog: Catalog, item: string, interval: BillingInterval 
   return null;
 }
 
+/** Is this amount within the payment provider's single-payment limit? (PayHere in rupees may have one.) */
+export function withinPaymentLimit(provider: Provider, currency: Currency, amountMinor: number, payhereMaxLkrMinor: number | null | undefined): boolean {
+  if (provider !== "payhere" || currency !== "LKR" || !payhereMaxLkrMinor) return true;
+  return amountMinor <= payhereMaxLkrMinor;
+}
+
 /** "1490.00" style amount (PayHere wants 2 decimals). */
 export function majorAmount(minor: number): string {
   return (minor / 100).toFixed(2);
