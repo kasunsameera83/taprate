@@ -76,7 +76,7 @@ function Meta({ date, minutes }: { date: string; minutes: number }) {
 function Cover({ url, title, big = false }: { url: string | null; title: string; big?: boolean }) {
   return url ? (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={url} alt="" className={`w-full object-cover ${big ? "h-full min-h-60" : "aspect-[1200/630]"}`} loading="lazy" />
+    <img src={url} alt={`Cover picture for “${title}”`} className={`w-full object-cover ${big ? "h-full min-h-60" : "aspect-[1200/630]"}`} loading="lazy" />
   ) : (
     <div aria-hidden className={`relative flex items-center justify-center overflow-hidden bg-[linear-gradient(135deg,var(--color-brand-from),var(--color-brand-to))] ${big ? "min-h-60" : "aspect-[1200/630]"}`}>
       <span className="px-6 text-center font-display text-[22px] leading-tight text-white/90 sm:text-[26px]">{title}</span>

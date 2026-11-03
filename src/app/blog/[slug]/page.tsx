@@ -67,7 +67,7 @@ export default async function BlogPost({ params }: Props) {
           {post.coverUrl && (
             <div className="mx-auto mt-8 max-w-4xl px-5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={post.coverUrl} alt="" className="aspect-[1200/630] w-full rounded-[var(--radius-hero)] object-cover" />
+              <img src={post.coverUrl} alt={`Cover picture for “${post.title}”`} className="aspect-[1200/630] w-full rounded-[var(--radius-hero)] object-cover" />
             </div>
           )}
           <div className="mx-auto mt-10 max-w-3xl px-5">
