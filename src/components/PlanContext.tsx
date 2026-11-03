@@ -18,9 +18,14 @@ function UpgradeBox({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-panel)] border border-brand/30 bg-brand-soft px-4 py-3 text-sm">
       <p className="min-w-0 flex-1 text-ink">{children}</p>
-      <Link href="/app/settings/billing" className="btn btn-primary btn-sm">
-        See plans
-      </Link>
+      <span className="flex flex-wrap items-center gap-2">
+        <Link href="/app/upgrade" className="btn btn-ghost btn-sm">
+          What you get
+        </Link>
+        <Link href="/app/settings/billing" className="btn btn-primary btn-sm">
+          See plans
+        </Link>
+      </span>
     </div>
   );
 }

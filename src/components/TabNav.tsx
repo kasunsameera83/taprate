@@ -2,10 +2,11 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useId } from "react";
+import { IconLock } from "@/components/icons";
 
 // Section tabs. On phones they become a dropdown (a long row of tabs that scrolls sideways is easy to
 // miss); from small tablets up they're normal tabs.
-export function TabNav({ label, tabs, exactRoot }: { label: string; tabs: Array<{ href: string; label: string }>; exactRoot?: string }) {
+export function TabNav({ label, tabs, exactRoot }: { label: string; tabs: Array<{ href: string; label: string; locked?: boolean }>; exactRoot?: string }) {
   const path = usePathname();
   const router = useRouter();
   const id = useId();
@@ -20,7 +21,7 @@ export function TabNav({ label, tabs, exactRoot }: { label: string; tabs: Array<
         <select id={id} className="input" value={current?.href} onChange={(e) => router.push(e.target.value)}>
           {tabs.map((t) => (
             <option key={t.href} value={t.href}>
-              {t.label}
+              {t.locked ? `${t.label} (paid plans)` : t.label}
             </option>
           ))}
         </select>
@@ -41,6 +42,12 @@ export function TabNav({ label, tabs, exactRoot }: { label: string; tabs: Array<
               className={`flex min-h-11 shrink-0 items-center border-b-2 px-3 text-sm font-semibold ${active ? "border-brand text-ink" : "border-transparent text-muted hover:text-ink"}`}
             >
               {t.label}
+              {t.locked && (
+                <span className="ml-1.5 text-faint" title="Paid plans">
+                  <IconLock className="h-3.5 w-3.5" />
+                  <span className="sr-only"> (paid plans)</span>
+                </span>
+              )}
             </Link>
           );
         })}

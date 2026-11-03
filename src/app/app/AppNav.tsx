@@ -4,15 +4,17 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "@/lib/client/api";
 import { ROLE_LABEL, type Role } from "@/lib/security/authz";
-import { IconDashboard, IconFollowUp, IconLogout, IconResponses, IconSettings, IconSparkle, IconSurveys, IconTrophy, Logo } from "@/components/icons";
+import { IconDashboard, IconFollowUp, IconLock, IconLogout, IconResponses, IconSettings, IconSparkle, IconSurveys, IconTrophy, Logo } from "@/components/icons";
 import { NotificationBell } from "@/components/Notifications";
+import { creditLevel, leftPercent, planLabel } from "@/lib/billing/credits";
+import { isPaidPlan, planAllows, type Feature } from "@/lib/billing/features";
 
-const NAV: Array<{ href: string; label: string; icon: (p: { className?: string }) => React.ReactElement; exact?: boolean; hideFor?: Role[] }> = [
+const NAV: Array<{ href: string; label: string; icon: (p: { className?: string }) => React.ReactElement; exact?: boolean; hideFor?: Role[]; feature?: Feature }> = [
   { href: "/app", label: "Dashboard", icon: IconDashboard, exact: true },
   { href: "/app/surveys", label: "Surveys", icon: IconSurveys },
   { href: "/app/responses", label: "Responses", icon: IconResponses },
   { href: "/app/follow-ups", label: "Follow-ups", icon: IconFollowUp },
-  { href: "/app/insights", label: "Insights", icon: IconSparkle, hideFor: ["agent"] as Role[] },
+  { href: "/app/insights", label: "Insights", icon: IconSparkle, hideFor: ["agent"] as Role[], feature: "ai" },
   { href: "/app/leaderboard", label: "Leaderboard", icon: IconTrophy },
   { href: "/app/settings", label: "Settings", icon: IconSettings },
 ];
@@ -20,8 +22,6 @@ const NAV: Array<{ href: string; label: string; icon: (p: { className?: string }
 // On phones the first four are tabs at the bottom; the rest live under "More".
 const PRIMARY = NAV.slice(0, 4);
 const MORE = NAV.slice(4);
-
-const TRIAL_CREDITS = 50;
 
 type Props = {
   isPlatformAdmin?: boolean;
@@ -31,6 +31,8 @@ type Props = {
   role: Role;
   plan: string;
   credits: number;
+  /** Responses per period (plan or free amount), for the bar. */
+  allowance: number;
   accounts: Array<{ id: string; name: string; role: Role }>;
 };
 
@@ -81,11 +83,16 @@ function AccountSwitcher({ accountId, accountName, role, accounts, compact = fal
   );
 }
 
-export function AppNav({ isPlatformAdmin = false, email, accountId, accountName, role, plan, credits, accounts }: Props) {
+export function AppNav({ isPlatformAdmin = false, email, accountId, accountName, role, plan, credits, allowance, accounts }: Props) {
   const path = usePathname();
   const [signingOut, setSigningOut] = useState(false);
   const isActive = (href: string, exact?: boolean) => (exact ? path === href : path === href || path.startsWith(`${href}/`));
-  const low = credits <= 10;
+  const level = creditLevel(credits, allowance);
+  const low = level > 0;
+  const paid = isPaidPlan(plan);
+  // Bar and number: brand while fine, amber when running low, red when out.
+  const tone = level === 2 ? { text: "text-neg-text", bar: "bg-neg-fill", chip: "bg-neg-soft text-neg-text" } : level === 1 ? { text: "text-neu-text", bar: "bg-neu-fill", chip: "bg-neu-soft text-neu-text" } : { text: "text-ink", bar: "bg-brand", chip: "bg-canvas text-ink" };
+  const cta = paid ? (low ? "Top up responses" : "Plans & billing") : "Upgrade";
   const showCredits = role === "owner" || role === "admin";
 
   async function signOut() {
@@ -109,7 +116,7 @@ export function AppNav({ isPlatformAdmin = false, email, accountId, accountName,
           <NotificationBell align="left" />
         </div>
         <nav aria-label="Main" className="mt-8 flex flex-col gap-1">
-          {NAV.filter((n) => !n.hideFor?.includes(role)).map(({ href, label, icon: Icon, exact }) => {
+          {NAV.filter((n) => !n.hideFor?.includes(role)).map(({ href, label, icon: Icon, exact, feature }) => {
             const active = isActive(href, exact);
             return (
               <Link
@@ -122,6 +129,7 @@ export function AppNav({ isPlatformAdmin = false, email, accountId, accountName,
               >
                 <Icon />
                 {label}
+                {feature && !planAllows(plan, feature) && <LockTag />}
               </Link>
             );
           })}
@@ -133,15 +141,25 @@ export function AppNav({ isPlatformAdmin = false, email, accountId, accountName,
             {showCredits && (
               <div>
                 <div className="flex items-baseline justify-between text-[13px]">
-                  <span className="capitalize text-muted">{plan} plan</span>
-                  <span className={`tabular font-semibold ${low ? "text-neg-text" : "text-ink"}`}>{credits} left</span>
+                  <span className="text-muted">{planLabel(plan)} plan</span>
+                  <span className={`tabular font-semibold ${tone.text}`}>{credits.toLocaleString("en")} left</span>
                 </div>
                 <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#f1f5f9]" aria-hidden>
-                  <div className={`h-full rounded-full ${low ? "bg-neg-fill" : "bg-brand"}`} style={{ width: `${Math.min(100, (credits / TRIAL_CREDITS) * 100)}%` }} />
+                  <div className={`h-full rounded-full ${tone.bar}`} style={{ width: `${leftPercent(credits, allowance)}%` }} />
                 </div>
-                {role === "owner" && (
-                  <Link href="/app/settings/billing" className="mt-2 inline-block text-[13px] font-semibold text-brand hover:underline">
-                    {low ? "Top up responses" : "Plans & billing"}
+                {role === "owner" &&
+                  (paid && !low ? (
+                    <Link href="/app/settings/billing" className="mt-2 inline-block text-[13px] font-semibold text-brand hover:underline">
+                      {cta}
+                    </Link>
+                  ) : (
+                    <Link href="/app/settings/billing" className="btn btn-primary btn-sm mt-3 w-full">
+                      {cta}
+                    </Link>
+                  ))}
+                {!paid && (
+                  <Link href="/app/upgrade" className="mt-1.5 block text-center text-[12px] font-semibold text-muted hover:text-brand hover:underline">
+                    See what paid plans include
                   </Link>
                 )}
               </div>
@@ -176,13 +194,13 @@ export function AppNav({ isPlatformAdmin = false, email, accountId, accountName,
               (role === "owner" ? (
                 <Link
                   href="/app/settings/billing"
-                  className={`tabular shrink-0 rounded-full px-2.5 py-1 text-[13px] font-semibold ${low ? "bg-neg-soft text-neg-text" : "bg-canvas text-ink"}`}
+                  className={`tabular shrink-0 rounded-full px-2.5 py-1 text-[13px] font-semibold ${tone.chip}`}
                   aria-label={`${credits} responses left. Plans and billing`}
                 >
                   {credits} left
                 </Link>
               ) : (
-                <span className={`tabular shrink-0 rounded-full px-2.5 py-1 text-[13px] font-semibold ${low ? "bg-neg-soft text-neg-text" : "bg-canvas text-ink"}`}>{credits} left</span>
+                <span className={`tabular shrink-0 rounded-full px-2.5 py-1 text-[13px] font-semibold ${tone.chip}`}>{credits} left</span>
               ))}
           </div>
         </div>
@@ -193,7 +211,7 @@ export function AppNav({ isPlatformAdmin = false, email, accountId, accountName,
         more={
           <div className="space-y-4">
             <nav aria-label="More" className="grid gap-1">
-              {MORE.filter((n) => !n.hideFor?.includes(role)).map(({ href, label, icon: Icon, exact }) => {
+              {MORE.filter((n) => !n.hideFor?.includes(role)).map(({ href, label, icon: Icon, exact, feature }) => {
                 const active = isActive(href, exact);
                 return (
                   <Link
@@ -204,6 +222,7 @@ export function AppNav({ isPlatformAdmin = false, email, accountId, accountName,
                   >
                     <Icon />
                     {label}
+                    {feature && !planAllows(plan, feature) && <LockTag />}
                   </Link>
                 );
               })}
@@ -224,8 +243,18 @@ export function AppNav({ isPlatformAdmin = false, email, accountId, accountName,
               <AccountSwitcher accountId={accountId} accountName={accountName} role={role} accounts={accounts} />
               {showCredits && (
                 <p className="mt-2 text-[13px] text-muted">
-                  <span className="capitalize">{plan}</span> plan · <span className={`font-semibold ${low ? "text-neg-text" : "text-ink"}`}>{credits} responses left</span>
+                  {planLabel(plan)} plan · <span className={`font-semibold ${tone.text}`}>{credits} responses left</span>
                 </p>
+              )}
+              {role === "owner" && (!paid || low) && (
+                <Link href="/app/settings/billing" className="btn btn-primary btn-sm mt-3 w-full">
+                  {cta}
+                </Link>
+              )}
+              {!paid && (
+                <Link href="/app/upgrade" className="mt-2 block text-center text-[13px] font-semibold text-muted hover:text-brand hover:underline">
+                  See what paid plans include
+                </Link>
               )}
             </div>
             <div className="flex items-center justify-between gap-2">
@@ -241,6 +270,15 @@ export function AppNav({ isPlatformAdmin = false, email, accountId, accountName,
         }
       />
     </>
+  );
+}
+
+function LockTag() {
+  return (
+    <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-canvas px-2 py-0.5 text-[11px] font-semibold text-faint">
+      <IconLock className="h-3 w-3" />
+      Paid
+    </span>
   );
 }
 
