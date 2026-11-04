@@ -67,7 +67,7 @@ export function applyPromo(
   const summary =
     promo.kind === "credits"
       ? `+${bonus.toLocaleString("en")} bonus responses`
-      : q.kind === "plan"
+      : q.kind === "plan" && !q.months
         ? `${promo.kind === "percent" ? `${promo.percentOff}%` : "Discount"} off every ${q.interval === "year" ? "year" : "month"} of this plan`
         : `${promo.kind === "percent" ? `${promo.percentOff}%` : "Discount"} off`;
   return {

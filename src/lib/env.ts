@@ -25,6 +25,9 @@ const schema = z.object({
   PAYHERE_APP_SECRET: z.string().max(200).optional().or(z.literal("")),
   PAYHERE_SANDBOX: z.enum(["true", "false"]).default("true"),
   PAYHERE_USD_ENABLED: z.enum(["true", "false", ""]).optional(),
+  // "true" once PayHere has switched on recurring payments for your account (PayHere Plus/Premium).
+  // Until then plans are sold as one-off payments for 1 or 3 months ("prepaid").
+  PAYHERE_RECURRING: z.enum(["true", "false", ""]).optional(),
   // Your PayHere account's largest single payment in rupees (e.g. 50000). Bigger amounts (like yearly plans)
   // are then not offered with PayHere in rupees. Leave empty for no limit.
   PAYHERE_MAX_LKR: z.string().regex(/^\d{1,9}$/, "PAYHERE_MAX_LKR must be a whole number of rupees").optional().or(z.literal("")),
@@ -69,7 +72,7 @@ export function env(): ServerEnv {
 }
 
 /** Which payment providers are fully configured. */
-export function billingProviders(): { payhere: boolean; stripe: boolean; payhereUsd: boolean; payhereMaxLkrMinor: number | null } {
+export function billingProviders(): { payhere: boolean; stripe: boolean; payhereUsd: boolean; payhereMaxLkrMinor: number | null; payhereRecurring: boolean } {
   const e = env();
   const payhere = Boolean(e.PAYHERE_MERCHANT_ID && e.PAYHERE_MERCHANT_SECRET);
   return {
@@ -78,5 +81,6 @@ export function billingProviders(): { payhere: boolean; stripe: boolean; payhere
     // Only once PayHere has switched on USD for your merchant account (otherwise their checkout refuses it).
     payhereUsd: payhere && e.PAYHERE_USD_ENABLED === "true",
     payhereMaxLkrMinor: e.PAYHERE_MAX_LKR ? Number(e.PAYHERE_MAX_LKR) * 100 : null,
+    payhereRecurring: e.PAYHERE_RECURRING === "true",
   };
 }

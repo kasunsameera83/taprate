@@ -13,7 +13,7 @@ import { PageLoader, Busy } from "@/components/FaceLoader";
 type Summary = {
   plan: string;
   credits: number;
-  providers: { payhere: boolean; stripe: boolean; payhereUsd: boolean; payhereMaxLkrMinor: number | null };
+  providers: { payhere: boolean; stripe: boolean; payhereUsd: boolean; payhereMaxLkrMinor: number | null; payhereRecurring: boolean };
   payWays: PayWay[];
   catalog: Catalog;
   suggestedProvider: Provider;
@@ -26,6 +26,8 @@ type Summary = {
     status: "active" | "past_due" | "cancelled";
     cancelAtPeriodEnd: boolean;
     currentPeriodEnd: string | null;
+    /** Paid up front for a set number of months (one-off payment), doesn't renew by itself. */
+    prepaid: boolean;
   } | null;
   profile: Record<"firstName" | "lastName" | "email" | "phone" | "address" | "city" | "country" | "company" | "taxId", string> | null;
   hasStripeCustomer: boolean;
@@ -107,7 +109,16 @@ function CurrentPlan({ data, onChanged }: { data: Summary; onChanged: () => void
           <p className="mt-1 text-sm">
             <Badge tone={data.credits > 20 ? "brand" : "neg"}>{data.credits.toLocaleString()} responses left</Badge>
           </p>
-          {s && (
+          {s?.prepaid && (
+            <p className="mt-2 text-sm text-muted">
+              Paid with PayHere{s.currentPeriodEnd && <>, active until <strong className="text-ink">{fmtDate(s.currentPeriodEnd)}</strong></>}. It doesn&rsquo;t renew by itself:{" "}
+              <a href="#plans" className="link">
+                renew below
+              </a>{" "}
+              any time and the new months are added on to the end.
+            </p>
+          )}
+          {s && !s.prepaid && (
             <p className="mt-2 text-sm text-muted">
               {formatMoney(s.amountMinor, s.currency)} / {s.interval === "year" ? "year" : "month"} via {s.provider === "payhere" ? "PayHere" : "Stripe"}
               {s.status === "past_due" && <span className="font-semibold text-neg-text">, last payment failed: the provider will retry</span>}
@@ -295,21 +306,26 @@ function Buy({ data }: { data: Summary }) {
   const [error, setError] = useState("");
   const currency: Currency = way.currency;
   const s = data.subscription;
-  const hasLivePlan = Boolean(s && s.status !== "cancelled");
+  // PayHere without recurring payments: plans are paid for 1 or 3 months at a time (one-off payments).
+  const prepaid = way.provider === "payhere" && !data.providers.payhereRecurring;
+  const [months, setMonths] = useState<1 | 3>(1);
+  const livePrepaid = Boolean(s && s.prepaid && s.status === "active");
+  // A recurring plan blocks choosing another; a prepaid plan can be renewed or switched any time.
+  const hasLivePlan = Boolean(s && s.status !== "cancelled" && !s.prepaid);
   const [codeInput, setCodeInput] = useState("");
   const [promo, setPromo] = useState<{ code: string; summary: string; prices: Record<string, { amountMinor: number; listAmountMinor: number; bonusCredits: number }> } | null>(null);
   const [promoError, setPromoError] = useState("");
   const [promoBusy, setPromoBusy] = useState(false);
 
   // Prices change with currency and period, so a code is re-checked whenever those change.
-  async function applyCode(code: string, w = way, per = interval) {
+  async function applyCode(code: string, w = way, per = interval, m = months) {
     const c = code.trim().toUpperCase();
     if (!/^[A-Z0-9_-]{4,30}$/.test(c)) return setPromoError("That code isn't valid.");
     setPromoError("");
     setPromoBusy(true);
     const r = await api<{ code: string; summary: string; prices: Record<string, { amountMinor: number; listAmountMinor: number; bonusCredits: number }> }>("/api/billing/promo", {
       method: "POST",
-      body: { code: c, provider: w.provider, currency: w.currency, interval: per },
+      body: { code: c, provider: w.provider, currency: w.currency, interval: per, ...(w.provider === "payhere" && !data.providers.payhereRecurring ? { months: m } : {}) },
     });
     setPromoBusy(false);
     if (r.ok) setPromo(r.data);
@@ -324,7 +340,16 @@ function Buy({ data }: { data: Summary }) {
   };
   // Amounts above PayHere's single-payment limit (e.g. yearly plans in rupees) aren't offered.
   const fits = (amountMinor: number) => withinPaymentLimit(way.provider, way.currency, amountMinor, data.providers.payhereMaxLkrMinor);
-  const yearlyOk = data.catalog.plans.some((p) => p.active && fits(p.price[way.currency].year));
+  const yearlyOk = !prepaid && data.catalog.plans.some((p) => p.active && fits(p.price[way.currency].year));
+  const planList = (p: Catalog["plans"][number]) => (prepaid ? p.price[currency].month * months : p.price[currency][interval]);
+  const threeOk = data.catalog.plans.some((p) => p.active && fits(p.price[way.currency].month * 3));
+  useEffect(() => {
+    if (!threeOk && months === 3) setMonths(1);
+  }, [threeOk, months]);
+  const changeMonths = (m: 1 | 3) => {
+    setMonths(m);
+    if (promo) applyCode(promo.code, way, "month", m);
+  };
   useEffect(() => {
     if (!yearlyOk && interval === "year") setBillingInterval("month");
   }, [yearlyOk, interval]);
@@ -354,7 +379,13 @@ function Buy({ data }: { data: Summary }) {
     setBusy(item);
     const r = await api<{ type: "payhere"; url: string; fields: Record<string, string> } | { type: "redirect"; url: string }>("/api/billing/checkout", {
       method: "POST",
-      body: { item, provider, currency, ...(item.startsWith("pack_") ? {} : { interval }), ...(promo?.prices[item] ? { promoCode: promo.code } : {}) },
+      body: {
+        item,
+        provider,
+        currency,
+        ...(item.startsWith("pack_") ? {} : prepaid ? { interval: "month", months } : { interval }),
+        ...(promo?.prices[item] ? { promoCode: promo.code } : {}),
+      },
     });
     if (!r.ok) {
       setBusy(null);
@@ -383,7 +414,28 @@ function Buy({ data }: { data: Summary }) {
 
   return (
     <>
-      <SettingsSection title="Plans" description={yearlyOk ? "Cancel any time. Yearly plans cost the same as 10 months." : "Cancel any time."}>
+      <SettingsSection
+        title="Plans"
+        description={
+          prepaid
+            ? "Pay for 1 or 3 months at a time. Nothing is charged automatically: we remind you before your plan ends."
+            : yearlyOk
+              ? "Cancel any time. Yearly plans cost the same as 10 months."
+              : "Cancel any time."
+        }
+      >
+        <span id="plans" className="block scroll-mt-24" aria-hidden />
+        {prepaid ? (
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <Segmented
+              label="How long to pay for"
+              value={String(months)}
+              onChange={(v) => changeMonths(v === "3" ? 3 : 1)}
+              options={threeOk ? [{ value: "1", label: "1 month" }, { value: "3", label: "3 months" }] : [{ value: "1", label: "1 month" }]}
+            />
+            {livePrepaid && <span className="text-[13px] text-muted">Renewing the same plan adds on to the end of your current one. A different plan starts today.</span>}
+          </div>
+        ) : (
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <Segmented
             label="Billing period"
@@ -400,6 +452,7 @@ function Buy({ data }: { data: Summary }) {
           />
           {!yearlyOk && <span className="text-[13px] text-muted">Yearly plans aren&rsquo;t available in rupees yet.</span>}
         </div>
+        )}
         <p className="mb-4 text-[13px] text-muted">
           {currency === "LKR" ? "Prices in Sri Lankan rupees, paid with PayHere." : provider === "payhere" ? "Prices in US dollars, paid by card with PayHere." : "Prices in US dollars, paid by card with Stripe."}{" "}
           <Link href="/refund-policy" target="_blank" className="link">
@@ -475,6 +528,8 @@ function Buy({ data }: { data: Summary }) {
         <div className="grid gap-3 sm:grid-cols-3">
           {data.catalog.plans.filter((p) => p.active).map((p) => {
             const current = s?.plan === p.id && hasLivePlan;
+            const renew = livePrepaid && s?.plan === p.id;
+            const list = planList(p);
             return (
               <div key={p.id} className={`flex flex-col rounded-[12px] border p-4 ${p.id === "growth" ? "border-brand" : "border-line"}`}>
                 <p className="flex items-center justify-between font-semibold">
@@ -482,7 +537,7 @@ function Buy({ data }: { data: Summary }) {
                   {p.id === "growth" && <Badge tone="brand">Popular</Badge>}
                 </p>
                 <p className="mt-2 text-2xl font-bold">
-                  <Price item={p.id} list={p.price[currency][interval]} per={interval === "year" ? "year" : "month"} />
+                  <Price item={p.id} list={list} per={prepaid ? (months === 3 ? "3 months" : "month") : interval === "year" ? "year" : "month"} />
                 </p>
                 <p className="mt-1 text-sm">{p.monthlyResponses.toLocaleString()} responses a month</p>
                 <p className="text-[13px] text-muted">We send up to {SEND_LIMITS[p.id].toLocaleString()} survey emails a day for you (unlimited from your own emails &amp; helpdesk)</p>
@@ -490,10 +545,22 @@ function Buy({ data }: { data: Summary }) {
                 <button
                   type="button"
                   className={`btn mt-4 ${p.id === "growth" ? "btn-primary" : "btn-secondary"}`}
-                  disabled={busy !== null || hasLivePlan || !data.profile || !fits(p.price[currency][interval])}
-                  onClick={() => checkout(p.id)}
+                  disabled={busy !== null || hasLivePlan || !data.profile || !fits(list)}
+                  title={fits(list) ? undefined : "Above the largest single payment we can take in rupees right now"}
+                  onClick={async () => {
+                    if (livePrepaid && !renew) {
+                      const ok = await confirmDialog({
+                        title: `Switch to ${p.name}?`,
+                        body: `${p.name} starts today and your current plan ends now. Responses you have left are kept, and ${p.name}'s responses are added.`,
+                        confirmLabel: `Switch to ${p.name}`,
+                        cancelLabel: "Keep my plan",
+                      });
+                      if (!ok) return;
+                    }
+                    checkout(p.id);
+                  }}
                 >
-                  {current ? "Current plan" : busy === p.id ? <Busy>Opening…</Busy> : `Choose ${p.name}`}
+                  {current ? "Current plan" : busy === p.id ? <Busy>Opening…</Busy> : renew ? `Renew ${p.name}` : livePrepaid ? `Switch to ${p.name}` : `Choose ${p.name}`}
                 </button>
               </div>
             );

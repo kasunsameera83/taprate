@@ -15,7 +15,7 @@ export const GET = secureRoute(
       supabase.from("accounts").select("plan, credit_balance").eq("id", acc).maybeSingle(),
       supabase
         .from("subscriptions")
-        .select("id, provider, plan, billing_interval, amount_minor, currency, status, cancel_at_period_end, current_period_end")
+        .select("id, provider, plan, billing_interval, amount_minor, currency, status, cancel_at_period_end, current_period_end, prepaid")
         .eq("account_id", acc)
         .in("status", ["active", "past_due", "cancelled"])
         .order("created_at", { ascending: false })
@@ -48,6 +48,7 @@ export const GET = secureRoute(
             status: s.status,
             cancelAtPeriodEnd: s.cancel_at_period_end,
             currentPeriodEnd: s.current_period_end,
+            prepaid: Boolean(s.prepaid),
           }
         : null,
       profile: p

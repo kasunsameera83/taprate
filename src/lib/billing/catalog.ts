@@ -79,7 +79,14 @@ export type Quote = {
   amountMinor: number;
   currency: Currency;
   description: string;
+  /** Prepaid plans only: months paid for up front in one payment (no automatic renewal). */
+  months?: number;
 };
+
+/** Months a prepaid plan can be bought for in one payment. */
+export const PREPAID_MONTHS = [1, 3] as const;
+export type PrepaidMonths = (typeof PREPAID_MONTHS)[number];
+export const isPrepaidMonths = (v: unknown): v is PrepaidMonths => (PREPAID_MONTHS as readonly unknown[]).includes(v);
 
 /** Server-side price lookup. Returns null for anything that isn't in the catalog or isn't on sale. */
 export function quote(catalog: Catalog, item: string, interval: BillingInterval | null | undefined, provider: Provider, currency: Currency = PROVIDER_CURRENCY[provider]): Quote | null {
@@ -106,6 +113,22 @@ export function quote(catalog: Catalog, item: string, interval: BillingInterval 
     return { kind: "topup", item, interval: null, credits: k.responses, amountMinor: k.price[currency], currency, description: `TapTruly ${k.responses.toLocaleString("en")} extra responses` };
   }
   return null;
+}
+
+/** A plan paid for N months up front in one payment: N x the monthly price and N x the monthly responses. */
+export function prepaidQuote(catalog: Catalog, item: string, months: unknown, provider: Provider, currency: Currency = PROVIDER_CURRENCY[provider]): Quote | null {
+  if (!isPlanId(item) || !isPrepaidMonths(months)) return null;
+  const base = quote(catalog, item, "month", provider, currency);
+  if (!base) return null;
+  const p = catalog.plans.find((x) => x.id === item)!;
+  const credits = base.credits * months;
+  return {
+    ...base,
+    credits,
+    amountMinor: base.amountMinor * months,
+    months,
+    description: `TapTruly ${p.name} (${months} month${months > 1 ? "s" : ""}, ${credits.toLocaleString("en")} responses)`,
+  };
 }
 
 /** Is this amount within the payment provider's single-payment limit? (PayHere in rupees may have one.) */

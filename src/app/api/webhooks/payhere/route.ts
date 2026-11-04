@@ -47,7 +47,8 @@ export async function POST(req: NextRequest) {
   const type = n.messageType ?? "";
 
   if (n.statusCode === 2 && type !== "RECURRING_STOPPED" && type !== "RECURRING_COMPLETE") {
-    if (!n.paymentId || (order.kind === "plan" && !n.subscriptionId)) outcome = "rejected: missing ids";
+    const recurringPlan = order.kind === "plan" && !order.prepaid_months;
+    if (!n.paymentId || (recurringPlan && !n.subscriptionId)) outcome = "rejected: missing ids";
     else {
       const { data, error } = await db.rpc("billing_record_payment", {
         p_order: order.id,
@@ -55,8 +56,9 @@ export async function POST(req: NextRequest) {
         p_payment_id: n.paymentId,
         p_amount_minor: n.amountMinor,
         p_currency: n.currency,
-        p_sub_ref: order.kind === "plan" ? n.subscriptionId : null,
-        p_period_end: n.nextDate ? `${n.nextDate}T23:59:59Z` : null,
+        // Prepaid plans: no subscription, and the database works out the period itself.
+        p_sub_ref: recurringPlan ? n.subscriptionId : null,
+        p_period_end: recurringPlan && n.nextDate ? `${n.nextDate}T23:59:59Z` : null,
       });
       if (error) {
         // A mismatch is permanent: record it and stop. Anything else may be temporary: ask PayHere to retry.

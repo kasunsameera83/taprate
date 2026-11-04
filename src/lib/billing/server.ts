@@ -34,7 +34,7 @@ export async function loadProfile(accountId: string): Promise<ProfileRow | null>
 export async function liveSubscription(accountId: string) {
   const { data } = await adminClient()
     .from("subscriptions")
-    .select("id, provider, provider_sub_id, plan, billing_interval, amount_minor, currency, status, cancel_at_period_end, current_period_end, created_at")
+    .select("id, provider, provider_sub_id, plan, billing_interval, amount_minor, currency, status, cancel_at_period_end, current_period_end, created_at, prepaid")
     .eq("account_id", accountId)
     .in("status", ["active", "past_due", "cancelled"])
     .order("created_at", { ascending: false })
@@ -65,6 +65,7 @@ export async function createOrder(
       promo_id: promo?.promoId ?? null,
       list_amount_minor: promo?.listAmountMinor ?? null,
       bonus_credits: promo?.bonusCredits ?? 0,
+      prepaid_months: q.kind === "plan" && q.months ? q.months : null,
     })
     .select("id")
     .single();
@@ -94,7 +95,8 @@ export async function startPayhere(orderId: string, q: Quote, profile: ProfileRo
       country: profile.country,
     },
     appOrigin: e.appOrigin,
-    recurrence: q.kind === "plan" ? (q.interval === "year" ? "1 Year" : "1 Month") : undefined,
+    // Prepaid plans are a normal one-off payment; only recurring plans ask PayHere to charge again.
+    recurrence: q.kind === "plan" && !q.months ? (q.interval === "year" ? "1 Year" : "1 Month") : undefined,
   });
   return { type: "payhere", url, fields };
 }
@@ -153,7 +155,7 @@ export async function eventSeen(provider: Provider, eventId: string): Promise<bo
 
 export async function orderById(orderId: string) {
   if (!/^[0-9a-f-]{36}$/.test(orderId)) return null;
-  const { data } = await adminClient().from("billing_orders").select("id, account_id, provider, kind, item, amount_minor, currency, status").eq("id", orderId).maybeSingle();
+  const { data } = await adminClient().from("billing_orders").select("id, account_id, provider, kind, item, amount_minor, currency, status, prepaid_months").eq("id", orderId).maybeSingle();
   return data;
 }
 

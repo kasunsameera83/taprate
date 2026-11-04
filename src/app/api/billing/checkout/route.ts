@@ -2,7 +2,7 @@ import { secureRoute, ok, fail } from "@/lib/security/route";
 import { LIMITS } from "@/lib/security/rateLimit";
 import { checkoutSchema, type CheckoutInput } from "@/lib/validation/schemas";
 import { billingProviders } from "@/lib/env";
-import { PROVIDER_CURRENCY, isPayWayOn, payWays, quote, withinPaymentLimit } from "@/lib/billing/catalog";
+import { PROVIDER_CURRENCY, isPayWayOn, payWays, prepaidQuote, quote, withinPaymentLimit } from "@/lib/billing/catalog";
 import { loadCatalog } from "@/lib/billing/catalogServer";
 import { createOrder, liveSubscription, loadProfile, loadPromo, startPayhere, startStripe } from "@/lib/billing/server";
 import { applyPromo } from "@/lib/billing/promo";
@@ -17,7 +17,12 @@ export const POST = secureRoute<undefined, undefined, CheckoutInput>(
   async ({ membership, user, body, ipHash, requestId }) => {
     const currency = body.currency ?? PROVIDER_CURRENCY[body.provider];
     if (!isPayWayOn(payWays(billingProviders()), body.provider, currency)) return fail("unavailable", "That payment method isn't set up yet.", undefined, requestId);
-    const listQuote = quote(await loadCatalog(), body.item, body.interval ?? null, body.provider, currency);
+    // PayHere without recurring payments switched on: plans are prepaid (one payment for 1 or 3 months).
+    const prepaid = body.provider === "payhere" && !billingProviders().payhereRecurring && !body.item.startsWith("pack_");
+    if (body.months !== undefined && !prepaid) return fail("validation_failed", "Choose monthly or yearly.", undefined, requestId);
+    if (prepaid && body.interval !== "month") return fail("validation_failed", "Plans are paid monthly for now. Choose 1 or 3 months.", undefined, requestId);
+    const catalog = await loadCatalog();
+    const listQuote = prepaid ? prepaidQuote(catalog, body.item, body.months ?? 1, body.provider, currency) : quote(catalog, body.item, body.interval ?? null, body.provider, currency);
     if (!listQuote) return fail("validation_failed", "Choose a plan or pack.", undefined, requestId);
 
     // A promo code is checked again here (never trusted from the preview) and baked into the order amount.
@@ -34,14 +39,15 @@ export const POST = secureRoute<undefined, undefined, CheckoutInput>(
 
     // PayHere accounts can have a largest single payment (e.g. Rs 50,000): refuse bigger amounts up front.
     if (!withinPaymentLimit(body.provider, currency, q.amountMinor, billingProviders().payhereMaxLkrMinor)) {
-      return fail("validation_failed", "This amount is above the largest single payment we can take in rupees right now. Choose the monthly plan instead.", undefined, requestId);
+      return fail("validation_failed", prepaid ? "This amount is above the largest single payment we can take in rupees right now. Choose 1 month instead." : "This amount is above the largest single payment we can take in rupees right now. Choose the monthly plan instead.", undefined, requestId);
     }
 
     const profile = await loadProfile(membership.accountId);
     if (!profile) return fail("conflict", "Add your billing details first.", undefined, requestId);
     if (q.kind === "plan") {
       const live = await liveSubscription(membership.accountId);
-      if (live && live.status !== "cancelled") {
+      // A prepaid plan can always be renewed (same plan: added on to the end) or switched (starts today).
+      if (live && live.status !== "cancelled" && !(prepaid && live.prepaid)) {
         return fail(
           "conflict",
           live.cancel_at_period_end
@@ -56,7 +62,7 @@ export const POST = secureRoute<undefined, undefined, CheckoutInput>(
     const orderId = await createOrder(membership.accountId, user.id, body.provider, q, promo);
     const start = body.provider === "payhere" ? await startPayhere(orderId, q, profile) : await startStripe(orderId, membership.accountId, q, profile);
     if (!start) return fail("unavailable", "Couldn't start the payment. Please try again.", undefined, requestId);
-    await audit({ accountId: membership.accountId, userId: user.id, action: "billing.checkout_started", targetType: "order", targetId: orderId, metadata: { item: q.item, provider: body.provider, currency: q.currency }, ipHash });
+    await audit({ accountId: membership.accountId, userId: user.id, action: "billing.checkout_started", targetType: "order", targetId: orderId, metadata: { item: q.item, provider: body.provider, currency: q.currency, ...(q.months ? { months: q.months } : {}) }, ipHash });
     return ok({ orderId, ...start }, 201);
   },
 );
