@@ -10,6 +10,8 @@ import { IconPlus } from "@/components/icons";
 import { Checklist } from "./Checklist";
 import { sampleStats } from "@/lib/onboarding/sample";
 import { PageLoader } from "@/components/FaceLoader";
+import { useRouter } from "next/navigation";
+import { WELCOME_SKIPPED_KEY } from "@/lib/surveys/templates";
 import { useOnResponsesChanged } from "@/components/Notifications";
 import { BenchmarkCard, HighlightsButton } from "./DashboardExtras";
 
@@ -74,6 +76,18 @@ export default function Dashboard() {
   }, [days, surveyId, locationId, reload]);
 
   const noSurveys = surveys !== null && surveys.length === 0;
+  // A brand-new business goes straight to the 2-minute welcome setup (unless they chose to skip it).
+  const router = useRouter();
+  useEffect(() => {
+    if (!noSurveys || (role !== "owner" && role !== "admin")) return;
+    let skipped = false;
+    try {
+      skipped = localStorage.getItem(WELCOME_SKIPPED_KEY) === "1";
+    } catch {
+      /* storage blocked: still offer the welcome */
+    }
+    if (!skipped) router.replace("/app/welcome");
+  }, [noSurveys, role, router]);
   const shown: StatsResponse | null = sample ? (sampleStats(days) as StatsResponse) : stats;
 
   return (
@@ -659,9 +673,9 @@ function GettingStarted({ onSample }: { onSample: () => void }) {
         ))}
       </ol>
       <div className="mt-8 flex flex-wrap gap-2">
-        <Link href="/app/surveys/new" className="btn btn-primary">
+        <Link href="/app/welcome" className="btn btn-primary">
           <IconPlus className="h-4 w-4" />
-          Create your first survey
+          Set up in 2 minutes
         </Link>
         <button type="button" className="btn btn-secondary" onClick={onSample}>
           Preview with sample data

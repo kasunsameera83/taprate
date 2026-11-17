@@ -45,9 +45,9 @@ function CopyButton({ text, label, primary = false }: { text: string; label: str
   );
 }
 
-function Card({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
+function Card({ id, title, description, children }: { id?: string; title: string; description: string; children: React.ReactNode }) {
   return (
-    <section className="panel p-5 sm:p-6">
+    <section id={id} className="panel scroll-mt-24 p-5 sm:p-6">
       <h2 className="text-lg font-semibold">{title}</h2>
       <p className="mt-1 text-sm text-muted">{description}</p>
       <div className="mt-4">{children}</div>
@@ -55,7 +55,7 @@ function Card({ title, description, children }: { title: string; description: st
   );
 }
 
-export function CollectPanel({ surveyId, canEdit, surveyName }: { surveyId: string; canEdit: boolean; surveyName: string }) {
+export function CollectPanel({ surveyId, canEdit, surveyName, focus }: { surveyId: string; canEdit: boolean; surveyName: string; focus?: string }) {
   const [share, setShare] = useState<Share | null>(null);
   const [error, setError] = useState("");
   const [locations, setLocations] = useState<Location[]>([]);
@@ -68,6 +68,16 @@ export function CollectPanel({ surveyId, canEdit, surveyName }: { surveyId: stri
     api<Location[]>("/api/locations").then((r) => r.ok && setLocations(r.data.filter((l) => !l.archived)));
   }, []);
   useEffect(load, [load]);
+  // Opened from a "Share" card: bring that section into view once it's on the page.
+  const loaded = share !== null;
+  useEffect(() => {
+    if (!loaded || !focus) return;
+    const el = document.getElementById(`share-${focus}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    el?.classList.add("ring-2", "ring-brand");
+    const t = setTimeout(() => el?.classList.remove("ring-2", "ring-brand"), 2500);
+    return () => clearTimeout(t);
+  }, [loaded, focus]);
 
   if (error) return <LoadError message={error} onRetry={load} />;
   if (!share) return <PageLoader className="h-96" />;
@@ -108,23 +118,26 @@ export function CollectPanel({ surveyId, canEdit, surveyName }: { surveyId: stri
       {!share.active && <Notice kind="error">This survey is paused, so these links show &ldquo;not collecting ratings&rdquo;. Turn it on in Settings.</Notice>}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card title={share.location ? `QR code for ${share.location.name}` : "QR code"} description="Print it on receipts, tables, counters or packaging. Customers scan and tap a rating.">
+        <Card id="share-qr" title={share.location ? `QR code for ${share.location.name}` : "QR code"} description="Print it on receipts, tables, counters or packaging. Customers scan and tap a rating.">
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
             <img src={qrDataUrl} alt={`QR code that opens the rating page for ${surveyName}`} width={180} height={180} className="rounded-[10px] border border-line" />
             <div className="flex flex-col gap-2">
-              <a className="btn btn-primary" href={qrDataUrl} download={fileName}>
+              <Link className="btn btn-primary" href={`/app/surveys/${encodeURIComponent(surveyId)}/poster${qs({ locationId: share.location?.id })}`}>
+                Printable poster
+              </Link>
+              <a className="btn btn-secondary" href={qrDataUrl} download={fileName}>
                 <IconDownload className="h-4 w-4" />
-                Download (SVG)
+                QR only (SVG)
               </a>
               <a className="btn btn-secondary" href={share.qr.link} target="_blank" rel="noopener noreferrer">
                 Try it
               </a>
-              <p className="max-w-56 text-[13px] text-muted">SVG prints sharp at any size. Most printers and Canva accept it.</p>
+              <p className="max-w-56 text-[13px] text-muted">The poster is ready to print. The SVG is for designers and Canva.</p>
             </div>
           </div>
         </Card>
 
-        <Card title="WhatsApp and SMS" description="Send the rating link after a visit, delivery or call. Opens in the customer's browser.">
+        <Card id="share-whatsapp" title="WhatsApp and SMS" description="Send the rating link after a visit, delivery or call. Opens in the customer's browser.">
           <div className="space-y-3">
             <p className="whitespace-pre-wrap rounded-[10px] bg-canvas p-3 text-sm">{share.whatsapp.text}</p>
             <div className="flex flex-wrap gap-2">
@@ -139,7 +152,7 @@ export function CollectPanel({ surveyId, canEdit, surveyName }: { surveyId: stri
         </Card>
       </div>
 
-      <Card title="Website widget" description="Paste this on your website (contact page, help centre, order confirmation). Taps open the thank-you page in a new tab.">
+      <Card id="share-website" title="Website widget" description="Paste this on your website (contact page, help centre, order confirmation). Taps open the thank-you page in a new tab.">
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div className="space-y-2">
             <textarea readOnly aria-label="Widget code" className="input h-28 font-mono text-xs" value={share.widget.code} />
@@ -151,7 +164,7 @@ export function CollectPanel({ surveyId, canEdit, surveyName }: { surveyId: stri
         </div>
       </Card>
 
-      <Card title="Plain link" description="Use anywhere else: social media, invoices, your bio.">
+      <Card id="share-link" title="Plain link" description="Use anywhere else: social media, invoices, your bio.">
         <div className="flex flex-col gap-2 sm:flex-row">
           <input readOnly aria-label="Rating link" className="input font-mono text-xs" value={share.link} />
           <CopyButton text={share.link} label="Copy link" />
@@ -198,6 +211,7 @@ function Kiosks({ surveyId, kiosks, canEdit, onChanged, locations }: { surveyId:
 
   return (
     <Card
+      id="share-kiosk"
       title="Tablet kiosk"
       description="Put a tablet at your counter or reception. Customers tap a face; the screen thanks them and resets for the next person."
     >

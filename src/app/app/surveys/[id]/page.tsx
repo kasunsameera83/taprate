@@ -11,10 +11,12 @@ import { SnippetPanel } from "./SnippetPanel";
 import { CollectPanel } from "./CollectPanel";
 import { IconCustomizer } from "./IconCustomizer";
 import { SendPanel } from "./SendPanel";
+import { ShareHub } from "./ShareHub";
 import { confirmDialog } from "@/components/ConfirmDialog";
 import { PageLoader } from "@/components/FaceLoader";
 
-type Tab = "buttons" | "send" | "collect" | "settings";
+type Tab = "share" | "buttons" | "send" | "collect" | "settings";
+const TABS: Tab[] = ["share", "buttons", "send", "collect", "settings"];
 
 function SurveyDetail({ id }: { id: string }) {
   const router = useRouter();
@@ -22,9 +24,11 @@ function SurveyDetail({ id }: { id: string }) {
   const created = search.get("created") === "1";
   const iconsFailed = Math.min(11, Math.max(0, Number(search.get("iconsFailed") ?? 0) || 0));
   const initialTab = search.get("tab");
-  const [tab, setTab] = useState<Tab>(initialTab === "settings" || initialTab === "collect" || initialTab === "send" ? initialTab : "buttons");
+  const via = search.get("via");
+  const [tab, setTab] = useState<Tab>(TABS.includes(initialTab as Tab) ? (initialTab as Tab) : "share");
+  const [focus, setFocus] = useState<string | undefined>(undefined);
   const [survey, setSurvey] = useState<Survey | null>(null);
-  const [hasResponses, setHasResponses] = useState(false);
+  const [hasResponses, setHasResponses] = useState<boolean | null>(null);
   const [canEdit, setCanEdit] = useState(true);
   const [role, setRole] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -42,11 +46,12 @@ function SurveyDetail({ id }: { id: string }) {
   }, [id]);
   useEffect(load, [load]);
 
-  function switchTab(next: Tab) {
+  function switchTab(next: Tab, focusOn?: string) {
     setTab(next);
+    setFocus(focusOn);
     const url = new URL(window.location.href);
     url.searchParams.delete("created");
-    if (next !== "buttons") url.searchParams.set("tab", next);
+    if (next !== "share") url.searchParams.set("tab", next);
     else url.searchParams.delete("tab");
     window.history.replaceState(null, "", url.toString());
   }
@@ -70,8 +75,9 @@ function SurveyDetail({ id }: { id: string }) {
 
   const canSeeSends = role === "owner" || role === "admin" || role === "viewer";
   const tabs: Array<{ value: Tab; label: string }> = [
-    { value: "buttons", label: "Add to emails" },
-    ...(canSeeSends ? [{ value: "send" as Tab, label: "Send by email" }] : []),
+    { value: "share", label: "Share" },
+    { value: "buttons", label: "Email buttons" },
+    ...(canSeeSends ? [{ value: "send" as Tab, label: "We email for you" }] : []),
     { value: "collect", label: "QR, WhatsApp & more" },
     { value: "settings", label: "Settings" },
   ];
@@ -103,7 +109,7 @@ function SurveyDetail({ id }: { id: string }) {
           </div>
         </div>
         {archiveError && <Notice kind="error">{archiveError}</Notice>}
-        {created && <Notice kind="success">Survey created. Now add the buttons to your emails.</Notice>}
+        {created && <Notice kind="success">Your survey is ready. Try it on your phone, then pick how to share it with customers.</Notice>}
         {iconsFailed > 0 && (
           <Notice kind="error">
             {iconsFailed === 1 ? "One picture" : `${iconsFailed} pictures`} couldn&rsquo;t be uploaded. Add {iconsFailed === 1 ? "it" : "them"} again below in &ldquo;Your own pictures and labels&rdquo;.
@@ -131,7 +137,9 @@ function SurveyDetail({ id }: { id: string }) {
       </div>
 
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-        {tab === "buttons" ? (
+        {tab === "share" ? (
+          <ShareHub surveyId={survey.id} canSeeSends={canSeeSends} via={via} hasResponses={hasResponses !== false} onOpen={(t) => switchTab(t.tab, t.focus)} />
+        ) : tab === "buttons" ? (
           <SnippetPanel surveyId={survey.id} key={survey.updatedAt} />
         ) : tab === "send" ? (
           canSeeSends ? (
@@ -142,12 +150,12 @@ function SurveyDetail({ id }: { id: string }) {
             <Notice kind="info">Only owners, admins and viewers can see survey emails.</Notice>
           )
         ) : tab === "collect" ? (
-          <CollectPanel surveyId={survey.id} surveyName={survey.name} canEdit={canEdit} />
+          <CollectPanel surveyId={survey.id} surveyName={survey.name} canEdit={canEdit} focus={focus} />
         ) : (
           <div className="space-y-6">
           <SurveyForm
             initial={survey}
-            hasResponses={hasResponses}
+            hasResponses={hasResponses ?? false}
             canEdit={canEdit}
             submitLabel="Save changes"
             onSubmit={async (values) => {

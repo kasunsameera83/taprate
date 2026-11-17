@@ -28,6 +28,8 @@ const DUE_OPTIONS = [
 
 type Props = {
   initial?: Survey;
+  /** New surveys only: start from a ready-made template's wording. */
+  preset?: { name: string; question: string; driversPositive: string[]; driversNegative: string[] };
   hasResponses?: boolean;
   canEdit?: boolean;
   onSubmit: (values: Record<string, unknown>, extras: { icons: PendingIcon[] }) => Promise<{ ok: boolean; message?: string; fields?: Record<string, string> }>;
@@ -162,10 +164,10 @@ function Toggle({ checked, onChange, label, hint }: { checked: boolean; onChange
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
-export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, submitLabel }: Props) {
+export function SurveyForm({ initial, preset, hasResponses, canEdit = true, onSubmit, submitLabel }: Props) {
   const creating = !initial;
   const [iconSet, setIconSet] = useState<IconSetId>(initial?.iconSet ?? "faces5");
-  const [question, setQuestion] = useState(initial?.question ?? SURVEY_DEFAULTS.en.question);
+  const [question, setQuestion] = useState(initial?.question ?? preset?.question ?? SURVEY_DEFAULTS.en.question);
   const [message, setMessage] = useState(initial?.thankYouMessage ?? SURVEY_DEFAULTS.en.thanks);
   const [language, setLanguage] = useState<Lang>(initial?.language ?? "en");
   const [langAvailable, setLangAvailable] = useState(false);
@@ -179,8 +181,8 @@ export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, su
   );
   const [alertEmails, setAlertEmails] = useState(initial?.alertEmails.join(", ") ?? "");
   const [preview, setPreview] = useState<"email" | "thanks">("email");
-  const [driversPositive, setDriversPositive] = useState<string[]>(initial ? initial.driversPositive : DEFAULT_POSITIVE);
-  const [driversNegative, setDriversNegative] = useState<string[]>(initial ? initial.driversNegative : DEFAULT_NEGATIVE);
+  const [driversPositive, setDriversPositive] = useState<string[]>(initial ? initial.driversPositive : (preset?.driversPositive ?? DEFAULT_POSITIVE));
+  const [driversNegative, setDriversNegative] = useState<string[]>(initial ? initial.driversNegative : (preset?.driversNegative ?? DEFAULT_NEGATIVE));
   const [reviewOn, setReviewOn] = useState(Boolean(initial?.reviewCtaUrl));
   const [followupsEnabled, setFollowupsEnabled] = useState(initial?.followupsEnabled ?? true);
   const [dueHours, setDueHours] = useState(String(initial?.followupDueHours ?? 48));
@@ -416,7 +418,7 @@ export function SurveyForm({ initial, hasResponses, canEdit = true, onSubmit, su
         <fieldset disabled={!canEdit || busy} className="space-y-6">
           <FormPart id="basics" step={++step} title="Name and question" onFocusCapture={() => setPreview("email")}>
             <Field label="Survey name" name="name" error={errors.name} hint="Only your team sees this, for example “Support tickets”.">
-              <TextInput name="name" defaultValue={initial?.name} maxLength={80} required autoFocus={creating} autoComplete="off" error={errors.name} hasHint />
+              <TextInput name="name" defaultValue={initial?.name ?? preset?.name} maxLength={80} required autoFocus={creating} autoComplete="off" error={errors.name} hasHint />
             </Field>
             <Field label="Question customers see" name="question" error={errors.question} hint={`Short and specific works best. ${question.length}/200`}>
               <TextInput name="question" value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={200} required autoComplete="off" error={errors.question} hasHint />
