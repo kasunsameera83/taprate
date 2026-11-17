@@ -31,6 +31,8 @@ export type ResponseItem = {
   channel: string;
   location: { id: string; name: string } | null;
   testimonial: { displayName: string | null; featured: boolean; social: boolean } | null;
+  /** The owner confirmed the customer agreed outside TapTruly to social media sharing (no name is shown). */
+  ownerShared?: boolean;
   followup: { status: "open" | "in_progress" | "resolved"; assigneeId: string | null; dueAt: string | null; resolvedAt: string | null } | null;
   createdAt: string;
   confirmedAt: string | null;

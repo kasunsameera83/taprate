@@ -36,10 +36,15 @@ export async function loadShareCard(responseId: string): Promise<ShareCard | nul
   const db = adminClient();
   const { data: r } = await db
     .from("responses")
-    .select("id, account_id, rating, comment, display_name, share_consent, share_social, sentiment, status, surveys(icon_set, option_labels, brand_color, language)")
+    .select("id, account_id, rating, comment, display_name, share_consent, share_social, owner_share_at, sentiment, status, surveys(icon_set, option_labels, brand_color, language)")
     .eq("id", responseId)
     .maybeSingle();
-  if (!r || !r.share_consent || !r.share_social || r.sentiment !== "positive" || r.status !== "confirmed" || r.rating === null) return null;
+  // Allowed when the customer ticked "website and social media", or an owner/admin confirmed the customer
+  // agreed elsewhere (0041; then no name is ever shown).
+  if (!r) return null;
+  const customerAgreed = Boolean(r.share_consent && r.share_social);
+  const ownerConfirmed = Boolean(r.owner_share_at);
+  if (!(customerAgreed || ownerConfirmed) || r.sentiment !== "positive" || r.status !== "confirmed" || r.rating === null) return null;
   const comment = typeof r.comment === "string" ? r.comment.trim() : "";
   if (!comment) return null;
   const { data: acct } = await db.from("accounts").select("name, logo_path, suspended_at, plan, hide_branding").eq("id", r.account_id).maybeSingle();
@@ -56,7 +61,7 @@ export async function loadShareCard(responseId: string): Promise<ShareCard | nul
     responseId: r.id as string,
     accountId: r.account_id as string,
     comment: short,
-    name: (typeof r.display_name === "string" && r.display_name.trim()) || "A happy customer",
+    name: (customerAgreed && typeof r.display_name === "string" && r.display_name.trim()) || "A happy customer",
     businessName: acct.name as string,
     logo: logoUrl(acct.logo_path as string | null),
     color: s && HEX.test(s.brand_color) ? s.brand_color : "#4f46e5",

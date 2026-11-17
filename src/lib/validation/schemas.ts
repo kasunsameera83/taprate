@@ -493,6 +493,8 @@ export const locationUpdateSchema = z
   .object({ name: text(1, 60, "Branch name").refine((v) => !/[<>]/.test(v), "Branch names can't contain < or >"), archived: z.boolean() })
   .strict();
 export const featureSchema = z.object({ featured: z.boolean() }).strict();
+/** Owner confirms (or withdraws) that the customer agreed outside TapTruly to their comment being shared. */
+export const sharePermissionSchema = z.object({ allowed: z.boolean() }).strict();
 export const tvScreenCreateSchema = z
   .object({
     name: text(1, 60, "Screen name").refine((v) => !/[<>]/.test(v), "Names can't contain < or >"),

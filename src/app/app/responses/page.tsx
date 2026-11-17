@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { CustomerTimelineButton } from "@/components/CustomerTimeline";
-import { ShareCardButton } from "@/components/ShareCardButton";
+import { OwnerShareButton, ShareCardButton } from "@/components/ShareCardButton";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { api, qs } from "@/lib/client/api";
@@ -411,6 +411,27 @@ function Customer({ r }: { r: ResponseItem }) {
   );
 }
 
+/**
+ * Social media sharing for a happy comment: straight away when the customer ticked "share", otherwise after
+ * the owner/admin confirms the customer agreed some other way (no name is shown then).
+ */
+function SocialShare({ r }: { r: ResponseItem }) {
+  const [confirmedNow, setConfirmedNow] = useState(false);
+  if (r.testimonial?.social) return <ShareCardButton responseId={r.id} />;
+  if (r.ownerShared || confirmedNow) return <ShareCardButton responseId={r.id} ownerConfirmed autoOpen={confirmedNow} />;
+  return <OwnerShareButton responseId={r.id} onConfirmed={() => setConfirmedNow(true)} />;
+}
+
+/** Happy comment the customer didn't tick "share" for: owners/admins can still share it with permission. */
+function ShareWithoutTick({ r, canFeature }: { r: ResponseItem; canFeature: boolean }) {
+  if (!canFeature || r.testimonial || r.sentiment !== "positive" || !r.comment || r.status !== "confirmed") return null;
+  return (
+    <span className="mt-2 block -ml-2">
+      <SocialShare r={r} />
+    </span>
+  );
+}
+
 /** Show a consented, happy comment on the website testimonial wall. */
 function TestimonialToggle({ r, canFeature }: { r: ResponseItem; canFeature: boolean }) {
   const [featured, setFeatured] = useState(r.testimonial?.featured ?? false);
@@ -438,11 +459,7 @@ function TestimonialToggle({ r, canFeature }: { r: ResponseItem; canFeature: boo
         {featured ? "Shown on your website" : "Show on website"}
       </button>
       <span className="ml-2 text-[13px] text-muted">as {r.testimonial.displayName ?? "A customer"}</span>
-      {r.testimonial.social ? (
-        <ShareCardButton responseId={r.id} />
-      ) : (
-        <span className="ml-2 text-[13px] text-muted" title="This customer agreed before social media sharing was added, so their comment can only be shown on your website.">Website only</span>
-      )}
+      <SocialShare r={r} />
       {err && <span className="mt-1 block text-[13px] text-neg-text">{err}</span>}
     </span>
   );
@@ -476,6 +493,7 @@ function ResponseTable({ items, canFeature }: { items: ResponseItem[]; canFeatur
                 {r.comment ?? (r.drivers.length ? null : <span className="text-faint">No comment</span>)}
                 <Reasons r={r} />
                 <TestimonialToggle r={r} canFeature={canFeature} />
+                <ShareWithoutTick r={r} canFeature={canFeature} />
               </td>
               {showCustomer && (
                 <td className="max-w-[220px] px-4 py-3">
@@ -511,6 +529,7 @@ function ResponseCards({ items, canFeature }: { items: ResponseItem[]; canFeatur
           {r.comment && <p className="whitespace-pre-wrap break-words">&ldquo;{r.comment}&rdquo;</p>}
           <Reasons r={r} />
           <TestimonialToggle r={r} canFeature={canFeature} />
+          <ShareWithoutTick r={r} canFeature={canFeature} />
           <div className="text-[13px] text-muted">
             <Customer r={r} />
             {r.agent && <span className="block">Agent: {r.agent}</span>}
