@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/site/LegalPage";
 import { COMPANY, SUBPROCESSORS } from "@/lib/site/company";
 
-export const metadata: Metadata = { title: "Privacy Policy" };
+export const metadata: Metadata = { title: "Privacy Policy", alternates: { canonical: "/privacy" } };
 
 // A plain-English starting point written with Sri Lanka's Personal Data Protection Act (No. 9 of 2022)
 // in mind. Have it reviewed by a lawyer before launch.

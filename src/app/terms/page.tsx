@@ -3,7 +3,7 @@ import Link from "next/link";
 import { LegalPage } from "@/components/site/LegalPage";
 import { COMPANY } from "@/lib/site/company";
 
-export const metadata: Metadata = { title: "Terms of Service" };
+export const metadata: Metadata = { title: "Terms of Service", alternates: { canonical: "/terms" } };
 
 // A plain-English starting point. Have it reviewed by a lawyer before launch.
 export default function TermsPage() {
