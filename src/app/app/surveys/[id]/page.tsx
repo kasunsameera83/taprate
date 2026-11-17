@@ -27,6 +27,7 @@ function SurveyDetail({ id }: { id: string }) {
   const via = search.get("via");
   const [tab, setTab] = useState<Tab>(TABS.includes(initialTab as Tab) ? (initialTab as Tab) : "share");
   const [focus, setFocus] = useState<string | undefined>(undefined);
+  const [visited, setVisited] = useState<Set<Tab>>(() => new Set([TABS.includes(initialTab as Tab) ? (initialTab as Tab) : "share"]));
   const [survey, setSurvey] = useState<Survey | null>(null);
   const [hasResponses, setHasResponses] = useState<boolean | null>(null);
   const [canEdit, setCanEdit] = useState(true);
@@ -48,6 +49,7 @@ function SurveyDetail({ id }: { id: string }) {
 
   function switchTab(next: Tab, focusOn?: string) {
     setTab(next);
+    setVisited((v) => (v.has(next) ? v : new Set(v).add(next)));
     setFocus(focusOn);
     const url = new URL(window.location.href);
     url.searchParams.delete("created");
@@ -136,23 +138,35 @@ function SurveyDetail({ id }: { id: string }) {
         ))}
       </div>
 
-      <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-        {tab === "share" ? (
+      {/* Tabs stay on the page once opened, so switching back is instant (no reloading). */}
+      {visited.has("share") && (
+        <div role="tabpanel" id="panel-share" aria-labelledby="tab-share" hidden={tab !== "share"}>
           <ShareHub surveyId={survey.id} canSeeSends={canSeeSends} via={via} hasResponses={hasResponses !== false} onOpen={(t) => switchTab(t.tab, t.focus)} />
-        ) : tab === "buttons" ? (
+        </div>
+      )}
+      {visited.has("buttons") && (
+        <div role="tabpanel" id="panel-buttons" aria-labelledby="tab-buttons" hidden={tab !== "buttons"}>
           <SnippetPanel surveyId={survey.id} key={survey.updatedAt} />
-        ) : tab === "send" ? (
-          canSeeSends ? (
+        </div>
+      )}
+      {visited.has("send") && (
+        <div role="tabpanel" id="panel-send" aria-labelledby="tab-send" hidden={tab !== "send"}>
+          {canSeeSends ? (
             <SendPanel survey={survey} canSend={canEdit} />
           ) : role === null ? (
             <PageLoader className="h-64" />
           ) : (
             <Notice kind="info">Only owners, admins and viewers can see survey emails.</Notice>
-          )
-        ) : tab === "collect" ? (
+          )}
+        </div>
+      )}
+      {visited.has("collect") && (
+        <div role="tabpanel" id="panel-collect" aria-labelledby="tab-collect" hidden={tab !== "collect"}>
           <CollectPanel surveyId={survey.id} surveyName={survey.name} canEdit={canEdit} focus={focus} />
-        ) : (
-          <div className="space-y-6">
+        </div>
+      )}
+      {visited.has("settings") && (
+        <div role="tabpanel" id="panel-settings" aria-labelledby="tab-settings" hidden={tab !== "settings"} className="space-y-6">
           <SurveyForm
             initial={survey}
             hasResponses={hasResponses ?? false}
@@ -168,9 +182,8 @@ function SurveyDetail({ id }: { id: string }) {
             }}
           />
           <IconCustomizer key={survey.updatedAt} survey={survey} canEdit={canEdit} onChanged={load} />
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

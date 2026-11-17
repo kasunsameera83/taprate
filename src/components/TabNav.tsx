@@ -6,12 +6,13 @@ import { IconLock } from "@/components/icons";
 
 // Section tabs. On phones they become a dropdown (a long row of tabs that scrolls sideways is easy to
 // miss); from small tablets up they're normal tabs.
-export function TabNav({ label, tabs, exactRoot }: { label: string; tabs: Array<{ href: string; label: string; locked?: boolean }>; exactRoot?: string }) {
+export function TabNav({ label, tabs, exactRoot }: { label: string; tabs: Array<{ href: string; label: string; locked?: boolean; also?: string[] }>; exactRoot?: string }) {
   const path = usePathname();
   const router = useRouter();
   const id = useId();
   const isActive = (href: string) => (href === exactRoot ? path === href : path === href || path.startsWith(`${href}/`));
-  const current = [...tabs].reverse().find((t) => isActive(t.href)) ?? tabs[0];
+  // A tab can also own other pages (Advanced → API keys, Activity log).
+  const current = [...tabs].reverse().find((t) => isActive(t.href) || t.also?.some((h) => isActive(h))) ?? tabs[0];
   return (
     <>
       <div className="sm:hidden">

@@ -15,8 +15,8 @@ export default async function SettingsLayout({ children }: { children: React.Rea
     { href: "/app/settings/locations", label: "Branches" },
     ...(canPerform(role, "billing:manage") ? [{ href: "/app/settings/billing", label: "Billing" }] : []),
     ...(canPerform(role, "integrations:read") ? [{ href: "/app/settings/integrations", label: "Integrations", locked: !planAllows(plan, "integrations") }] : []),
-    ...(canPerform(role, "apikeys:manage") ? [{ href: "/app/settings/api", label: "API", locked: !planAllows(plan, "api") }] : []),
-    ...(canPerform(role, "audit:read") ? [{ href: "/app/settings/activity", label: "Activity" }] : []),
+    // Domains, data, developer tools (API, activity log) and the danger zone.
+    { href: "/app/settings/advanced", label: "Advanced", also: ["/app/settings/api", "/app/settings/activity"] },
   ];
   return (
     <div className="space-y-6">

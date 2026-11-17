@@ -106,6 +106,14 @@ const SHOWCASE: Showcase[] = [
   },
 ];
 
+/** Shown as big rows with a product picture; the rest are short cards. */
+const FEATURED = new Set([
+  "See how customers feel, today",
+  "Never miss an unhappy customer",
+  "Collect ratings wherever you meet customers",
+  "Know what to fix, in plain words",
+]);
+
 function Check() {
   return (
     <svg viewBox="0 0 20 20" className="mt-0.5 h-5 w-5 shrink-0 text-brand" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -201,7 +209,7 @@ export function LandingView({
         {/* Product showcase */}
         <section id="features" className="scroll-mt-20 bg-surface">
           <div className="mx-auto max-w-6xl space-y-24 px-5 py-24">
-            {SHOWCASE.filter((x) => !x.localOnly || currency === "LKR").map(({ title, body, points, Screen }, i) => (
+            {SHOWCASE.filter((x) => (!x.localOnly || currency === "LKR") && FEATURED.has(x.title)).map(({ title, body, points, Screen }, i) => (
               <ShowcaseRow
                 key={title}
                 flip={i % 2 === 1}
@@ -226,6 +234,18 @@ export function LandingView({
                 }
               />
             ))}
+            {/* The rest as short cards, so the page stays quick to scroll (especially on phones). */}
+            <div>
+              <h2 className="text-[30px] font-bold leading-tight sm:text-[36px]">And everything else you need</h2>
+              <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {SHOWCASE.filter((x) => (!x.localOnly || currency === "LKR") && !FEATURED.has(x.title)).map(({ title, body }) => (
+                  <li key={title} className="rounded-[var(--radius-panel)] border border-line bg-canvas p-5">
+                    <h3 className="font-sans text-[17px] font-bold tracking-normal">{title}</h3>
+                    <p className="mt-1.5 text-[15px] leading-relaxed text-muted">{body}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </section>
 

@@ -1,19 +1,15 @@
 "use client";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { api } from "@/lib/client/api";
-import { accountUpdateSchema, deleteAccountSchema, eraseCustomerSchema, fieldErrors } from "@/lib/validation/schemas";
+import { accountUpdateSchema, fieldErrors } from "@/lib/validation/schemas";
 import { canPerform, isRole, type Role } from "@/lib/security/authz";
-import { Badge, Field, LoadError, Notice, PasswordInput, TextInput } from "@/components/ui";
+import Link from "next/link";
+import { Badge, Field, LoadError, Notice, TextInput } from "@/components/ui";
 import { SettingsSection } from "@/components/SettingsSection";
-import { IconDownload } from "@/components/icons";
 import { LOGO_MAX_BYTES, sniffImage } from "@/lib/branding";
-import { confirmDialog } from "@/components/ConfirmDialog";
-import { DoNotEmail } from "./DoNotEmail";
 import { TvScreens } from "./TvScreens";
-import { OwnDomain } from "./OwnDomain";
 import { DropAlerts } from "./DropAlerts";
 import { BrandingSetting, IndustrySetting } from "./Extras";
-import { SurveyDomain } from "./SurveyDomain";
 import { PageLoader, Busy } from "@/components/FaceLoader";
 
 type Me = { account: { id: string; name: string; plan: string; credits: number; role: string; logoUrl: string | null } | null };
@@ -44,34 +40,21 @@ export default function BusinessSettingsPage() {
 
       {canPerform(role, "account:write") && <Logo current={a.logoUrl} onChanged={load} />}
 
-      {canPerform(role, "account:export") && (
-        <SettingsSection title="Export all data" description="Download everything for this business (surveys, ratings, comments, team) as a JSON file.">
-          <a className="btn btn-secondary" href="/api/account/export">
-            <IconDownload className="h-4 w-4" />
-            Download export
-          </a>
-        </SettingsSection>
-      )}
-
       <IndustrySetting canChange={canPerform(role, "account:write")} />
 
       <DropAlerts canChange={canPerform(role, "account:write")} />
 
       {canPerform(role, "account:write") && <BrandingSetting canChange />}
 
-      {canPerform(role, "sends:write") && <OwnDomain canChange={canPerform(role, "account:write")} />}
-
-      {canPerform(role, "sends:write") && <SurveyDomain canChange={canPerform(role, "account:write")} />}
-
-      {canPerform(role, "sends:write") && <DoNotEmail />}
-
       {canPerform(role, "survey:write") && <TvScreens />}
 
-      {canPerform(role, "privacy:erase") && <EraseCustomer />}
-
-      <Leave name={a.name} />
-
-      {canPerform(role, "account:delete") && <DeleteAccount name={a.name} />}
+      <p className="text-sm text-muted">
+        Looking for your own domain, the do-not-email list, data export or deleting the business?{" "}
+        <Link href="/app/settings/advanced" className="link">
+          They&rsquo;re in Advanced
+        </Link>
+        .
+      </p>
     </div>
   );
 }
@@ -177,119 +160,5 @@ function Rename({ current, onSaved }: { current: string; onSaved: () => void }) 
         {busy ? <Busy>Saving…</Busy> : "Save"}
       </button>
     </form>
-  );
-}
-
-function EraseCustomer() {
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [notice, setNotice] = useState<{ kind: "error" | "success"; text: string } | null>(null);
-  const [busy, setBusy] = useState(false);
-  async function onSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const formEl = e.currentTarget;
-    const parsed = eraseCustomerSchema.safeParse({ email: String(new FormData(formEl).get("eraseEmail") ?? "") });
-    if (!parsed.success) return setErrors({ eraseEmail: fieldErrors(parsed.error).email ?? "" });
-    if (!(await confirmDialog({ title: "Delete this customer's data?", body: `Every rating and comment from ${parsed.data.email} will be permanently deleted. This can't be undone.`, confirmLabel: "Delete data", danger: true }))) return;
-    setErrors({});
-    setBusy(true);
-    const r = await api<{ deleted: number }>("/api/privacy/erase", { method: "POST", body: parsed.data });
-    setBusy(false);
-    if (r.ok) {
-      formEl.reset();
-      setNotice({ kind: "success", text: r.data.deleted === 0 ? "No ratings were stored for that email." : `Deleted ${r.data.deleted} ${r.data.deleted === 1 ? "rating" : "ratings"}.` });
-    } else setNotice({ kind: "error", text: r.message });
-  }
-  return (
-    <SettingsSection
-      title="Delete a customer's data"
-      description="When a customer asks you to erase their data (Sri Lanka's PDPA, GDPR), delete all their ratings and comments here."
-    >
-      <form onSubmit={onSubmit} noValidate className="max-w-md space-y-4">
-        {notice && <Notice kind={notice.kind}>{notice.text}</Notice>}
-        <Field label="Customer email" name="eraseEmail" error={errors.eraseEmail || undefined}>
-          <TextInput name="eraseEmail" type="email" inputMode="email" autoComplete="off" maxLength={254} error={errors.eraseEmail || undefined} />
-        </Field>
-        <button className="btn btn-danger" disabled={busy}>
-          {busy ? <Busy>Deleting…</Busy> : "Delete their data"}
-        </button>
-      </form>
-    </SettingsSection>
-  );
-}
-
-function Leave({ name }: { name: string }) {
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  return (
-    <SettingsSection title="Leave this business" description={`You'll lose access to ${name}. Someone will need to invite you again to come back.`}>
-      {error && (
-        <div className="mb-3">
-          <Notice kind="error">{error}</Notice>
-        </div>
-      )}
-      <button
-        type="button"
-        className="btn btn-secondary"
-        disabled={busy}
-        onClick={async () => {
-          if (!(await confirmDialog({ title: `Leave ${name}?`, body: "You'll lose access until someone invites you again.", confirmLabel: "Leave", danger: true }))) return;
-          setBusy(true);
-          const r = await api("/api/account/leave", { method: "POST" });
-          if (r.ok) window.location.assign("/app");
-          else {
-            setBusy(false);
-            setError(r.message);
-          }
-        }}
-      >
-        {busy ? <Busy>Leaving…</Busy> : "Leave business"}
-      </button>
-    </SettingsSection>
-  );
-}
-
-function DeleteAccount({ name }: { name: string }) {
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  async function onSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const parsed = deleteAccountSchema.safeParse({ confirmName: String(f.get("confirmName") ?? ""), password: String(f.get("deletePassword") ?? "") });
-    if (!parsed.success) {
-      const errs = fieldErrors(parsed.error);
-      return setErrors({ confirmName: errs.confirmName ?? "", deletePassword: errs.password ?? "" });
-    }
-    if (parsed.data.confirmName.trim() !== name) return setErrors({ confirmName: "That doesn't match the business name" });
-    setErrors({});
-    setBusy(true);
-    const r = await api("/api/account/delete", { method: "POST", body: parsed.data });
-    if (r.ok) {
-      window.location.assign("/welcome");
-      return;
-    }
-    setBusy(false);
-    setErrors({ confirmName: r.fields?.confirmName ?? "", deletePassword: r.fields?.password ?? "" });
-    setError(r.fields ? "" : r.message);
-  }
-  return (
-    <SettingsSection
-      danger
-      title="Delete this business"
-      description="Permanently deletes every survey, rating, comment and team member. Buttons already in emails will stop working. This can't be undone."
-    >
-      <form onSubmit={onSubmit} noValidate className="max-w-md space-y-4">
-        {error && <Notice kind="error">{error}</Notice>}
-        <Field label={`Type “${name}” to confirm`} name="confirmName" error={errors.confirmName || undefined}>
-          <TextInput name="confirmName" autoComplete="off" maxLength={200} error={errors.confirmName || undefined} />
-        </Field>
-        <Field label="Your password" name="deletePassword" error={errors.deletePassword || undefined}>
-          <PasswordInput name="deletePassword" autoComplete="current-password" maxLength={128} error={errors.deletePassword || undefined} />
-        </Field>
-        <button className="btn btn-danger" disabled={busy}>
-          {busy ? <Busy>Deleting…</Busy> : "Delete business permanently"}
-        </button>
-      </form>
-    </SettingsSection>
   );
 }

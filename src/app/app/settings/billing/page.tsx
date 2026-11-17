@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/client/api";
 import { billingProfileSchema, fieldErrors } from "@/lib/validation/schemas";
@@ -51,20 +51,50 @@ function BillingView() {
   if (error) return <LoadError message={error} onRetry={load} />;
   if (!data) return <PageLoader className="h-96" />;
 
+  return <BillingBody data={data} load={load} cancelled={search.get("cancelled") === "1"} />;
+}
+
+/** Plans first. Billing details are only asked for (in a pop-up) when someone chooses a plan or pack. */
+function BillingBody({ data, load, cancelled }: { data: Summary; load: () => void; cancelled: boolean }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const [resume, setResume] = useState<PlanId | PackId | null>(null);
+  const askDetails = (item: PlanId | PackId) => {
+    setResume(item);
+    dialog.current?.showModal();
+  };
   const anyProvider = data.providers.payhere || data.providers.stripe;
   return (
     <div className="space-y-6">
-      {search.get("cancelled") === "1" && <Notice kind="info">Payment cancelled. Nothing was charged.</Notice>}
+      {cancelled && <Notice kind="info">Payment cancelled. Nothing was charged.</Notice>}
       <CurrentPlan data={data} onChanged={load} />
-      {!anyProvider && (
-        <Notice kind="info">
-          Payments aren&rsquo;t switched on yet. Add your PayHere and/or Stripe keys to <code>.env.local</code> (see <code>.env.example</code>) and restart.
-        </Notice>
-      )}
-      <BillingDetails profile={data.profile} onSaved={load} />
-      {anyProvider && <Buy data={data} />}
+      {!anyProvider && <Notice kind="info">Online payments aren&rsquo;t available just now. Please contact us to change your plan.</Notice>}
+      {anyProvider && <Buy data={data} onNeedDetails={askDetails} resume={data.profile ? resume : null} onResumed={() => setResume(null)} />}
+      {data.profile && <BillingDetails profile={data.profile} onSaved={load} />}
       <Invite />
       <History payments={data.payments} />
+      <dialog
+        ref={dialog}
+        aria-label="Billing details"
+        className="m-auto w-[min(640px,calc(100%-2rem))] rounded-[var(--radius-panel)] bg-transparent p-0 backdrop:bg-[rgba(15,23,42,0.55)]"
+        onClose={() => {
+          if (!data.profile) setResume(null);
+        }}
+      >
+        <div className="max-h-[85vh] overflow-y-auto">
+          <BillingDetails
+            profile={null}
+            onSaved={() => {
+              dialog.current?.close();
+              load();
+            }}
+          />
+          <div className="bg-surface px-6 pb-5">
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => dialog.current?.close()}>
+              Not now
+            </button>
+          </div>
+        </div>
+      </dialog>
     </div>
   );
 }
@@ -238,7 +268,7 @@ function BillingDetails({ profile, onSaved }: { profile: Summary["profile"]; onS
 
   const p = profile;
   return (
-    <SettingsSection title="Billing details" description="Needed before you pay. Shown on your receipts and sent to the payment provider.">
+    <SettingsSection title="Your billing details" description="Needed once, before your first payment. Shown on your receipts and sent to the payment provider.">
       <form onSubmit={onSubmit} noValidate className="space-y-4">
         {notice && <Notice kind={notice.kind}>{notice.text}</Notice>}
         <div className="grid gap-4 sm:grid-cols-2">
@@ -295,7 +325,7 @@ function BillingDetails({ profile, onSaved }: { profile: Summary["profile"]; onS
   );
 }
 
-function Buy({ data }: { data: Summary }) {
+function Buy({ data, onNeedDetails, resume, onResumed }: { data: Summary; onNeedDetails: (item: PlanId | PackId) => void; resume: PlanId | PackId | null; onResumed: () => void }) {
   // Ways to pay, preferred first (Sri Lanka: rupees; elsewhere: dollars). The other currency is one tap away.
   const ways = data.payWays;
   const [way, setWay] = useState<PayWay>(ways[0] ?? { provider: "payhere", currency: "LKR" });
@@ -373,8 +403,16 @@ function Buy({ data }: { data: Summary }) {
     );
   };
 
+  // Billing details were just saved in the pop-up: carry on to the payment they chose.
+  useEffect(() => {
+    if (!resume) return;
+    onResumed();
+    void checkout(resume);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resume]);
+
   async function checkout(item: PlanId | PackId) {
-    if (!data.profile) return setError("Add your billing details first.");
+    if (!data.profile) return onNeedDetails(item);
     setError("");
     setBusy(item);
     const r = await api<{ type: "payhere"; url: string; fields: Record<string, string> } | { type: "redirect"; url: string }>("/api/billing/checkout", {
@@ -545,7 +583,7 @@ function Buy({ data }: { data: Summary }) {
                 <button
                   type="button"
                   className={`btn mt-4 ${p.id === "growth" ? "btn-primary" : "btn-secondary"}`}
-                  disabled={busy !== null || hasLivePlan || !data.profile || !fits(list)}
+                  disabled={busy !== null || hasLivePlan || !fits(list)}
                   title={fits(list) ? undefined : "Above the largest single payment we can take in rupees right now"}
                   onClick={async () => {
                     if (livePrepaid && !renew) {
@@ -578,13 +616,13 @@ function Buy({ data }: { data: Summary }) {
                   <Price item={k.id} list={k.price[currency]} />
                 </p>
               </div>
-              <button type="button" className="btn btn-secondary btn-sm" disabled={busy !== null || !data.profile || !fits(k.price[currency])} title={fits(k.price[currency]) ? undefined : "Above the largest single payment we can take in rupees right now"} onClick={() => checkout(k.id)}>
+              <button type="button" className="btn btn-secondary btn-sm" disabled={busy !== null || !fits(k.price[currency])} title={fits(k.price[currency]) ? undefined : "Above the largest single payment we can take in rupees right now"} onClick={() => checkout(k.id)}>
                 {busy === k.id ? <Busy>Opening…</Busy> : "Buy"}
               </button>
             </div>
           ))}
         </div>
-        {!data.profile && <p className="mt-3 text-[13px] text-muted">Add your billing details above to buy.</p>}
+        {!data.profile && <p className="mt-3 text-[13px] text-muted">We&rsquo;ll ask for your billing details once, when you choose.</p>}
       </SettingsSection>
     </>
   );
