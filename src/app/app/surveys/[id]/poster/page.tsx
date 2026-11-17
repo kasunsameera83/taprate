@@ -70,10 +70,10 @@ function Poster() {
     try {
       let url: string;
       try {
-        url = drawPoster(true).toDataURL("image/png");
+        url = centred(true).toDataURL("image/png");
       } catch {
         // The logo's server didn't allow drawing it: make the picture with the business name instead.
-        url = drawPoster(false).toDataURL("image/png");
+        url = centred(false).toDataURL("image/png");
       }
       const a = document.createElement("a");
       a.href = url;
@@ -84,7 +84,16 @@ function Poster() {
     }
   }
 
-  function drawPoster(withLogo: boolean): HTMLCanvasElement {
+  /** Draw once to measure, then again with the content centred on the page. */
+  function centred(withLogo: boolean): HTMLCanvasElement {
+    const first = drawPoster(withLogo, 0);
+    const H = first.height;
+    const used = Number(first.dataset.end ?? H);
+    const shift = Math.max(0, Math.round((H * 0.98 - used) / 2));
+    return shift > 0 ? drawPoster(withLogo, shift) : first;
+  }
+
+  function drawPoster(withLogo: boolean, shift: number): HTMLCanvasElement {
     {
       const W = size === "a4" ? 1240 : 874;
       const H = size === "a4" ? 1754 : 1240;
@@ -97,7 +106,7 @@ function Poster() {
       g.fillStyle = survey!.brandColor;
       g.fillRect(0, 0, W, Math.round(H * 0.012));
       const font = getComputedStyle(document.body).fontFamily || "Arial, sans-serif";
-      let y = Math.round(H * 0.07);
+      let y = Math.round(H * 0.07) + shift;
       const l = logoImg.current;
       if (withLogo && l && l.complete && l.naturalWidth > 0) {
         const ratio = l.naturalWidth / l.naturalHeight;
@@ -142,6 +151,7 @@ function Poster() {
       g.font = `500 ${Math.round(W * 0.028)}px ${font}`;
       g.fillStyle = "#64748b";
       g.fillText(words.seconds, W / 2, y + Math.round(H * 0.02));
+      c.dataset.end = String(y + Math.round(H * 0.03));
       return c;
     }
   }

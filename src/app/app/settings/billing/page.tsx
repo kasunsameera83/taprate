@@ -75,7 +75,7 @@ function BillingBody({ data, load, cancelled }: { data: Summary; load: () => voi
       <dialog
         ref={dialog}
         aria-label="Billing details"
-        className="m-auto w-[min(640px,calc(100%-2rem))] rounded-[var(--radius-panel)] bg-transparent p-0 backdrop:bg-[rgba(15,23,42,0.55)]"
+        className="m-auto w-[min(640px,calc(100%-2rem))] overflow-hidden rounded-[var(--radius-panel)] bg-surface p-0 shadow-[0_30px_80px_-30px_rgba(15,23,42,0.6)] backdrop:bg-[rgba(15,23,42,0.55)]"
         onClose={() => {
           if (!data.profile) setResume(null);
         }}
@@ -88,7 +88,7 @@ function BillingBody({ data, load, cancelled }: { data: Summary; load: () => voi
               load();
             }}
           />
-          <div className="bg-surface px-6 pb-5">
+          <div className="flex justify-end px-6 pb-5">
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => dialog.current?.close()}>
               Not now
             </button>

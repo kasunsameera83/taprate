@@ -11,6 +11,7 @@ import { TvScreens } from "./TvScreens";
 import { DropAlerts } from "./DropAlerts";
 import { BrandingSetting, IndustrySetting } from "./Extras";
 import { PageLoader, Busy } from "@/components/FaceLoader";
+import { planLabel } from "@/lib/billing/credits";
 
 type Me = { account: { id: string; name: string; plan: string; credits: number; role: string; logoUrl: string | null } | null };
 
@@ -32,7 +33,7 @@ export default function BusinessSettingsPage() {
     <div className="space-y-6">
       <SettingsSection title="Business details">
         <p className="mb-4 flex items-center gap-2 text-sm">
-          <span className="capitalize">{a.plan} plan</span>
+          <span>{planLabel(a.plan)} plan</span>
           <Badge tone="brand">{a.credits} responses left</Badge>
         </p>
         {canPerform(role, "account:write") ? <Rename current={a.name} onSaved={load} /> : <p className="text-sm font-semibold">{a.name}</p>}

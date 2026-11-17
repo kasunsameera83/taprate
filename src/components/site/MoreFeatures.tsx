@@ -218,11 +218,11 @@ export function MoreFeatures() {
         Built to grow with you
       </h2>
       <p className="mt-3 max-w-[56ch] text-[17px] text-muted">From your first survey to a group of businesses, the details are taken care of.</p>
-      <div ref={ref} className="lp-cards mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div ref={ref} className="lp-cards mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {CARDS.map((c, i) => (
           <article
             key={c.title}
-            className={`lp-card group rounded-[var(--radius-panel)] border border-line bg-surface p-5 hover:shadow-[0_20px_40px_-28px_rgba(16,21,61,0.45)] ${c.wide ? "lg:col-span-2" : ""}`}
+            className={`lp-card group min-w-0 overflow-hidden rounded-[var(--radius-panel)] border border-line bg-surface p-5 hover:shadow-[0_20px_40px_-28px_rgba(16,21,61,0.45)] ${c.wide ? "lg:col-span-2" : ""}`}
             style={{ "--d": `${i * 80}ms` } as React.CSSProperties}
           >
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] bg-brand-soft text-brand ring-1 ring-brand/10 transition duration-300 group-hover:scale-105 group-hover:bg-brand group-hover:text-white" aria-hidden>

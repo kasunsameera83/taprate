@@ -237,7 +237,7 @@ export function LandingView({
             {/* The rest as short cards, so the page stays quick to scroll (especially on phones). */}
             <div>
               <h2 className="text-[30px] font-bold leading-tight sm:text-[36px]">And everything else you need</h2>
-              <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {SHOWCASE.filter((x) => (!x.localOnly || currency === "LKR") && !FEATURED.has(x.title)).map(({ title, body }) => (
                   <li key={title} className="rounded-[var(--radius-panel)] border border-line bg-canvas p-5">
                     <h3 className="font-sans text-[17px] font-bold tracking-normal">{title}</h3>

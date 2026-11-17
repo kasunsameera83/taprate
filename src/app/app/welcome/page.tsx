@@ -22,11 +22,16 @@ const LANGS: Array<{ id: Lang; label: string }> = [
 function Choice({ checked, onSelect, emoji, title, hint, name, value }: { checked: boolean; onSelect: () => void; emoji: string; title: string; hint: string; name: string; value: string }) {
   return (
     <label
-      className={`flex h-full cursor-pointer items-start gap-3 rounded-[14px] border-2 bg-surface p-4 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand ${
+      className={`relative flex h-full cursor-pointer items-start gap-3 rounded-[14px] border-2 bg-surface p-4 pr-9 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand ${
         checked ? "border-brand bg-brand-soft" : "border-line hover:border-line-strong"
       }`}
     >
       <input type="radio" name={name} value={value} checked={checked} onChange={onSelect} className="sr-only" />
+      {checked && (
+        <span className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-brand text-[13px] font-bold text-white" aria-hidden>
+          ✓
+        </span>
+      )}
       <span className="text-[28px] leading-none" aria-hidden>
         {emoji}
       </span>
