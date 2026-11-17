@@ -4,6 +4,8 @@ out/
 .env
 .env.local
 .env.*.local
+# Any other environment file (e.g. .env.production) holds secrets too.
+.env*
 *.tsbuildinfo
 next-env.d.ts
 .DS_Store

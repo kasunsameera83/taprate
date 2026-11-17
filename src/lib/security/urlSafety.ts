@@ -63,8 +63,16 @@ export function isPrivateAddress(ip: string): boolean {
       (a === 198 && (b === 18 || b === 19))
     );
   }
-  const v6 = ip.toLowerCase();
+  const v6 = ip.toLowerCase().replace(/^\[|\]$/g, "");
   if (v6 === "::" || v6 === "::1") return true;
-  if (v6.startsWith("::ffff:")) return isPrivateAddress(v6.slice(7));
-  return /^(fc|fd|fe8|fe9|fea|feb|ff)/.test(v6);
+  // IPv4 hidden inside IPv6: ::ffff:1.2.3.4, ::ffff:0102:0304, ::1.2.3.4 and NAT64 64:ff9b::1.2.3.4.
+  const embedded = /^(?:::ffff:|::|64:ff9b::)(?:(\d{1,3}(?:\.\d{1,3}){3})|([0-9a-f]{1,4}):([0-9a-f]{1,4}))$/.exec(v6);
+  if (embedded) {
+    if (embedded[1]) return isPrivateAddress(embedded[1]);
+    const hi = parseInt(embedded[2]!, 16);
+    const lo = parseInt(embedded[3]!, 16);
+    return isPrivateAddress(`${hi >> 8}.${hi & 255}.${lo >> 8}.${lo & 255}`);
+  }
+  // Unique-local, link-local, multicast, documentation, 6to4 and Teredo tunnels (can reach private IPv4).
+  return /^(fc|fd|fe8|fe9|fea|feb|ff|2001:db8:|2002:|2001:0:|2001::)/.test(v6) || /^64:ff9b:/.test(v6);
 }

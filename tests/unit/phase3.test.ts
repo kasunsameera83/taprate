@@ -103,3 +103,10 @@ test("QR codes: structure and SVG output", () => {
   assert.ok(svg.startsWith("<svg") && !svg.includes("<script>"), "title is sanitised");
   assert.throws(() => encodeQr("x".repeat(400)), /too long/);
 });
+
+test("private addresses hidden inside IPv6 are blocked too", () => {
+  for (const ip of ["::ffff:7f00:1", "::ffff:a9fe:a9fe", "::127.0.0.1", "64:ff9b::10.0.0.1", "64:ff9b::a00:1", "2002:7f00:1::1", "2001:0:4136:e378::1", "2001:db8::1", "[::1]"]) {
+    assert.equal(isPrivateAddress(ip), true, ip);
+  }
+  for (const ip of ["::ffff:808:808", "2606:4700:4700::1111", "2404:6800:4003::200e"]) assert.equal(isPrivateAddress(ip), false, ip);
+});
