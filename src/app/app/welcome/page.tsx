@@ -15,8 +15,8 @@ import type { Lang } from "@/lib/i18n/public";
 
 const LANGS: Array<{ id: Lang; label: string }> = [
   { id: "en", label: "English" },
-  { id: "si", label: "සිංහල" },
-  { id: "ta", label: "தமிழ்" },
+  { id: "si", label: "Sinhala" },
+  { id: "ta", label: "Tamil" },
 ];
 
 function Choice({ checked, onSelect, emoji, title, hint, name, value }: { checked: boolean; onSelect: () => void; emoji: string; title: string; hint: string; name: string; value: string }) {
@@ -46,12 +46,15 @@ export default function WelcomePage() {
   const [email, setEmail] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [businessName, setBusinessName] = useState("");
+  // Sinhala and Tamil are only offered to Sri Lankan businesses (the database enforces this too).
+  const [localLanguages, setLocalLanguages] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    api<{ email: string | null; role: string | null; name: string | null }>("/api/account").then((r) => {
+    api<{ email: string | null; role: string | null; name: string | null; account: { localLanguages?: boolean } | null }>("/api/account").then((r) => {
       if (!r.ok) return;
+      setLocalLanguages(Boolean(r.data.account?.localLanguages));
       setEmail(r.data.email);
       setRole(r.data.role);
       setBusinessName(r.data.name ?? "");
@@ -66,7 +69,7 @@ export default function WelcomePage() {
     if (!template || !channel) return;
     setBusy(true);
     setError("");
-    const r = await api<Survey>("/api/surveys", { method: "POST", body: templateSurvey(template, lang, email) });
+    const r = await api<Survey>("/api/surveys", { method: "POST", body: templateSurvey(template, localLanguages ? lang : "en", email) });
     if (r.ok) {
       router.push(`/app/surveys/${encodeURIComponent(r.data.id)}?created=1&via=${channel}`);
       return;
@@ -129,6 +132,7 @@ export default function WelcomePage() {
         </div>
       </fieldset>
 
+      {localLanguages && (
       <fieldset>
         <legend className="text-sm font-semibold text-muted">Language your customers see</legend>
         <div className="mt-2 flex flex-wrap gap-2">
@@ -140,6 +144,7 @@ export default function WelcomePage() {
           ))}
         </div>
       </fieldset>
+      )}
 
       {preview && (
         <section aria-label="Preview" className="rounded-[var(--radius-panel)] border border-line bg-canvas p-5 text-center">

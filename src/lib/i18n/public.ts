@@ -9,7 +9,7 @@ export type Lang = (typeof LANGS)[number];
 export const isLang = (v: unknown): v is Lang => typeof v === "string" && (LANGS as readonly string[]).includes(v);
 
 /** How each language is named in the survey settings. */
-export const LANG_NAME: Record<Lang, string> = { en: "English", si: "සිංහල (Sinhala)", ta: "தமிழ் (Tamil)" };
+export const LANG_NAME: Record<Lang, string> = { en: "English", si: "Sinhala", ta: "Tamil" };
 
 const en = {
   tapOne: "Tap one. It takes a second.",

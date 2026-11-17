@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooterAuto } from "@/components/site/SiteFooterAuto";
 import { loadCatalog } from "@/lib/billing/catalogServer";
 import { formatMoney } from "@/lib/billing/catalog";
+import { preferredCurrency } from "@/lib/site/geo";
 
 export const metadata: Metadata = {
   title: "Why TapTruly: one-tap customer feedback at a fair price",
@@ -18,7 +19,7 @@ const POINTS: Array<{ title: string; body: string }> = [
   { title: "Every channel included", body: "Emails, your helpdesk, QR codes, WhatsApp and SMS links, a website widget, tablet kiosks and an office TV screen, on one dashboard." },
   { title: "Turn unhappy into happy", body: "Instant alerts, follow-ups with owners and due dates, replies sent from TapTruly, and a “did we fix it?” check that shows who you won back." },
   { title: "Know what customers say", body: "AI reads every comment and gives you the themes, real quotes and next steps. Compare your score with similar businesses." },
-  { title: "Made for Sri Lanka, ready for the world", body: "Surveys in English, Sinhala and Tamil. Pay in rupees with PayHere or in US dollars by card." },
+  { title: "Made for Sri Lanka, ready for the world", body: "Surveys in English, Sinhala and Tamil. Pay in rupees with PayHere or in US dollars by card." }, // Sri Lanka only (see below)
   { title: "Secure by design", body: "Two-step sign-in, every request checked on the server, customer data kept private, and your data exportable any time." },
 ];
 
@@ -33,12 +34,16 @@ const INCLUDED: string[] = [
   "AI comment summaries",
   "Compare with your industry",
   "Social media share cards and monthly highlights",
-  "Surveys in English, Sinhala and Tamil",
+  "Surveys in English, Sinhala and Tamil", // Sri Lanka only (see below)
   "Unlimited team members on paid plans",
 ];
 
 export default async function WhyTapTruly() {
-  const catalog = await loadCatalog();
+  const [catalog, currency] = await Promise.all([loadCatalog(), preferredCurrency()]);
+  // Sinhala and Tamil (and rupees) are only mentioned to visitors in Sri Lanka.
+  const lk = currency === "LKR";
+  const points = POINTS.map((p) => (!lk && p.title.startsWith("Made for Sri Lanka") ? { title: "Simple for any business", body: "No training or setup fees. Pay by card in US dollars and cancel any time." } : p));
+  const included = INCLUDED.filter((f) => lk || !f.includes("Sinhala"));
   const plans = catalog.plans.filter((p) => p.active);
   const starter = plans.find((p) => p.id === "starter") ?? plans[0];
 
@@ -57,7 +62,7 @@ export default async function WhyTapTruly() {
 
         <section className="mx-auto max-w-5xl px-5" aria-label="Why businesses choose TapTruly">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {POINTS.map((p) => (
+            {points.map((p) => (
               <article key={p.title} className="rounded-[var(--radius-panel)] border border-line bg-surface p-5">
                 <h2 className="text-[18px] font-bold">{p.title}</h2>
                 <p className="mt-1.5 text-[15px] leading-relaxed text-muted">{p.body}</p>
@@ -98,7 +103,7 @@ export default async function WhyTapTruly() {
             </table>
           </div>
           <p className="mt-3 text-sm text-muted">
-            In Sri Lanka you can pay in rupees.{" "}
+            {lk ? "You can also pay in rupees. " : null}
             <Link href="/#pricing" className="link">
               See all prices
             </Link>
@@ -108,7 +113,7 @@ export default async function WhyTapTruly() {
         <section className="mx-auto mt-14 max-w-5xl px-5" aria-labelledby="inc-title">
           <h2 id="inc-title" className="text-[26px] font-bold">What&rsquo;s included</h2>
           <ul className="mt-5 grid gap-x-8 gap-y-2.5 text-[15px] sm:grid-cols-2">
-            {INCLUDED.map((f) => (
+            {included.map((f) => (
               <li key={f} className="flex items-start gap-2.5">
                 <span className="mt-0.5 font-bold text-pos-text" aria-hidden>
                   ✓
