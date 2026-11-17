@@ -13,7 +13,7 @@ export function ShareCardButton({ responseId }: { responseId: string }) {
 
   if (!allowed) {
     return (
-      <Link href="/app/settings/billing" className="ml-2 text-[12px] font-semibold text-muted hover:text-ink" title="Social media share cards come with any paid plan">
+      <Link href="/app/settings/billing" className="ml-2 text-[13px] font-semibold text-muted hover:text-ink" title="Social media share cards come with any paid plan">
         Share (paid plans)
       </Link>
     );
@@ -23,7 +23,7 @@ export function ShareCardButton({ responseId }: { responseId: string }) {
     <>
       <button
         type="button"
-        className="ml-2 inline-flex min-h-9 items-center gap-1.5 rounded-full bg-gradient-to-r from-[var(--color-brand-from)] to-[var(--color-brand-to)] px-3.5 text-[12px] font-bold text-white shadow-[0_6px_14px_-6px_rgba(79,70,229,0.7)] transition-transform hover:-translate-y-px hover:shadow-[0_10px_18px_-8px_rgba(79,70,229,0.8)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+        className="ml-2 inline-flex min-h-9 items-center gap-1.5 rounded-full bg-gradient-to-r from-[var(--color-brand-from)] to-[var(--color-brand-to)] px-3.5 text-[13px] font-bold text-white shadow-[0_6px_14px_-6px_rgba(79,70,229,0.7)] transition-transform hover:-translate-y-px hover:shadow-[0_10px_18px_-8px_rgba(79,70,229,0.8)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         onClick={() => setOpen(true)}
       >
         <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>

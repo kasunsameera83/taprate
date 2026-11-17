@@ -108,7 +108,7 @@ export default function IntegrationsPage() {
             Compute HMAC-SHA256 of <code className="rounded bg-canvas px-1">{"{t}.{raw body}"}</code> with your signing secret and compare it to <code className="rounded bg-canvas px-1">v1</code>.
             Reject events whose <code className="rounded bg-canvas px-1">t</code> is more than 5 minutes old.
           </p>
-          <pre className="overflow-x-auto rounded-[10px] bg-canvas p-3 text-[12px] text-ink">{`{
+          <pre className="overflow-x-auto rounded-[10px] bg-canvas p-3 text-[13px] text-ink">{`{
   "event": "rating.created",
   "id": "…",
   "created_at": "2026-10-27T09:30:00Z",

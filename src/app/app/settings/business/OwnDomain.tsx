@@ -24,7 +24,7 @@ function CopyCell({ text }: { text: string }) {
   return (
     <button
       type="button"
-      className="ml-2 shrink-0 text-[12px] font-semibold text-brand hover:underline"
+      className="ml-2 shrink-0 text-[13px] font-semibold text-brand hover:underline"
       onClick={async () => {
         try {
           await navigator.clipboard.writeText(text);
@@ -120,7 +120,7 @@ export function OwnDomain({ canChange }: { canChange: boolean }) {
                       <tr key={i} className="align-top">
                         <td className="px-3 py-2 font-semibold">
                           {r.type}
-                          {r.priority !== null && <span className="block text-[11px] font-normal text-muted">priority {r.priority}</span>}
+                          {r.priority !== null && <span className="block text-[12px] font-normal text-muted">priority {r.priority}</span>}
                         </td>
                         <td className="px-3 py-2">
                           <span className="flex items-start">

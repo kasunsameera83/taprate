@@ -65,7 +65,7 @@ export function TvScreens() {
         {created && (
           <Notice kind="success">
             Open this link on the TV&rsquo;s browser and make it full screen. It&rsquo;s shown only once, so save it now.
-            <code className="mt-2 block break-all rounded bg-white px-1.5 py-1 text-[12px]">{created}</code>
+            <code className="mt-2 block break-all rounded bg-white px-1.5 py-1 text-[13px]">{created}</code>
           </Notice>
         )}
         {!screens ? (
@@ -77,10 +77,10 @@ export function TvScreens() {
                 <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
                   <span>
                     <span className="font-semibold">{s.name}</span>
-                    <span className="block text-[12px] text-muted">
+                    <span className="block text-[13px] text-muted">
                       {[s.survey ?? "All surveys", s.location ?? "All branches", s.showComments ? "shows comments" : "no comments"].join(" · ")}
                       {" · "}
-                      {s.lastSeenAt ? `last on ${new Date(s.lastSeenAt).toLocaleString()}` : "not opened yet"}
+                      {s.lastSeenAt ? `last on ${new Date(s.lastSeenAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true })}` : "not opened yet"}
                     </span>
                   </span>
                   <button type="button" className="btn btn-danger btn-sm" onClick={() => revoke(s)}>

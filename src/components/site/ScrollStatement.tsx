@@ -40,9 +40,10 @@ export function ScrollStatement({ text }: { text: string }) {
           </span>
         ))}
       </p>
-      <div className="mt-10 flex h-28 items-end gap-[3px] px-1" aria-hidden>
+      {/* Half the ticks on phones, and never wider than the screen (it used to make the page scroll sideways). */}
+      <div className="mt-10 flex h-28 items-end gap-[2px] overflow-hidden px-1 sm:gap-[3px]" aria-hidden>
         {TICK_PATTERN.map((s, i) => (
-          <span key={i} className="ss-tick min-w-[3px] flex-1 rounded-t-[3px]" style={{ height: H[s], background: COLOR[s], ["--i" as string]: i }} />
+          <span key={i} className={`ss-tick min-w-0 flex-1 rounded-t-[3px] ${i % 2 ? "max-sm:hidden" : ""}`} style={{ height: H[s], background: COLOR[s], ["--i" as string]: i }} />
         ))}
       </div>
     </div>

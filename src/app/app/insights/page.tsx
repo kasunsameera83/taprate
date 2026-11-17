@@ -206,7 +206,7 @@ function Summary({ item }: { item: Item }) {
           ))}
         </ol>
       </div>
-      <p className="text-[12px] text-muted">Written by AI from your customers&rsquo; comments. Quotes are checked against the real comments; always use your judgement.</p>
+      <p className="text-[13px] text-muted">Written by AI from your customers&rsquo; comments. Quotes are checked against the real comments; always use your judgement.</p>
     </article>
   );
 }

@@ -207,7 +207,7 @@ function Kiosks({ surveyId, kiosks, canEdit, onChanged, locations }: { surveyId:
           <Notice kind="success">
             Kiosk link created. Open it on the tablet and add it to the home screen. This is the only time the full link is shown.
             <span className="mt-2 flex flex-wrap items-center gap-2">
-              <code className="break-all rounded bg-white px-1.5 py-0.5 text-[12px]">{created}</code>
+              <code className="break-all rounded bg-white px-1.5 py-0.5 text-[13px]">{created}</code>
               <CopyButton text={created} label="Copy" />
             </span>
           </Notice>
@@ -218,7 +218,7 @@ function Kiosks({ surveyId, kiosks, canEdit, onChanged, locations }: { surveyId:
               <li key={k.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
                 <span>
                   <span className="font-semibold">{k.name}</span>
-                  <span className="block text-[12px] text-muted">
+                  <span className="block text-[13px] text-muted">
                     {k.location ? `${k.location} · ` : ""}
                     {k.lastUsedAt ? `Last rating ${new Date(k.lastUsedAt).toLocaleString()}` : "Not used yet"}
                   </span>

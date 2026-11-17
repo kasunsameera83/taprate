@@ -15,7 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const { supabase, user, memberships, active } = await requirePageSession({ needAccount: true });
 
   const isOwner = active!.role === "owner";
-  const [{ data: account }, { data: adminStatus }, catalog, { data: prepaidSub }] = await Promise.all([
+  const [{ data: account }, { data: adminStatus }, catalog, { data: prepaidSub }, { count: agentRatings }] = await Promise.all([
     supabase.from("accounts").select("name, plan, credit_balance, suspended_at, suspended_reason").eq("id", active!.accountId).maybeSingle(),
     supabase.rpc("platform_admin_status"),
     loadCatalog(),
@@ -23,6 +23,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     isOwner
       ? supabase.from("subscriptions").select("plan, current_period_end").eq("account_id", active!.accountId).eq("prepaid", true).eq("status", "active").order("created_at", { ascending: false }).limit(1).maybeSingle()
       : Promise.resolve({ data: null }),
+    // Any rating with an agent name? (RLS: agents only see their own, which is fine.)
+    supabase.from("responses").select("id", { count: "exact", head: true }).eq("account_id", active!.accountId).not("agent", "is", null).limit(1),
   ]);
   const endsAt = prepaidSub?.current_period_end ? String(prepaidSub.current_period_end) : null;
   const endingSoon = endsAt !== null && Date.parse(endsAt) - Date.now() < RENEW_REMINDER_DAYS * 86400_000;
@@ -43,6 +45,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         plan={plan}
         credits={credits}
         allowance={allowance}
+        hasAgents={(agentRatings ?? 0) > 0}
         accounts={memberships.map((m) => ({ id: m.accountId, name: m.accountName, role: m.role }))}
       />
       <main id="main" className="min-w-0 flex-1 px-4 pb-28 pt-6 sm:px-6 lg:px-10 lg:pb-16 lg:pt-10">

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/client/api";
 import { IconCheck } from "@/components/icons";
 
-type Onboarding = { firstSurveyId: string | null; steps: Record<"survey" | "tried" | "rating" | "logo" | "team" | "alerts", boolean> };
+type Onboarding = { firstSurveyId: string | null; alertsAvailable?: boolean; steps: Record<"survey" | "tried" | "rating" | "logo" | "team" | "alerts", boolean> };
 
 // First-run checklist on the dashboard. Hides itself when everything's done, or when dismissed
 // (remembered in this browser only).
@@ -33,7 +33,7 @@ export function Checklist({ accountId }: { accountId: string | null }) {
     { done: s.rating, title: "Get your first rating", body: "Add the buttons to your emails, print a QR code, or send to a few customers.", href: survey, cta: "Share it" },
     { done: s.logo, title: "Add your logo", body: "It shows on your thank-you pages and survey emails.", href: "/app/settings/business", cta: "Add logo" },
     { done: s.team, title: "Invite your team", body: "Agents see their own ratings; admins can follow up.", href: "/app/settings/team", cta: "Invite" },
-    { done: s.alerts, title: "Turn on phone alerts", body: "Hear about unhappy customers the moment they tap.", href: "/app/settings", cta: "Turn on" },
+    ...(data.alertsAvailable ? [{ done: s.alerts, title: "Turn on phone alerts", body: "Hear about unhappy customers the moment they tap.", href: "/app/settings", cta: "Turn on" }] : []),
   ];
   const doneCount = items.filter((i) => i.done).length;
   if (doneCount === items.length) return null;

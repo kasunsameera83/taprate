@@ -167,7 +167,7 @@ export function NotificationBell({ align = "left" }: { align?: "left" | "right" 
           <path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0" />
         </svg>
         {unread > 0 ? (
-          <span className="absolute -right-0.5 -top-0.5 min-w-5 rounded-full bg-neg-fill px-1.5 text-center text-[11px] font-bold leading-5 text-white">{unread > 99 ? "99+" : unread}</span>
+          <span className="absolute -right-0.5 -top-0.5 min-w-5 rounded-full bg-neg-fill px-1.5 text-center text-[12px] font-bold leading-5 text-white">{unread > 99 ? "99+" : unread}</span>
         ) : attention > 0 ? (
           <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-neu-fill ring-2 ring-surface" aria-hidden />
         ) : null}
@@ -204,7 +204,7 @@ export function NotificationBell({ align = "left" }: { align?: "left" | "right" 
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-semibold text-ink">{i.title}</span>
                       {i.body && <span className="block truncate text-[13px] text-muted">{i.body}</span>}
-                      {i.at && <span className="block text-[12px] text-muted">{ago(i.at)}</span>}
+                      {i.at && <span className="block text-[13px] text-muted">{ago(i.at)}</span>}
                     </span>
                   </Link>
                 </li>

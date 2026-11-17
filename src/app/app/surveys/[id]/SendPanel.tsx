@@ -97,8 +97,13 @@ function Composer({ survey, credits, onSent }: { survey: Survey; credits: number
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [busy, setBusy] = useState(false);
   const [myEmail, setMyEmail] = useState<string | null>(null);
+  const [businessName, setBusinessName] = useState<string | null>(null);
   useEffect(() => {
-    api<{ email: string | null }>("/api/account").then((r) => r.ok && setMyEmail(r.data.email));
+    api<{ email: string | null; name: string | null }>("/api/account").then((r) => {
+      if (!r.ok) return;
+      setMyEmail(r.data.email);
+      setBusinessName(r.data.name);
+    });
   }, []);
 
   /** One email to yourself with this subject and message, to see exactly what customers get. */
@@ -397,7 +402,7 @@ function Composer({ survey, credits, onSent }: { survey: Survey; credits: number
                 <div className="h-2 overflow-hidden rounded-full bg-[#e6e8ee]">
                   <div className="h-full rounded-full bg-brand transition-[width] duration-300" style={{ width: `${progress.total ? Math.round((progress.done / progress.total) * 100) : 0}%` }} />
                 </div>
-                <p className="mt-1 text-[12px] text-muted">
+                <p className="mt-1 text-[13px] text-muted">
                   {n(progress.done)} of {n(progress.total)} sent. Keep this page open.
                 </p>
               </div>
@@ -414,10 +419,10 @@ function Composer({ survey, credits, onSent }: { survey: Survey; credits: number
           <div className="overflow-hidden rounded-[14px] border border-line bg-white">
             <div className="border-b border-line bg-[#f8fafc] px-4 py-3">
               <p className="truncate text-[13px] font-semibold">{subject || "Subject line"}</p>
-              <p className="text-[12px] text-muted">From your business name</p>
+              <p className="text-[13px] text-muted">From {businessName || "your business name"}</p>
             </div>
             <div className="space-y-3 px-4 py-4 text-[14px] leading-relaxed text-[#1f2937]">
-              {fillPlaceholders(intro, sample, "your business")
+              {fillPlaceholders(intro, sample, businessName || "your business")
                 .split(/\n{2,}/)
                 .filter((p) => p.trim())
                 .map((p, i) => (
@@ -426,10 +431,10 @@ function Composer({ survey, credits, onSent }: { survey: Survey; credits: number
                   </p>
                 ))}
               <EmailButtonsPreview iconSet={survey.iconSet} question={survey.question} options={options} lang={survey.language} />
-              <p className="text-[12px] text-muted">Just tap the one that fits. That&rsquo;s it.</p>
+              <p className="text-[13px] text-muted">Just tap the one that fits. That&rsquo;s it.</p>
             </div>
           </div>
-          <p className="mt-3 text-[12px] text-muted">The footer includes an unsubscribe link, as the law and email providers require.</p>
+          <p className="mt-3 text-[13px] text-muted">The footer includes an unsubscribe link, as the law and email providers require.</p>
         </aside>
       </div>
     </section>
@@ -513,9 +518,9 @@ function SendRow({ s, canSend, onChanged }: { s: SendItem; canSend: boolean; onC
 
   const stat = (label: string, value: string, sub?: string) => (
     <div className="min-w-[6.5rem]">
-      <p className="text-[12px] text-muted">{label}</p>
+      <p className="text-[13px] text-muted">{label}</p>
       <p className="font-display text-xl font-bold tabular leading-tight">{value}</p>
-      {sub && <p className="text-[12px] text-muted">{sub}</p>}
+      {sub && <p className="text-[13px] text-muted">{sub}</p>}
     </div>
   );
 

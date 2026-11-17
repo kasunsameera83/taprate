@@ -64,7 +64,7 @@ export default function BusinessesPage() {
         <div className="panel overflow-x-auto">
           <table className="w-full min-w-[640px] text-sm">
             <caption className="sr-only">Your businesses, last 30 days</caption>
-            <thead className="text-left text-[12px] text-muted">
+            <thead className="text-left text-[13px] text-muted">
               <tr className="border-b border-line">
                 <th scope="col" className="p-3">
                   <button type="button" className="font-semibold hover:text-ink" aria-pressed={sort === "name"} onClick={() => setSort("name")}>Business</button>
@@ -86,7 +86,7 @@ export default function BusinessesPage() {
                   <td className="p-3">
                     <span className="font-semibold">{b.name}</span>
                     {b.id === data.currentId && <span className="ml-2"><Badge tone="brand">Open now</Badge></span>}
-                    <span className="block text-[12px] text-muted">{ROLE[b.role]}{b.plan ? ` · ${b.plan}` : ""}</span>
+                    <span className="block text-[13px] text-muted">{ROLE[b.role]}{b.plan ? ` · ${b.plan}` : ""}</span>
                   </td>
                   <td className="p-3 text-right tabular-nums">{b.responses30d}</td>
                   <td className="p-3 text-right tabular-nums">

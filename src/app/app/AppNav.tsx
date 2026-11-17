@@ -9,13 +9,13 @@ import { NotificationBell } from "@/components/Notifications";
 import { creditLevel, leftPercent, planLabel } from "@/lib/billing/credits";
 import { isPaidPlan, planAllows, type Feature } from "@/lib/billing/features";
 
-const NAV: Array<{ href: string; label: string; icon: (p: { className?: string }) => React.ReactElement; exact?: boolean; hideFor?: Role[]; feature?: Feature }> = [
+const NAV: Array<{ href: string; label: string; icon: (p: { className?: string }) => React.ReactElement; exact?: boolean; hideFor?: Role[]; feature?: Feature; needsAgents?: boolean }> = [
   { href: "/app", label: "Dashboard", icon: IconDashboard, exact: true },
   { href: "/app/surveys", label: "Surveys", icon: IconSurveys },
   { href: "/app/responses", label: "Responses", icon: IconResponses },
   { href: "/app/follow-ups", label: "Follow-ups", icon: IconFollowUp },
   { href: "/app/insights", label: "Insights", icon: IconSparkle, hideFor: ["agent"] as Role[], feature: "ai" },
-  { href: "/app/leaderboard", label: "Leaderboard", icon: IconTrophy },
+  { href: "/app/leaderboard", label: "Leaderboard", icon: IconTrophy, needsAgents: true },
   { href: "/app/settings", label: "Settings", icon: IconSettings },
 ];
 
@@ -33,6 +33,8 @@ type Props = {
   credits: number;
   /** Responses per period (plan or free amount), for the bar. */
   allowance: number;
+  /** Ratings carry agent names (helpdesk buttons): only then is the Leaderboard worth a menu item. */
+  hasAgents?: boolean;
   accounts: Array<{ id: string; name: string; role: Role }>;
 };
 
@@ -73,7 +75,7 @@ function AccountSwitcher({ accountId, accountName, role, accounts, compact = fal
           </option>
         ))}
       </select>
-      {error && <p className="mt-1 text-[12px] text-neg-text">{error}</p>}
+      {error && <p className="mt-1 text-[13px] text-neg-text">{error}</p>}
       {!compact && (
         <Link href="/app/businesses" className="mt-1.5 inline-block text-[13px] font-semibold text-brand hover:underline">
           See all businesses
@@ -83,7 +85,7 @@ function AccountSwitcher({ accountId, accountName, role, accounts, compact = fal
   );
 }
 
-export function AppNav({ isPlatformAdmin = false, email, accountId, accountName, role, plan, credits, allowance, accounts }: Props) {
+export function AppNav({ isPlatformAdmin = false, email, accountId, accountName, role, plan, credits, allowance, hasAgents = false, accounts }: Props) {
   const path = usePathname();
   const [signingOut, setSigningOut] = useState(false);
   const isActive = (href: string, exact?: boolean) => (exact ? path === href : path === href || path.startsWith(`${href}/`));
@@ -116,7 +118,7 @@ export function AppNav({ isPlatformAdmin = false, email, accountId, accountName,
           <NotificationBell align="left" />
         </div>
         <nav aria-label="Main" className="mt-8 flex flex-col gap-1">
-          {NAV.filter((n) => !n.hideFor?.includes(role)).map(({ href, label, icon: Icon, exact, feature }) => {
+          {NAV.filter((n) => !n.hideFor?.includes(role) && (!n.needsAgents || hasAgents)).map(({ href, label, icon: Icon, exact, feature }) => {
             const active = isActive(href, exact);
             return (
               <Link
@@ -158,7 +160,7 @@ export function AppNav({ isPlatformAdmin = false, email, accountId, accountName,
                     </Link>
                   ))}
                 {!paid && (
-                  <Link href="/app/upgrade" className="mt-1.5 block text-center text-[12px] font-semibold text-muted hover:text-brand hover:underline">
+                  <Link href="/app/upgrade" className="mt-1.5 block text-center text-[13px] font-semibold text-muted hover:text-brand hover:underline">
                     See what paid plans include
                   </Link>
                 )}
@@ -211,7 +213,7 @@ export function AppNav({ isPlatformAdmin = false, email, accountId, accountName,
         more={
           <div className="space-y-4">
             <nav aria-label="More" className="grid gap-1">
-              {MORE.filter((n) => !n.hideFor?.includes(role)).map(({ href, label, icon: Icon, exact, feature }) => {
+              {MORE.filter((n) => !n.hideFor?.includes(role) && (!n.needsAgents || hasAgents)).map(({ href, label, icon: Icon, exact, feature }) => {
                 const active = isActive(href, exact);
                 return (
                   <Link
@@ -275,7 +277,7 @@ export function AppNav({ isPlatformAdmin = false, email, accountId, accountName,
 
 function LockTag() {
   return (
-    <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-canvas px-2 py-0.5 text-[11px] font-semibold text-faint">
+    <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-canvas px-2 py-0.5 text-[12px] font-semibold text-faint">
       <IconLock className="h-3 w-3" />
       Paid
     </span>
@@ -318,7 +320,7 @@ function MobileTabs({ isActive, more }: { isActive: (href: string, exact?: boole
                 <Link
                   href={href}
                   aria-current={active ? "page" : undefined}
-                  className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-semibold ${active ? "text-brand" : "text-muted"}`}
+                  className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-[12px] font-semibold ${active ? "text-brand" : "text-muted"}`}
                 >
                   <span className={`flex h-7 w-12 items-center justify-center rounded-full ${active ? "bg-brand-soft" : ""}`}>
                     <Icon className="h-5 w-5" />
@@ -337,7 +339,7 @@ function MobileTabs({ isActive, more }: { isActive: (href: string, exact?: boole
                 sheet.current?.showModal();
                 setOpen(true);
               }}
-              className={`flex min-h-14 w-full flex-col items-center justify-center gap-0.5 text-[11px] font-semibold ${moreActive ? "text-brand" : "text-muted"}`}
+              className={`flex min-h-14 w-full flex-col items-center justify-center gap-0.5 text-[12px] font-semibold ${moreActive ? "text-brand" : "text-muted"}`}
             >
               <span className={`flex h-7 w-12 items-center justify-center rounded-full ${moreActive ? "bg-brand-soft" : ""}`}>
                 <IconMore className="h-5 w-5" />

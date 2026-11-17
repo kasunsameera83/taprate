@@ -149,7 +149,7 @@ export function ShareDialog({
               )}
             </div>
             {note && <p className="break-all text-[13px] text-pos-text">{note}</p>}
-            {footnote && <p className="text-[12px] text-muted">{footnote}</p>}
+            {footnote && <p className="text-[13px] text-muted">{footnote}</p>}
           </>
         )}
       </div>

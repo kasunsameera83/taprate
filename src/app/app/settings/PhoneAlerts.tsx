@@ -98,12 +98,12 @@ export function PhoneAlerts() {
     setMsg(r.ok ? { kind: "success", text: `Test sent to ${r.data.sent} ${r.data.sent === 1 ? "device" : "devices"}.` } : { kind: "error", text: r.message });
   }
 
+  // Not switched on for this site yet: hide the whole card rather than show a setup note to customers.
+  if (info && !info.configured) return null;
   return (
     <SettingsSection title="Phone alerts" description="Get a notification on your phone or computer the moment a customer gives a bad rating. Alerts never show the customer's details.">
       {!info ? (
         <Skeleton className="h-20 w-full" />
-      ) : !info.configured ? (
-        <Notice kind="info">Phone alerts aren&rsquo;t set up on this server yet (VAPID keys). See DEPLOY.md.</Notice>
       ) : (
         <div className="space-y-4">
           {msg && <Notice kind={msg.kind}>{msg.text}</Notice>}
@@ -149,7 +149,7 @@ export function PhoneAlerts() {
                 <li key={d.id} className="flex items-center justify-between gap-2 px-3 py-2">
                   <span>
                     <span className="font-semibold">{d.device ?? "Device"}</span>
-                    <span className="block text-[12px] text-muted">{d.last_used_at ? `Last alert ${new Date(d.last_used_at).toLocaleString()}` : `Added ${new Date(d.created_at).toLocaleDateString()}`}</span>
+                    <span className="block text-[13px] text-muted">{d.last_used_at ? `Last alert ${new Date(d.last_used_at).toLocaleString()}` : `Added ${new Date(d.created_at).toLocaleDateString()}`}</span>
                   </span>
                   <button type="button" className="btn btn-ghost btn-sm" onClick={() => remove(d.id)} aria-label={`Remove ${d.device ?? "device"}`}>
                     Remove

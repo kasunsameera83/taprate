@@ -164,7 +164,7 @@ export function IconCustomizer({ survey, canEdit, onChanged }: { survey: Survey;
               {preview.map((o) => (
                 <span key={o.value} className="flex min-h-20 min-w-20 flex-col items-center justify-center rounded-[12px] border-2 bg-white px-3" style={{ borderColor: o.color }}>
                   {o.imageUrl ? <img src={o.imageUrl} alt="" className="h-12 w-12 object-contain" /> : <span className="text-4xl" style={{ color: o.color }} aria-hidden>{set.id === "stars5" ? `${o.value}★` : o.symbol}</span>}
-                  <span className="mt-0.5 text-[11px] font-semibold text-muted">{o.label}</span>
+                  <span className="mt-0.5 text-[12px] font-semibold text-muted">{o.label}</span>
                 </span>
               ))}
             </div>

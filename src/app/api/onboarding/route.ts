@@ -1,5 +1,6 @@
 import { secureRoute, ok } from "@/lib/security/route";
 import { LIMITS } from "@/lib/security/rateLimit";
+import { pushConfigured } from "@/lib/push/server";
 
 // The first-run checklist: which setup steps this business has done. Read with the user's session (RLS).
 export const GET = secureRoute(
@@ -18,6 +19,8 @@ export const GET = secureRoute(
     const firstSurvey = (surveys.data?.[0]?.id as string | undefined) ?? null;
     return ok({
       firstSurveyId: firstSurvey,
+      // Phone alerts only count as a step when they're switched on for this site.
+      alertsAvailable: pushConfigured(),
       steps: {
         survey: Boolean(firstSurvey),
         tried: (sends.count ?? 0) > 0 || (ratings.count ?? 0) > 0,

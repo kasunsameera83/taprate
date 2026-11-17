@@ -52,7 +52,7 @@ export default function ApiKeysPage() {
       <SettingsSection title="For developers" description="Send the key in the Authorization header from your server. Never put it in a web page, app or URL.">
         <div className="space-y-3 text-sm text-muted">
           <p className="font-semibold text-ink">List recent ratings</p>
-          <pre className="overflow-x-auto rounded-[10px] bg-canvas p-3 text-[12px] text-ink">{`curl ${origin}/api/v1/responses?limit=20 \\
+          <pre className="overflow-x-auto rounded-[10px] bg-canvas p-3 text-[13px] text-ink">{`curl ${origin}/api/v1/responses?limit=20 \\
   -H "Authorization: Bearer tr_…"`}</pre>
           <p>
             Filters: <code className="rounded bg-canvas px-1">survey_id</code>, <code className="rounded bg-canvas px-1">since</code>,{" "}
@@ -61,7 +61,7 @@ export default function ApiKeysPage() {
             <code className="rounded bg-canvas px-1">cursor</code> for the next page.
           </p>
           <p className="font-semibold text-ink">Make signed rating links for one customer (read &amp; write key)</p>
-          <pre className="overflow-x-auto rounded-[10px] bg-canvas p-3 text-[12px] text-ink">{`curl -X POST ${origin}/api/v1/surveys/<survey id>/links \\
+          <pre className="overflow-x-auto rounded-[10px] bg-canvas p-3 text-[13px] text-ink">{`curl -X POST ${origin}/api/v1/surveys/<survey id>/links \\
   -H "Authorization: Bearer tr_…" \\
   -H "Content-Type: application/json" \\
   -d '{"email":"amaya@example.com","agent":"Nimal","ticket":"T-1042"}'`}</pre>
@@ -69,7 +69,7 @@ export default function ApiKeysPage() {
             Ratings from these links are marked <strong className="text-ink">verified</strong>: the customer can&rsquo;t change the email, agent or ticket.
           </p>
           <p className="font-semibold text-ink">Have TapTruly email the survey to one customer (read &amp; write key)</p>
-          <pre className="overflow-x-auto rounded-[10px] bg-canvas p-3 text-[12px] text-ink">{`curl -X POST ${origin}/api/v1/surveys/<survey id>/send \\
+          <pre className="overflow-x-auto rounded-[10px] bg-canvas p-3 text-[13px] text-ink">{`curl -X POST ${origin}/api/v1/surveys/<survey id>/send \\
   -H "Authorization: Bearer tr_…" \\
   -H "Content-Type: application/json" \\
   -d '{"email":"amaya@example.com","name":"Amaya","ticket":"T-1042"}'`}</pre>
@@ -206,7 +206,7 @@ function KeyRow({ item, onChanged }: { item: ApiKey; onChanged: () => void }) {
       <div className="min-w-0">
         <p className="flex flex-wrap items-center gap-2 font-semibold">
           {item.name}
-          <code className="rounded bg-canvas px-1.5 text-[12px] font-normal">{item.hint}</code>
+          <code className="rounded bg-canvas px-1.5 text-[13px] font-normal">{item.hint}</code>
           {item.revokedAt ? <Badge tone="plain">Revoked</Badge> : expired ? <Badge tone="neg">Expired</Badge> : <Badge tone="pos">Active</Badge>}
         </p>
         <p className="text-[13px] text-muted">

@@ -109,19 +109,19 @@ function TimelineBody({ email }: { email: string }) {
     <>
       <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
         <div className="rounded-lg border border-line p-2">
-          <dt className="text-[12px] text-muted">Ratings</dt>
+          <dt className="text-[13px] text-muted">Ratings</dt>
           <dd className="text-lg font-semibold tabular-nums">{s.total}</dd>
         </div>
         <div className="rounded-lg border border-line p-2">
-          <dt className="text-[12px] text-muted">Happy</dt>
+          <dt className="text-[13px] text-muted">Happy</dt>
           <dd className="text-lg font-semibold tabular-nums">{s.positive}</dd>
         </div>
         <div className="rounded-lg border border-line p-2">
-          <dt className="text-[12px] text-muted">Unhappy</dt>
+          <dt className="text-[13px] text-muted">Unhappy</dt>
           <dd className="text-lg font-semibold tabular-nums">{s.negative}</dd>
         </div>
       </dl>
-      {s.first && <p className="mt-2 text-[12px] text-muted">Customer since {new Date(s.first).toLocaleDateString()}</p>}
+      {s.first && <p className="mt-2 text-[13px] text-muted">Customer since {new Date(s.first).toLocaleDateString()}</p>}
       {items.length === 0 ? (
         <p className="mt-4 text-sm text-muted">No ratings from this customer yet.</p>
       ) : (
@@ -138,7 +138,7 @@ function TimelineBody({ email }: { email: string }) {
                 </div>
                 {/* Customer text is rendered as plain text (React escapes it). */}
                 {it.r.comment && <p className="mt-1 whitespace-pre-wrap break-words text-sm">&ldquo;{it.r.comment}&rdquo;</p>}
-                <p className="mt-0.5 text-[12px] text-muted">
+                <p className="mt-0.5 text-[13px] text-muted">
                   {fmt(it.at)}
                   {it.r.followup && ` · Follow-up ${it.r.followup.replace("_", " ")}`}
                 </p>
@@ -149,7 +149,7 @@ function TimelineBody({ email }: { email: string }) {
                 <p className="text-sm">
                   Emailed: <span className="font-medium">{it.e.name}</span>
                 </p>
-                <p className="mt-0.5 text-[12px] text-muted">{fmt(it.at)}</p>
+                <p className="mt-0.5 text-[13px] text-muted">{fmt(it.at)}</p>
               </li>
             ),
           )}

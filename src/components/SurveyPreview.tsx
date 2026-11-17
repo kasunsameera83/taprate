@@ -12,18 +12,19 @@ export function EmailButtonsPreview({ iconSet, question, options, lang = "en" }:
   return (
     <div style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
       <p className="mb-2 text-[15px] font-bold leading-5 text-[#111827]">{question || "Your question"}</p>
-      <div className={`flex flex-wrap ${compact ? "gap-1" : "gap-1.5"}`}>
+      {/* One row, like the real email (a table row): scrolls sideways in a narrow preview instead of wrapping. */}
+      <div className={`flex flex-nowrap overflow-x-auto pb-1 ${compact ? "gap-1" : "gap-1.5"}`}>
         {opts.map((o) => (
           <span
             key={o.value}
             className={`flex flex-col items-center justify-center rounded-[8px] border-2 bg-white text-center font-bold ${
-              compact ? "min-w-[30px] px-0 py-2.5 text-[15px] leading-5" : "min-w-[48px] px-2.5 py-2 text-[22px] leading-[26px]"
+              compact ? "min-w-[30px] shrink-0 px-0 py-2.5 text-[15px] leading-5" : "min-w-[48px] shrink-0 px-2 py-2 text-[22px] leading-[26px]"
             }`}
             style={{ borderColor: o.color, color: compact ? "#111827" : o.color }}
             title={o.label}
           >
             {o.imageUrl ? <img src={o.imageUrl} alt="" className="mx-auto mb-0.5 h-9 w-9 object-contain" /> : set.id === "stars5" ? `${o.value}★` : o.symbol}
-            {(showLabels || o.imageUrl) && <span className="text-[11px] leading-[14px] text-[#374151]">{o.label}</span>}
+            {(showLabels || o.imageUrl) && <span className="whitespace-nowrap text-[11px] leading-[14px] text-[#374151]">{o.label}</span>}
           </span>
         ))}
       </div>

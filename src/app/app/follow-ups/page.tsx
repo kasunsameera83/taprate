@@ -133,7 +133,11 @@ function FollowUpsView() {
           <EmptyState
             icon={<IconFollowUp className="h-8 w-8" />}
             title={status === "resolved" ? "Nothing resolved yet" : status === "overdue" ? "Nothing overdue" : "You're all caught up"}
-            body={status === "resolved" ? "Resolved follow-ups will be listed here." : "New negative ratings will appear here as tasks."}
+            body={
+              status === "resolved"
+                ? "Resolved follow-ups will be listed here."
+                : "Bad ratings become tasks here when a survey has follow-ups turned on (open the survey, then Settings, then “When a customer is unhappy”)."
+            }
           />
         </div>
       ) : data ? (
@@ -214,20 +218,20 @@ function FollowUpCard({
           {item.drivers.length > 0 && (
             <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Reasons given">
               {item.drivers.map((d) => (
-                <li key={d} className="rounded-full bg-neg-soft px-2.5 py-0.5 text-[12px] font-semibold text-neg-text">
+                <li key={d} className="rounded-full bg-neg-soft px-2.5 py-0.5 text-[13px] font-semibold text-neg-text">
                   {d}
                 </li>
               ))}
             </ul>
           )}
-          <p className="mt-2 text-[12px] text-muted">
+          <p className="mt-2 text-[13px] text-muted">
             {item.surveyName}
             {item.ticket ? `, ticket ${item.ticket}` : ""}, {new Date(item.createdAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
           </p>
         </div>
         <div className="flex flex-col items-end gap-1 text-right">
           <Badge tone={f.status === "resolved" ? "pos" : f.status === "in_progress" ? "brand" : "plain"}>{STATUS_LABEL[f.status]}</Badge>
-          {f.status !== "resolved" && <span className={`text-[12px] font-semibold ${due.overdue ? "text-neg-text" : "text-muted"}`}>{due.text}</span>}
+          {f.status !== "resolved" && <span className={`text-[13px] font-semibold ${due.overdue ? "text-neg-text" : "text-muted"}`}>{due.text}</span>}
         </div>
       </div>
 
@@ -410,7 +414,7 @@ function ReplyComposer({
           placeholder="Hi, thank you for telling us. I'm sorry about… Here's what we've done…"
           onChange={(e) => setBody(e.target.value)}
         />
-        <p className="text-right text-[12px] text-muted">{body.length}/2000</p>
+        <p className="text-right text-[13px] text-muted">{body.length}/2000</p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         {email && canSend && sendAllowed && (
@@ -439,7 +443,7 @@ function ReplyComposer({
         >
           {state === "copied" ? "Copied" : "Copy"}
         </button>
-        {email && canSend && !sendAllowed && <span className="text-[12px] text-muted">Sending from TapTruly comes with any paid plan.</span>}
+        {email && canSend && !sendAllowed && <span className="text-[13px] text-muted">Sending from TapTruly comes with any paid plan.</span>}
       </div>
     </div>
   );
@@ -486,12 +490,12 @@ function Notes({ responseId, canWrite, onAdded }: { responseId: string; canWrite
           {notes.map((n) => (
             <li key={n.id} className={`text-sm ${n.kind === "reply" ? "rounded-[8px] border border-line bg-surface p-2.5" : ""}`}>
               {n.kind === "reply" && (
-                <p className="mb-1 text-[12px] font-semibold text-brand">
+                <p className="mb-1 text-[13px] font-semibold text-brand">
                   ✉ Reply {n.sendStatus === "sent" ? "sent" : n.sendStatus === "failed" ? "not sent (saved only)" : "sending"} to {n.sentTo}: {n.subject}
                 </p>
               )}
               <p className="whitespace-pre-wrap break-words">{n.body}</p>
-              <p className="text-[12px] text-muted">
+              <p className="text-[13px] text-muted">
                 {n.author}, {new Date(n.createdAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
               </p>
             </li>

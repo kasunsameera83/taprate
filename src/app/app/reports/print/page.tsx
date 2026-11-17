@@ -41,9 +41,9 @@ export default async function PrintReport({ searchParams }: { searchParams: Prom
 
   const Tile = ({ label, value, note }: { label: string; value: string; note?: string }) => (
     <div className="rounded-[10px] border border-line p-3">
-      <p className="text-[12px] text-muted">{label}</p>
+      <p className="text-[13px] text-muted">{label}</p>
       <p className="text-2xl font-bold tabular">{value}</p>
-      {note && <p className="text-[12px] text-muted">{note}</p>}
+      {note && <p className="text-[13px] text-muted">{note}</p>}
     </div>
   );
 
@@ -66,7 +66,7 @@ export default async function PrintReport({ searchParams }: { searchParams: Prom
               {survey?.name ?? "All surveys"} · last {q.days} days ({periodLabel(q.days, now)})
             </p>
           </div>
-          <p className="text-[12px] text-muted">Made {new Date(now).toLocaleString("en-GB", { timeZone: "Asia/Colombo" })}</p>
+          <p className="text-[13px] text-muted">Made {new Date(now).toLocaleString("en-GB", { timeZone: "Asia/Colombo" })}</p>
         </header>
 
         {s.total === 0 ? (
@@ -91,7 +91,7 @@ export default async function PrintReport({ searchParams }: { searchParams: Prom
                   </div>
                 ))}
               </div>
-              <p className="mt-1 text-[12px] text-muted">Green positive, amber neutral, red negative.</p>
+              <p className="mt-1 text-[13px] text-muted">Green positive, amber neutral, red negative.</p>
             </section>
 
             {ai?.success && (
@@ -171,7 +171,7 @@ export default async function PrintReport({ searchParams }: { searchParams: Prom
                 <h2 className="text-lg font-semibold">Recent unhappy comments</h2>
                 {negatives.map((c, i) => (
                   <blockquote key={i} className="mt-2 break-inside-avoid border-l-2 border-neg-fill pl-3 text-sm">
-                    <span className="block text-[12px] text-muted">
+                    <span className="block text-[13px] text-muted">
                       {c.rating}
                       {c.agent ? ` · ${c.agent}` : ""} · {new Date(c.createdAt).toLocaleDateString("en-GB")}
                     </span>

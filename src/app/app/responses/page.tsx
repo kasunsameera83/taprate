@@ -389,7 +389,7 @@ function Reasons({ r }: { r: ResponseItem }) {
   return (
     <ul className="mt-1.5 flex flex-wrap gap-1" aria-label="Reasons given">
       {r.drivers.map((d) => (
-        <li key={d} className={`rounded-full px-2 py-0.5 text-[12px] font-semibold ${tone}`}>
+        <li key={d} className={`rounded-full px-2 py-0.5 text-[13px] font-semibold ${tone}`}>
           {d}
         </li>
       ))}
@@ -401,9 +401,9 @@ function Customer({ r }: { r: ResponseItem }) {
   return (
     <>
       <span className="break-all">{r.email ? <CustomerTimelineButton email={r.email} /> : <span className="text-muted">Not provided</span>}</span>
-      {r.ticket && <span className="block text-[12px] text-muted">Ticket {r.ticket}</span>}
+      {r.ticket && <span className="block text-[13px] text-muted">Ticket {r.ticket}</span>}
       {(r.email || r.agent || r.ticket) && !r.verified && (
-        <span className="block text-[12px] text-muted" title="Filled in by your email tool. TapTruly can't confirm it.">
+        <span className="block text-[13px] text-muted" title="Filled in by your email tool. TapTruly can't confirm it.">
           Details from your email tool
         </span>
       )}
@@ -417,14 +417,14 @@ function TestimonialToggle({ r, canFeature }: { r: ResponseItem; canFeature: boo
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   if (!r.testimonial || r.sentiment !== "positive" || !r.comment) return null;
-  if (!canFeature) return featured ? <span className="mt-2 block text-[12px] font-semibold text-pos-text">Shown on your website</span> : null;
+  if (!canFeature) return featured ? <span className="mt-2 block text-[13px] font-semibold text-pos-text">Shown on your website</span> : null;
   return (
     <span className="mt-2 block">
       <button
         type="button"
         aria-pressed={featured}
         disabled={busy}
-        className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold ${featured ? "border-transparent bg-pos-soft text-pos-text" : "border-line-strong text-muted hover:border-ink hover:text-ink"}`}
+        className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 text-[13px] font-semibold ${featured ? "border-transparent bg-pos-soft text-pos-text" : "border-line-strong text-muted hover:border-ink hover:text-ink"}`}
         onClick={async () => {
           setBusy(true);
           setErr("");
@@ -437,18 +437,21 @@ function TestimonialToggle({ r, canFeature }: { r: ResponseItem; canFeature: boo
         <span aria-hidden>{featured ? "★" : "☆"}</span>
         {featured ? "Shown on your website" : "Show on website"}
       </button>
-      <span className="ml-2 text-[12px] text-muted">as {r.testimonial.displayName ?? "A customer"}</span>
+      <span className="ml-2 text-[13px] text-muted">as {r.testimonial.displayName ?? "A customer"}</span>
       {r.testimonial.social ? (
         <ShareCardButton responseId={r.id} />
       ) : (
-        <span className="ml-2 text-[12px] text-muted" title="This customer agreed before social media sharing was added, so their comment can only be shown on your website.">Website only</span>
+        <span className="ml-2 text-[13px] text-muted" title="This customer agreed before social media sharing was added, so their comment can only be shown on your website.">Website only</span>
       )}
-      {err && <span className="mt-1 block text-[12px] text-neg-text">{err}</span>}
+      {err && <span className="mt-1 block text-[13px] text-neg-text">{err}</span>}
     </span>
   );
 }
 
 function ResponseTable({ items, canFeature }: { items: ResponseItem[]; canFeature: boolean }) {
+  // Columns that would say "Not provided" / "None" on every row are left out.
+  const showCustomer = items.some((r) => r.email || r.ticket);
+  const showAgent = items.some((r) => r.agent);
   return (
     <div className="panel hidden overflow-x-auto md:block">
       <table className="w-full text-sm">
@@ -456,8 +459,8 @@ function ResponseTable({ items, canFeature }: { items: ResponseItem[]; canFeatur
           <tr>
             <th scope="col" className="px-4 py-3 font-semibold">Rating</th>
             <th scope="col" className="px-4 py-3 font-semibold">Comment</th>
-            <th scope="col" className="px-4 py-3 font-semibold">Customer</th>
-            <th scope="col" className="px-4 py-3 font-semibold">Agent</th>
+            {showCustomer && <th scope="col" className="px-4 py-3 font-semibold">Customer</th>}
+            {showAgent && <th scope="col" className="px-4 py-3 font-semibold">Agent</th>}
             <th scope="col" className="px-4 py-3 font-semibold">Survey</th>
             <th scope="col" className="px-4 py-3 font-semibold">When</th>
           </tr>
@@ -474,13 +477,15 @@ function ResponseTable({ items, canFeature }: { items: ResponseItem[]; canFeatur
                 <Reasons r={r} />
                 <TestimonialToggle r={r} canFeature={canFeature} />
               </td>
-              <td className="max-w-[220px] px-4 py-3">
-                <Customer r={r} />
-              </td>
-              <td className="px-4 py-3">{r.agent ?? <span className="text-faint">None</span>}</td>
+              {showCustomer && (
+                <td className="max-w-[220px] px-4 py-3">
+                  <Customer r={r} />
+                </td>
+              )}
+              {showAgent && <td className="px-4 py-3">{r.agent ?? <span className="text-faint">None</span>}</td>}
               <td className="px-4 py-3">
                 {r.surveyName}
-                <span className="block text-[12px] text-muted">
+                <span className="block text-[13px] text-muted">
                   {CHANNEL_LABEL[r.channel] ?? r.channel}
                   {r.location ? ` · ${r.location.name}` : ""}
                 </span>
@@ -501,7 +506,7 @@ function ResponseCards({ items, canFeature }: { items: ResponseItem[]; canFeatur
         <li key={r.id} className="panel space-y-2 p-4 text-sm">
           <div className="flex items-start justify-between gap-3">
             <Rating r={r} />
-            <span className="shrink-0 text-[12px] text-muted">{when(r.createdAt)}</span>
+            <span className="shrink-0 text-[13px] text-muted">{when(r.createdAt)}</span>
           </div>
           {r.comment && <p className="whitespace-pre-wrap break-words">&ldquo;{r.comment}&rdquo;</p>}
           <Reasons r={r} />

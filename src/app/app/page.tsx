@@ -161,8 +161,9 @@ export default function Dashboard() {
           <DailyChart stats={shown} />
           <Reasons stats={shown} />
           <div className="grid gap-6 lg:grid-cols-5">
-            <FollowUps items={sample ? [] : followUps} surveyId={surveyId} />
-            <Agents stats={shown} />
+            {/* "By agent" only appears once ratings carry agent names (helpdesk buttons). */}
+            <FollowUps items={sample ? [] : followUps} surveyId={surveyId} wide={!shown || shown.byAgent.length === 0} />
+            {shown && shown.byAgent.length > 0 && <Agents stats={shown} />}
           </div>
           {!locationId && shown && shown.byLocation.length > 0 && <Branches rows={shown.byLocation} days={days} onPick={sample ? () => undefined : setLocationId} />}
         </>
@@ -273,75 +274,95 @@ function KpiRow({ stats, days }: { stats: StatsResponse | null; days: number }) 
       </div>
     );
   }
+  // Only cards with something to say: a new business sees "Ratings" alone instead of three "None yet" boxes.
+  const head = (t: string) => <h2 className="font-sans text-sm font-semibold tracking-normal text-muted">{t}</h2>;
+  const big = "font-display tabular mt-1 text-[32px] font-bold leading-tight";
+  const cards: Array<{ key: string; node: React.ReactNode }> = [
+    {
+      key: "ratings",
+      node: (
+        <>
+          {head("Ratings")}
+          <p className={big}>{stats.total}</p>
+          <Delta current={stats.total} previous={stats.previous.total} unit="count" days={days} />
+        </>
+      ),
+    },
+  ];
+  if (stats.nps) {
+    cards.push({
+      key: "nps",
+      node: (
+        <>
+          {head("Would recommend you (0–10)")}
+          <p className={big}>{stats.nps.score}</p>
+          <p className="text-[13px] text-muted">
+            {stats.nps.promoters} big fans, {stats.nps.detractors} unhappy (Net Promoter Score)
+          </p>
+        </>
+      ),
+    });
+  } else if (stats.ces) {
+    cards.push({
+      key: "ces",
+      node: (
+        <>
+          {head("How easy it was")}
+          <p className={big}>
+            {stats.ces.average}
+            <span className="text-lg text-muted"> / 7</span>
+          </p>
+          <p className="text-[13px] text-muted">Average of {stats.ces.total} ratings. Higher is easier.</p>
+        </>
+      ),
+    });
+  }
+  if (stats.recovery.answered > 0 || stats.recovery.sent > 0) {
+    cards.push({
+      key: "won",
+      node: (
+        <>
+          {head("Won back")}
+          {stats.recovery.answered > 0 ? (
+            <>
+              <p className={big}>
+                {stats.recovery.ratePct}
+                <span className="text-lg text-muted">%</span>
+              </p>
+              <p className="text-[13px] text-muted">
+                {stats.recovery.recovered} of {stats.recovery.answered} unhappy customers were happy when asked again after their follow-up.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="font-display mt-1 text-[32px] font-bold leading-tight text-faint">Waiting</p>
+              <p className="text-[13px] text-muted">{stats.recovery.sent} &ldquo;Did we put it right?&rdquo; emails sent. Answers show here.</p>
+            </>
+          )}
+        </>
+      ),
+    });
+  }
+  if (stats.pending > 0) {
+    cards.push({
+      key: "pending",
+      node: (
+        <>
+          {head("Being checked")}
+          <p className={big}>{stats.pending}</p>
+          <p className="text-[13px] text-muted">Taps we&rsquo;re still checking come from a real person. Automatic email checks are never counted.</p>
+        </>
+      ),
+    });
+  }
+  const cols = ["", "", "sm:grid-cols-2", "sm:grid-cols-3", "sm:grid-cols-2 lg:grid-cols-4"][cards.length];
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <div className="panel p-5">
-        <h2 className="font-sans text-sm font-semibold tracking-normal text-muted">
-          Ratings
-        </h2>
-        <p className="font-display tabular mt-1 text-[32px] font-bold leading-tight">{stats.total}</p>
-        <Delta current={stats.total} previous={stats.previous.total} unit="count" days={days} />
-      </div>
-      <div className="panel p-5">
-        <h2 className="font-sans text-sm font-semibold tracking-normal text-muted">
-          {stats.nps ? "Net Promoter Score" : stats.ces ? "Customer effort" : "Net Promoter Score"}
-        </h2>
-        {!stats.nps && stats.ces ? (
-          <>
-            <p className="font-display tabular mt-1 text-[32px] font-bold leading-tight">
-              {stats.ces.average}
-              <span className="text-lg text-muted"> / 7</span>
-            </p>
-            <p className="text-[13px] text-muted">Average of {stats.ces.total} effort ratings. Higher is easier.</p>
-          </>
-        ) : stats.nps ? (
-          <>
-            <p className="font-display tabular mt-1 text-[32px] font-bold leading-tight">{stats.nps.score}</p>
-            <p className="text-[13px] text-muted">
-              {stats.nps.promoters} promoters, {stats.nps.detractors} detractors
-            </p>
-          </>
-        ) : (
-          <>
-            <p className="font-display mt-1 text-[32px] font-bold leading-tight text-faint">None yet</p>
-            <p className="text-[13px] text-muted">Shown when a survey uses the 0–10 or effort scale.</p>
-          </>
-        )}
-      </div>
-      <div className="panel p-5">
-        <h2 className="font-sans text-sm font-semibold tracking-normal text-muted">
-          Won back
-        </h2>
-        {stats.recovery.answered > 0 ? (
-          <>
-            <p className="font-display tabular mt-1 text-[32px] font-bold leading-tight">
-              {stats.recovery.ratePct}
-              <span className="text-lg text-muted">%</span>
-            </p>
-            <p className="text-[13px] text-muted">
-              {stats.recovery.recovered} of {stats.recovery.answered} unhappy customers were happy when asked again after their follow-up.
-            </p>
-          </>
-        ) : (
-          <>
-            <p className="font-display mt-1 text-[32px] font-bold leading-tight text-faint">{stats.recovery.sent > 0 ? "Waiting" : "None yet"}</p>
-            <p className="text-[13px] text-muted">
-              {stats.recovery.sent > 0
-                ? `${stats.recovery.sent} “Did we put it right?” emails sent. Answers show here.`
-                : "Resolve a follow-up and the customer is asked how they feel now."}
-            </p>
-          </>
-        )}
-      </div>
-      <div className="panel p-5">
-        <h2 className="font-sans text-sm font-semibold tracking-normal text-muted">
-          Awaiting confirmation
-        </h2>
-        <p className="font-display tabular mt-1 text-[32px] font-bold leading-tight">{stats.pending}</p>
-        <p className="text-[13px] text-muted">
-          Clicks not yet confirmed by a real browser. Email scanners end up here and are never counted.
-        </p>
-      </div>
+    <div className={`grid gap-4 ${cols}`}>
+      {cards.map((c) => (
+        <div key={c.key} className="panel p-5">
+          {c.node}
+        </div>
+      ))}
     </div>
   );
 }
@@ -384,7 +405,7 @@ function DailyChart({ stats }: { stats: StatsResponse | null }) {
           </div>
         ))}
       </div>
-      <div className="mt-2 flex justify-between text-[12px] text-muted" aria-hidden>
+      <div className="mt-2 flex justify-between text-[13px] text-muted" aria-hidden>
         <span>{stats.byDay[0] && fmt(stats.byDay[0].date)}</span>
         <span>{mid && fmt(mid.date)}</span>
         <span>Today</span>
@@ -468,15 +489,15 @@ function timeAgo(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-function FollowUps({ items, surveyId }: { items: ResponseItem[] | null; surveyId: string }) {
+function FollowUps({ items, surveyId, wide }: { items: ResponseItem[] | null; surveyId: string; wide: boolean }) {
   return (
-    <section className="panel p-5 sm:p-6 lg:col-span-3" aria-labelledby="follow-title">
+    <section className={`panel p-5 sm:p-6 ${wide ? "lg:col-span-5" : "lg:col-span-3"}`} aria-labelledby="follow-title">
       <div className="mb-3 flex items-baseline justify-between gap-2">
         <h2 id="follow-title" className="text-lg font-semibold">
-          Needs follow-up
+          Recent unhappy customers
         </h2>
-        <Link href="/app/follow-ups" className="link text-sm">
-          Open follow-ups
+        <Link href={`/app/responses?sentiment=negative${surveyId ? `&surveyId=${encodeURIComponent(surveyId)}` : ""}`} className="link text-sm">
+          See all
         </Link>
       </div>
       {items === null ? (
@@ -503,7 +524,7 @@ function FollowUps({ items, surveyId }: { items: ResponseItem[] | null; surveyId
                     {r.agent && <span className="text-muted"> for {r.agent}</span>}
                   </p>
                   {r.comment && <p className="mt-0.5 line-clamp-2 break-words text-sm text-ink">&ldquo;{r.comment}&rdquo;</p>}
-                  <p className="mt-0.5 text-[12px] text-muted">
+                  <p className="mt-0.5 text-[13px] text-muted">
                     {r.surveyName}
                     {r.ticket ? `, ticket ${r.ticket}` : ""}, {timeAgo(r.createdAt)}
                   </p>

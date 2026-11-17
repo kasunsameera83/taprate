@@ -24,17 +24,17 @@ export const FEATURE_PLAN: Record<Feature, Tier> = {
 };
 
 export const FEATURE_NAME: Record<Feature, string> = {
-  integrations: "Helpdesk, Shopify, Slack and webhook connections",
+  integrations: "Connecting your helpdesk, Shopify or Slack",
   api: "The API",
-  tv: "Office TV screens",
-  ai: "AI reply drafts and insights",
-  reports: "Weekly and monthly email reports",
-  repeats: "Repeat sends",
-  social: "Social media share cards",
+  tv: "The office TV screen",
+  ai: "AI insights and reply drafts",
+  reports: "Email reports (weekly or monthly)",
+  repeats: "Sending again automatically",
+  social: "Sharing comments on social media",
   replies: "Replying to customers from TapTruly",
   white_label: "Removing the TapTruly name from your surveys",
-  own_domain: "Emails from your own domain",
-  custom_domain: "Survey pages on your own web address",
+  own_domain: "Sending emails from your own domain",
+  custom_domain: "Using your own web address for survey pages",
 };
 
 const RANK: Record<string, number> = { starter: 1, growth: 2, scale: 3 };

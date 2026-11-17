@@ -83,7 +83,7 @@ export default async function UpgradePage() {
                 <div className="min-w-0">
                   <p className="flex flex-wrap items-center gap-2 font-semibold">
                     {it.title}
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${got ? "bg-pos-soft text-pos-text" : "bg-canvas text-faint"}`}>{got ? "✓ You have this" : TIER_NOTE[tier]}</span>
+                    <span className={`rounded-full px-2 py-0.5 text-[12px] font-semibold ${got ? "bg-pos-soft text-pos-text" : "bg-canvas text-faint"}`}>{got ? "✓ You have this" : TIER_NOTE[tier]}</span>
                   </p>
                   <p className="mt-1 text-sm text-muted">{it.body}</p>
                 </div>
