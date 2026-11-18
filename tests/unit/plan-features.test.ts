@@ -14,9 +14,9 @@ test("free and unpaid businesses get no paid features", () => {
 });
 
 test("paid plans get their features by tier", () => {
-  for (const plan of ["starter", "growth", "scale"]) {
+  for (const plan of ["small", "starter", "growth", "scale"]) {
     for (const f of FEATURES) {
-      const expected = FEATURE_PLAN[f] === "scale" ? plan === "scale" : FEATURE_PLAN[f] === "growth" ? plan !== "starter" : true;
+      const expected = FEATURE_PLAN[f] === "scale" ? plan === "scale" : FEATURE_PLAN[f] === "growth" ? plan === "growth" || plan === "scale" : true;
       assert.equal(planAllows(plan, f), expected, `${plan} ${f}`);
     }
     assert.ok(planLimits(plan).members >= 1000 && planLimits(plan).locations >= 1000);
@@ -26,7 +26,9 @@ test("paid plans get their features by tier", () => {
 test("the database rules match (migration 0031)", () => {
   const sql = readFileSync(new URL("../../supabase/migrations/0031_plan_features.sql", import.meta.url), "utf8");
   assert.match(sql, /when 'own_domain' then p_plan = 'scale'/);
-  assert.match(sql, /p_plan in \('starter', 'growth', 'scale'\)/);
+  const latest = readFileSync(new URL("../../supabase/migrations/0042_small_plan.sql", import.meta.url), "utf8");
+  assert.match(latest, /p_plan in \('small', 'starter', 'growth', 'scale'\)/);
+  assert.match(latest, /in \('small', 'starter', 'growth', 'scale'\) then 1000/);
   assert.match(sql, /when p_what = 'members' then 2\s+else 1/);
   for (const [table, f] of [["integrations", "integrations"], ["api_keys", "api"], ["tv_screens", "tv"], ["report_subscriptions", "reports"], ["sending_domains", "own_domain"]]) {
     assert.match(sql, new RegExp(`before insert on public\\.${table} for each row execute function private\\.require_feature\\('${f}'\\)`), table);

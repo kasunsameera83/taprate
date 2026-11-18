@@ -35,7 +35,7 @@ export function PaidFeatureNotice({ feature }: { feature: Feature }) {
   if (useAllows(feature)) return null;
   return (
     <UpgradeBox>
-      <strong>{FEATURE_NAME[feature]}</strong> {FEATURE_PLAN[feature] === "scale" ? "is included with the Scale plan." : FEATURE_PLAN[feature] === "growth" ? "is included with the Growth and Scale plans." : "is included with every paid plan, from Starter."}
+      <strong>{FEATURE_NAME[feature]}</strong> {FEATURE_PLAN[feature] === "scale" ? "is included with the Scale plan." : FEATURE_PLAN[feature] === "growth" ? "is included with the Growth and Scale plans." : "is included with every paid plan."}
     </UpgradeBox>
   );
 }

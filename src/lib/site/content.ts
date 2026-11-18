@@ -163,7 +163,7 @@ export const catalogItemSchema = z.discriminatedUnion("kind", [
   z
     .object({
       kind: z.literal("plan"),
-      item: z.enum(["starter", "growth", "scale"]),
+      item: z.enum(["small", "starter", "growth", "scale"]),
       name: t(40, "Name"),
       blurb: z.union([t(120, "Description"), z.literal("")]),
       responses: z.number({ error: "Responses must be a number" }).int().min(1).max(1_000_000),

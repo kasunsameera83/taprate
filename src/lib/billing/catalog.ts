@@ -5,15 +5,15 @@
 
 export type Currency = "LKR" | "USD";
 export type Provider = "payhere" | "stripe";
-export type PlanId = "starter" | "growth" | "scale";
+export type PlanId = "small" | "starter" | "growth" | "scale";
 export type PackId = "pack_250" | "pack_1000" | "pack_5000";
 export type BillingInterval = "month" | "year";
 
-export const PLAN_IDS: readonly PlanId[] = ["starter", "growth", "scale"];
+export const PLAN_IDS: readonly PlanId[] = ["small", "starter", "growth", "scale"];
 
 /** Survey emails a business can send per day (UTC). Enforced in the database by
- *  private.daily_send_limit (migrations 0029/0030); keep the two in step. */
-export const SEND_LIMITS = { starter: 500, growth: 2000, scale: 5000, paused: 0 } as const;
+ *  private.daily_send_limit (latest: migration 0042); keep the two in step. */
+export const SEND_LIMITS = { small: 150, starter: 500, growth: 2000, scale: 5000, paused: 0 } as const;
 // Free and new businesses: catalog.free.dailyEmails (set in /admin → Pricing, migration 0030).
 export const PACK_IDS: readonly PackId[] = ["pack_250", "pack_1000", "pack_5000"];
 
@@ -56,6 +56,7 @@ export const DEFAULT_FREE: FreePlan = { responses: 50, dailyEmails: 100 };
 
 export const DEFAULT_CATALOG: Catalog = {
   plans: [
+    { id: "small", name: "Small shop", monthlyResponses: 150, blurb: "For a single shop, salon or café", price: { LKR: { month: 199000, year: 1990000 }, USD: { month: 700, year: 7000 } }, active: true },
     { id: "starter", name: "Starter", monthlyResponses: 500, blurb: "For a small team getting started", price: { LKR: { month: 590000, year: 5900000 }, USD: { month: 1900, year: 19000 } }, active: true },
     { id: "growth", name: "Growth", monthlyResponses: 2000, blurb: "For busy support and sales teams", price: { LKR: { month: 1490000, year: 14900000 }, USD: { month: 4900, year: 49000 } }, active: true },
     { id: "scale", name: "Scale", monthlyResponses: 10000, blurb: "For high-volume and multi-team businesses", price: { LKR: { month: 3890000, year: 38900000 }, USD: { month: 12900, year: 129000 } }, active: true },

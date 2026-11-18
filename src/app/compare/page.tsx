@@ -45,7 +45,7 @@ export default async function WhyTapTruly() {
   const points = POINTS.map((p) => (!lk && p.title.startsWith("Made for Sri Lanka") ? { title: "Simple for any business", body: "No training or setup fees. Pay by card in US dollars and cancel any time." } : p));
   const included = INCLUDED.filter((f) => lk || !f.includes("Sinhala"));
   const plans = catalog.plans.filter((p) => p.active);
-  const starter = plans.find((p) => p.id === "starter") ?? plans[0];
+  const starter = [...plans].sort((a, b) => a.price.USD.month - b.price.USD.month)[0];
 
   return (
     <div className="min-h-screen">

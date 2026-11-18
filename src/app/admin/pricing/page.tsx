@@ -199,7 +199,7 @@ function FreeForm({ free, onSaved }: { free: FreePlan; onSaved: () => void }) {
           <label className="block space-y-1 text-sm">
             <span className="font-semibold">Survey emails a day (free businesses)</span>
             <input className="input" inputMode="numeric" value={v.dailyEmails} maxLength={4} onChange={(e) => setV({ ...v, dailyEmails: e.target.value })} aria-invalid={errors.dailyEmails ? "true" : undefined} />
-            <span className="block text-[13px] text-muted">Each email costs you to send. Paid plans: Starter 500, Growth 2,000, Scale 5,000.</span>
+            <span className="block text-[13px] text-muted">Each email costs you to send. Paid plans: Small shop 150, Starter 500, Growth 2,000, Scale 5,000.</span>
             {errors.dailyEmails && <span className="block text-[13px] font-medium text-neg-text">{errors.dailyEmails}</span>}
           </label>
         </div>

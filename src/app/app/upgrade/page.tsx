@@ -21,7 +21,7 @@ function Svg({ children }: { children: React.ReactNode }) {
 }
 
 const ITEMS: Array<{ feature: Feature | "volume" | "team"; title: string; body: string; icon: React.ReactNode }> = [
-  { feature: "volume", title: "Fresh responses every month", body: "From 500 a month on Starter. Unused responses roll over, so nothing is wasted.", icon: <Svg><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l3 2" /></Svg> },
+  { feature: "volume", title: "Fresh responses every month", body: "A new batch of responses every month. Unused responses roll over, so nothing is wasted.", icon: <Svg><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l3 2" /></Svg> },
   { feature: "team", title: "Your whole team and every branch", body: "Add as many team members and branches as you need. The free plan has 2 people and 1 branch.", icon: <Svg><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0" /><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5" /></Svg> },
   { feature: "ai", title: "AI insights and reply drafts", body: "AI reads every comment and tells you the themes, real quotes and what to fix next. It also drafts replies for you.", icon: <Svg><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.6L12 15l-1.8-4.4L5.5 9l4.7-1.4Z" /><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8Z" /></Svg> },
   { feature: "replies", title: "Reply to customers from TapTruly", body: "Answer an unhappy customer by email straight from the follow-up, and see the whole conversation in one place.", icon: <Svg><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z" /><path d="m10 9-3 3 3 3" /><path d="M7 12h6a3 3 0 0 1 3 3" /></Svg> },
@@ -35,7 +35,7 @@ const ITEMS: Array<{ feature: Feature | "volume" | "team"; title: string; body: 
   { feature: "custom_domain", title: "Your own web address and email domain", body: "Survey pages on feedback.yourbusiness.com and emails from your domain. Scale plan.", icon: <Svg><circle cx="12" cy="12" r="9" /><path d="M3 12h18" /><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18Z" /></Svg> },
 ];
 
-const TIER_NOTE = { starter: "From Starter", growth: "Growth and Scale", scale: "Scale" } as const;
+const TIER_NOTE = { starter: "Every paid plan", growth: "Growth and Scale", scale: "Scale" } as const;
 
 export default async function UpgradePage() {
   const { supabase, active } = await requirePageSession({ needAccount: true });

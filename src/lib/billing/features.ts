@@ -4,10 +4,11 @@
 
 export type Feature = "integrations" | "api" | "tv" | "ai" | "reports" | "repeats" | "social" | "replies" | "white_label" | "own_domain" | "custom_domain";
 
-export const PAID_PLANS = ["starter", "growth", "scale"] as const;
+export const PAID_PLANS = ["small", "starter", "growth", "scale"] as const;
 export const isPaidPlan = (plan: string | null | undefined): boolean => (PAID_PLANS as readonly string[]).includes(plan ?? "");
 
-/** Features and the cheapest plan that has them. Keep in step with private.plan_allows (0031). */
+/** Features and the cheapest plan that has them ("starter" = every paid plan, Small shop included).
+ *  Keep in step with private.plan_allows (latest: migration 0042). */
 export type Tier = "starter" | "growth" | "scale";
 export const FEATURE_PLAN: Record<Feature, Tier> = {
   integrations: "starter",
@@ -37,7 +38,7 @@ export const FEATURE_NAME: Record<Feature, string> = {
   custom_domain: "Using your own web address for survey pages",
 };
 
-const RANK: Record<string, number> = { starter: 1, growth: 2, scale: 3 };
+const RANK: Record<string, number> = { small: 1, starter: 1, growth: 2, scale: 3 };
 
 export function planAllows(plan: string | null | undefined, feature: Feature): boolean {
   return (RANK[plan ?? ""] ?? 0) >= RANK[FEATURE_PLAN[feature]]!;

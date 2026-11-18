@@ -28,6 +28,7 @@ type PromoRow = {
 };
 
 const ITEMS = [
+  { id: "small", label: "Small shop" },
   { id: "starter", label: "Starter" },
   { id: "growth", label: "Growth" },
   { id: "scale", label: "Scale" },

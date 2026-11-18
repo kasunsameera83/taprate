@@ -34,7 +34,7 @@ type Summary = {
   payments: Array<{ id: string; receiptNo: string; description: string; amountMinor: number; currency: "LKR" | "USD"; status: string; paidAt: string; provider: string }>;
 };
 
-const PLAN_LABEL: Record<string, string> = { trial: "Free trial", free: "Free", starter: "Starter", growth: "Growth", scale: "Scale", paused: "Paused" };
+const PLAN_LABEL: Record<string, string> = { trial: "Free trial", free: "Free", small: "Small shop", starter: "Starter", growth: "Growth", scale: "Scale", paused: "Paused" };
 const COUNTRIES = ["LK", "IN", "MV", "BD", "PK", "NP", "SG", "MY", "TH", "AE", "SA", "QA", "OM", "KW", "BH", "AU", "NZ", "GB", "IE", "DE", "FR", "NL", "IT", "ES", "SE", "NO", "DK", "CH", "US", "CA", "JP", "KR", "HK", "PH", "ID", "VN", "ZA", "KE", "NG"];
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 
@@ -563,7 +563,7 @@ function Buy({ data, onNeedDetails, resume, onResumed }: { data: Summary; onNeed
             <Notice kind="info">To change plan, cancel your current one; you can choose a new plan when it ends. Top-ups are always available.</Notice>
           </div>
         )}
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {data.catalog.plans.filter((p) => p.active).map((p) => {
             const current = s?.plan === p.id && hasLivePlan;
             const renew = livePrepaid && s?.plan === p.id;

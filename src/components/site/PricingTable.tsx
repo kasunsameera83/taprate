@@ -6,6 +6,9 @@ import { Badge, Segmented } from "@/components/ui";
 
 // Prices are shown in ONE currency, picked from where the visitor is: rupees in Sri Lanka, US dollars
 // everywhere else. (A Sri Lankan price shown to an overseas visitor looks out of place.)
+// Columns for the number of cards (Free + paid plans), so 3, 4 or 5 cards each fill one row on a wide screen.
+const GRID: Record<number, string> = { 0: "", 1: "", 2: "sm:grid-cols-2", 3: "md:grid-cols-3", 4: "sm:grid-cols-2 lg:grid-cols-4", 5: "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5" };
+
 export function PricingTable({ catalog, defaultCurrency = "LKR", maxLkrMinor = null }: { catalog: Catalog; defaultCurrency?: Currency; maxLkrMinor?: number | null }) {
   const currency = defaultCurrency;
   const [interval, setInterval_] = useState<BillingInterval>("month");
@@ -20,7 +23,7 @@ export function PricingTable({ catalog, defaultCurrency = "LKR", maxLkrMinor = n
       <div className="flex flex-wrap items-center gap-3">
         {yearlyOk && <Segmented label="Billing period" value={interval} onChange={setInterval_} options={[{ value: "month", label: "Monthly" }, { value: "year", label: "Yearly" }]} />}
       </div>
-      <div className={`mt-6 grid gap-4 ${free.responses > 0 ? "sm:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-3"}`}>
+      <div className={`mt-6 grid gap-4 ${GRID[Math.min(plans.length + (free.responses > 0 ? 1 : 0), 5)]}`}>
         {free.responses > 0 && (
           <div className="flex flex-col rounded-[var(--radius-panel)] border border-line bg-surface p-6">
             <p className="text-lg font-semibold">Free</p>

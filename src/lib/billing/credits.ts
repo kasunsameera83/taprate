@@ -35,6 +35,7 @@ export function leftPercent(balance: number, allowance: number): number {
 /** "Free" for anything that isn't a paid plan (including old "trial" businesses). */
 export function planLabel(plan: string | null | undefined): string {
   if (!isPaidPlan(plan)) return "Free";
+  if (plan === "small") return "Small shop";
   const p = String(plan);
   return p.charAt(0).toUpperCase() + p.slice(1);
 }

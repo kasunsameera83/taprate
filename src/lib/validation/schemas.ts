@@ -731,7 +731,7 @@ export type BillingProfileInput = z.infer<typeof billingProfileSchema>;
 
 export const checkoutSchema = z
   .object({
-    item: z.enum(["starter", "growth", "scale", "pack_250", "pack_1000", "pack_5000"], { error: "Choose a plan or pack" }),
+    item: z.enum(["small", "starter", "growth", "scale", "pack_250", "pack_1000", "pack_5000"], { error: "Choose a plan or pack" }),
     interval: z.enum(["month", "year"]).optional(),
     provider: z.enum(["payhere", "stripe"], { error: "Choose how to pay" }),
     // Optional: PayHere can charge in rupees or (when switched on) dollars. Stripe is always dollars.
@@ -750,7 +750,7 @@ export const promoPreviewSchema = z
   .object({ code: z.string().trim().toUpperCase().regex(/^[A-Z0-9_-]{4,30}$/, "That code isn't valid."), provider: z.enum(["payhere", "stripe"]), currency: z.enum(["LKR", "USD"]).optional(), interval: z.enum(["month", "year"]), months: z.union([z.literal(1), z.literal(3)]).optional() })
   .strict();
 
-const promoItems = z.array(z.enum(["starter", "growth", "scale", "pack_250", "pack_1000", "pack_5000"])).max(6);
+const promoItems = z.array(z.enum(["small", "starter", "growth", "scale", "pack_250", "pack_1000", "pack_5000"])).max(7);
 const moneyText = z
   .string()
   .trim()
