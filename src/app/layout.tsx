@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Instrument_Sans } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
+import { WebAnalytics } from "@/components/WebAnalytics";
 
 // Fonts are downloaded at build time and served from our own domain (CSP: font-src 'self').
 // Ibrand: the TapTruly brand typeface, for headings. Bundled with the app (src/app/fonts).
@@ -32,7 +33,10 @@ export const viewport: Viewport = { themeColor: "#f8fafc", width: "device-width"
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${display.variable} ${sans.variable}`}>
-      <body className="min-h-screen antialiased">{children}</body>
+      <body className="min-h-screen antialiased">
+        {children}
+        <WebAnalytics />
+      </body>
     </html>
   );
 }

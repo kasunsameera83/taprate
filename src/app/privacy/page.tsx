@@ -90,6 +90,8 @@ export default function PrivacyPage() {
       <p>
         We only use cookies needed to keep you signed in and secure, and to remember which business you&rsquo;re working in. We don&rsquo;t use advertising or tracking
         cookies. The website may remember in your browser that you&rsquo;ve closed a promotion.
+        To see how many people visit our website and which pages they read, we use Vercel Web Analytics. It uses no cookies and
+        doesn&rsquo;t identify you, and it records nothing on the rating pages your customers open.
       </p>
 
       <h2>Changes</h2>
