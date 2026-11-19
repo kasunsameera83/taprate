@@ -50,27 +50,25 @@ export async function createOrder(
   q: Quote,
   promo?: { promoId: string; listAmountMinor: number; bonusCredits: number },
 ): Promise<string> {
-  const { data, error } = await adminClient()
-    .from("billing_orders")
-    .insert({
-      account_id: accountId,
-      created_by: userId,
-      provider,
-      kind: q.kind,
-      item: q.item,
-      billing_interval: q.interval,
-      credits: q.credits,
-      amount_minor: q.amountMinor,
-      currency: q.currency,
-      promo_id: promo?.promoId ?? null,
-      list_amount_minor: promo?.listAmountMinor ?? null,
-      bonus_credits: promo?.bonusCredits ?? 0,
-      prepaid_months: q.kind === "plan" && q.months ? q.months : null,
-    })
-    .select("id")
-    .single();
-  if (error || !data) throw new Error("could not create order");
-  return data.id as string;
+  // Idempotent: the same unpaid checkout within 30 minutes returns the same order (migration 0043),
+  // so a double-click or second tab can't lead to two payments for one purchase.
+  const { data, error } = await adminClient().rpc("billing_create_order", {
+    p_account: accountId,
+    p_user: userId,
+    p_provider: provider,
+    p_kind: q.kind,
+    p_item: q.item,
+    p_interval: q.interval,
+    p_credits: q.credits,
+    p_amount_minor: q.amountMinor,
+    p_currency: q.currency,
+    p_promo: promo?.promoId ?? null,
+    p_list_amount_minor: promo?.listAmountMinor ?? null,
+    p_bonus_credits: promo?.bonusCredits ?? 0,
+    p_prepaid_months: q.kind === "plan" && q.months ? q.months : null,
+  });
+  if (error || typeof data !== "string") throw new Error("could not create order");
+  return data;
 }
 
 export type CheckoutStart = { type: "payhere"; url: string; fields: Record<string, string> } | { type: "redirect"; url: string };
