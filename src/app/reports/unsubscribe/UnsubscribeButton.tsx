@@ -3,7 +3,7 @@ import { useState } from "react";
 import { api } from "@/lib/client/api";
 import { Notice } from "@/components/ui";
 
-export function UnsubscribeButton({ target, t }: { target: { s: string } | { w: string }; t: string }) {
+export function UnsubscribeButton({ target, t }: { target: { s: string } | { w: string } | { tip: string }; t: string }) {
   const [state, setState] = useState<"idle" | "busy" | "done">("idle");
   const [error, setError] = useState("");
   if (state === "done") return <Notice kind="success">Done. You won&rsquo;t get these emails any more.</Notice>;

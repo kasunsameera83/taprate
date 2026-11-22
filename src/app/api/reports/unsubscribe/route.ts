@@ -7,9 +7,14 @@ import { adminClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
 import { UNSUB_PURPOSE } from "@/lib/insights/reportEmail";
 import { WINS_UNSUB_PURPOSE } from "@/lib/insights/winsEmail";
+import { TIPS_UNSUB_PURPOSE } from "@/lib/lifecycle/emails";
 
-// s = a report subscription; w = a person's weekly "wins" email.
-const body = z.union([z.object({ s: uuidSchema, t: z.string().max(60) }).strict(), z.object({ w: uuidSchema, t: z.string().max(60) }).strict()]);
+// s = a report subscription; w = a person's weekly "wins" email; tip = a person's welcome/tips emails.
+const body = z.union([
+  z.object({ s: uuidSchema, t: z.string().max(60) }).strict(),
+  z.object({ w: uuidSchema, t: z.string().max(60) }).strict(),
+  z.object({ tip: uuidSchema, t: z.string().max(60) }).strict(),
+]);
 
 // One-click "stop these emails" from the email footer. No sign-in needed; the signed token proves the
 // link came from an email we sent to this person. (A button on the page calls this, so email
@@ -18,6 +23,12 @@ export const POST = secureRoute<undefined, undefined, z.infer<typeof body>, "pub
   { auth: "public", action: null, ipLimit: LIMITS.publicPerIp, body, maxBodyBytes: 256 },
   async ({ body: b, requestId }) => {
     const secret = env().RESPONSE_TOKEN_SECRET;
+    if ("tip" in b) {
+      if (!verifyPurposeToken(secret, TIPS_UNSUB_PURPOSE, b.tip, b.t, 90 * 86400)) return fail("forbidden", "This link has expired. These tips stop on their own after your first week.", undefined, requestId);
+      const { error } = await adminClient().rpc("tips_opt_out", { p_user: b.tip });
+      if (error) return fail("internal_error", undefined, undefined, requestId);
+      return ok({ unsubscribed: true });
+    }
     if ("w" in b) {
       if (!verifyPurposeToken(secret, WINS_UNSUB_PURPOSE, b.w, b.t, 90 * 86400)) return fail("forbidden", "This link has expired. Ask your team owner to stop these emails.", undefined, requestId);
       const { error } = await adminClient().rpc("wins_opt_out", { p_user: b.w });

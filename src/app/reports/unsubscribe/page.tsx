@@ -9,6 +9,8 @@ export default async function UnsubscribePage({ searchParams }: { searchParams: 
   const s = typeof sp.s === "string" ? sp.s : "";
   const w = typeof sp.w === "string" ? sp.w : "";
   const t = typeof sp.t === "string" ? sp.t : "";
+  const tip = typeof sp.tip === "string" ? sp.tip : "";
+  const tips = Boolean(tip) && !s && !w;
   const wins = Boolean(w) && !s;
   return (
     <main className="flex min-h-screen items-center justify-center p-5">
@@ -16,11 +18,15 @@ export default async function UnsubscribePage({ searchParams }: { searchParams: 
         <div className="flex justify-center">
           <Logo />
         </div>
-        <h1 className="text-xl font-bold">{wins ? "Stop your weekly wins email?" : "Stop report emails?"}</h1>
+        <h1 className="text-xl font-bold">{tips ? "Stop TapTruly tips emails?" : wins ? "Stop your weekly wins email?" : "Stop report emails?"}</h1>
         <p className="text-sm text-muted">
-          {wins ? "You won't get the Monday email with your ratings and kind words any more. You can still see them in TapTruly." : "You'll stop getting these feedback reports. You can turn them back on any time in TapTruly."}
+          {tips
+            ? "You won't get our getting-started tips any more. Alerts about unhappy customers and your account still arrive."
+            : wins
+              ? "You won't get the Monday email with your ratings and kind words any more. You can still see them in TapTruly."
+              : "You'll stop getting these feedback reports. You can turn them back on any time in TapTruly."}
         </p>
-        <UnsubscribeButton target={wins ? { w } : { s }} t={t} />
+        <UnsubscribeButton target={tips ? { tip } : wins ? { w } : { s }} t={t} />
       </div>
     </main>
   );
