@@ -7,6 +7,7 @@ import { Field, Notice, PasswordInput, TextInput } from "@/components/ui";
 import { AuthShell } from "@/components/AuthShell";
 import { ResendConfirmation } from "@/components/ResendConfirmation";
 import { Busy } from "@/components/FaceLoader";
+import { GoogleButton } from "@/components/GoogleButton";
 
 export default function SignupPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -73,9 +74,12 @@ export default function SignupPage() {
 
   return (
     <AuthShell title="Start collecting ratings" subtitle="Free to start. No card needed." footer={footer}>
+      {ref && <div className="mb-5"><Notice kind="info">A friend invited you. You both get 250 bonus responses after your first payment.</Notice></div>}
+      <div className="mb-5">
+        <GoogleButton intent="signup" refCode={ref} />
+      </div>
       <form onSubmit={onSubmit} noValidate className="space-y-5">
         {message && <Notice kind={message.kind}>{message.text}</Notice>}
-        {ref && <Notice kind="info">A friend invited you. You both get 250 bonus responses after your first payment.</Notice>}
         <Field label="Business name" name="accountName" error={errors.accountName}>
           <TextInput name="accountName" autoComplete="organization" maxLength={80} required error={errors.accountName} />
         </Field>

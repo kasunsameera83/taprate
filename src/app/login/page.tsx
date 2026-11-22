@@ -8,10 +8,12 @@ import { Field, Notice, PasswordInput, TextInput } from "@/components/ui";
 import { AuthShell } from "@/components/AuthShell";
 import { ResendConfirmation } from "@/components/ResendConfirmation";
 import { Busy } from "@/components/FaceLoader";
+import { GoogleButton } from "@/components/GoogleButton";
 
 const LINK_ERRORS: Record<string, string> = {
   link: "That confirmation link is invalid or has expired. Try signing in, or sign up again.",
   busy: "Too many attempts. Wait a minute and try again.",
+  google: "Google sign-in didn't finish. Try again, or sign in with your email.",
 };
 
 function LoginForm() {
@@ -47,6 +49,10 @@ function LoginForm() {
   }
 
   return (
+    <>
+    <div className="mb-5">
+      <GoogleButton intent="login" />
+    </div>
     <form onSubmit={onSubmit} noValidate className="space-y-5">
       {message && <Notice kind="error">{message}</Notice>}
       {unconfirmed && <ResendConfirmation email={unconfirmed} startWaiting={false} />}
@@ -65,6 +71,7 @@ function LoginForm() {
         {busy ? <Busy>Signing in…</Busy> : "Sign in"}
       </button>
     </form>
+    </>
   );
 }
 

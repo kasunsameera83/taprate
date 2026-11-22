@@ -55,6 +55,9 @@ export default function WelcomePage() {
   const [localLanguages, setLocalLanguages] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  // People who signed up with Google haven't told us their business name yet ("My business").
+  const [needsName, setNeedsName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
 
   useEffect(() => {
     api<{ email: string | null; role: string | null; name: string | null; account: { localLanguages?: boolean } | null }>("/api/account").then((r) => {
@@ -63,17 +66,30 @@ export default function WelcomePage() {
       setEmail(r.data.email);
       setRole(r.data.role);
       setBusinessName(r.data.name ?? "");
+      setNeedsName(!r.data.name || r.data.name === "My business");
     });
   }, []);
 
   const template = SURVEY_TEMPLATES.find((t) => t.id === templateId) ?? null;
-  const ready = channel !== null && template !== null;
+  const cleanName = nameDraft.trim();
+  const ready = channel !== null && template !== null && (!needsName || (cleanName.length >= 1 && cleanName.length <= 80));
   const canCreate = role === "owner" || role === "admin";
 
   async function create() {
     if (!template || !channel) return;
     setBusy(true);
     setError("");
+    if (needsName) {
+      // Same endpoint and checks as Settings → Business.
+      const n = await api("/api/account", { method: "PATCH", body: { name: cleanName } });
+      if (!n.ok) {
+        setBusy(false);
+        setError(n.fields?.name ?? n.message);
+        return;
+      }
+      setNeedsName(false);
+      setBusinessName(cleanName);
+    }
     const r = await api<Survey>("/api/surveys", { method: "POST", body: templateSurvey(template, localLanguages ? lang : "en", email) });
     if (r.ok) {
       router.push(`/app/surveys/${encodeURIComponent(r.data.id)}?created=1&via=${channel}`);
@@ -108,10 +124,28 @@ export default function WelcomePage() {
   return (
     <div className="mx-auto max-w-4xl space-y-8">
       <header>
-        <p className="text-sm font-semibold text-brand">Welcome{businessName ? `, ${businessName}` : ""} 👋</p>
+        <p className="text-sm font-semibold text-brand">Welcome{businessName && !needsName ? `, ${businessName}` : ""} 👋</p>
         <h1 className="mt-1 text-[30px] font-bold leading-tight">Let&rsquo;s get your first rating in two minutes</h1>
         <p className="mt-2 text-muted">Answer two quick questions and we&rsquo;ll set everything up. You can change any of it later.</p>
       </header>
+
+      {needsName && (
+        <div className="max-w-md">
+          <label htmlFor="businessName" className="text-lg font-semibold">
+            What&rsquo;s your business called?
+          </label>
+          <input
+            id="businessName"
+            className="input mt-2 w-full"
+            maxLength={80}
+            autoComplete="organization"
+            placeholder="e.g. Kova Café"
+            value={nameDraft}
+            onChange={(e) => setNameDraft(e.target.value)}
+          />
+          <p className="mt-1 text-[13px] text-muted">Customers see this on your rating page.</p>
+        </div>
+      )}
 
       <fieldset>
         <legend className="text-lg font-semibold">
@@ -172,7 +206,7 @@ export default function WelcomePage() {
         <button type="button" className="btn btn-primary min-h-12 px-6 text-base" disabled={!ready || busy || !canCreate} onClick={create}>
           {busy ? <Busy>Setting up…</Busy> : "Create my survey"}
         </button>
-        {!ready && <span className="text-sm text-muted">Pick an answer for 1 and 2.</span>}
+        {!ready && <span className="text-sm text-muted">{needsName && !cleanName ? "Add your business name, then pick an answer for 1 and 2." : "Pick an answer for 1 and 2."}</span>}
         <Link href="/app/surveys/new" onClick={skip} className="ml-auto text-sm font-semibold text-muted hover:text-ink">
           Skip, I&rsquo;ll set it up myself
         </Link>

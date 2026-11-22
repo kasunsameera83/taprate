@@ -4,6 +4,7 @@ import { apiKeyCreateSchema, type ApiKeyCreateInput } from "@/lib/validation/sch
 import { apiKeyHint, formatApiKey, newApiKeySecret } from "@/lib/security/apiKeys";
 import { verifyPassword } from "@/lib/reauth";
 import { audit } from "@/lib/audit";
+import { wrongPasswordMessage } from "@/lib/auth/google";
 
 // API keys for the public API. Owners and admins only (checked here and again by the database).
 export const GET = secureRoute(
@@ -39,7 +40,7 @@ export const POST = secureRoute<undefined, undefined, ApiKeyCreateInput>(
   async ({ supabase, membership, user, body, ipHash, requestId }) => {
     const check = await verifyPassword(user.id, user.email, body.password);
     if (check === "limited") return fail("rate_limited", undefined, undefined, requestId);
-    if (check === "wrong") return fail("validation_failed", undefined, { password: "That password is incorrect" }, requestId);
+    if (check === "wrong") return fail("validation_failed", undefined, { password: wrongPasswordMessage(user) }, requestId);
 
     const { secret, hash } = newApiKeySecret();
     const scopes = body.access === "read_write" ? ["read", "write"] : ["read"];

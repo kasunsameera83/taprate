@@ -5,6 +5,7 @@ import { changeEmailSchema } from "@/lib/validation/schemas";
 import { verifyPassword } from "@/lib/reauth";
 import { env } from "@/lib/env";
 import { audit } from "@/lib/audit";
+import { wrongPasswordMessage } from "@/lib/auth/google";
 
 // Changing the sign-in email needs the current password. Supabase then emails a confirmation link;
 // the change only happens once it's clicked (turn on "Secure email change" in Supabase to confirm both addresses).
@@ -14,7 +15,7 @@ export const POST = secureRoute<undefined, undefined, z.infer<typeof changeEmail
     if (body.email === user.email?.toLowerCase()) return fail("validation_failed", undefined, { email: "That's already your email" }, requestId);
     const check = await verifyPassword(user.id, user.email, body.currentPassword);
     if (check === "limited") return fail("rate_limited", undefined, undefined, requestId);
-    if (check === "wrong") return fail("validation_failed", undefined, { currentPassword: "That password is incorrect" }, requestId);
+    if (check === "wrong") return fail("validation_failed", undefined, { currentPassword: wrongPasswordMessage(user) }, requestId);
 
     const { error } = await supabase.auth.updateUser({ email: body.email }, { emailRedirectTo: `${env().appOrigin}/auth/callback` });
     if (error) {

@@ -236,6 +236,15 @@ export const statsQuerySchema = z
   })
   .strict();
 
+/** Start "Continue with Google". Sign-up shows the Terms notice next to the button, so it must say so. */
+export const googleStartSchema = z
+  .object({
+    intent: z.enum(["signup", "login"]),
+    acceptTerms: z.literal(true, { error: "Please agree to the Terms and Privacy Policy" }),
+    ref: z.string().regex(/^[A-Z2-9]{8}$/, "Invalid invite code").optional(),
+  })
+  .strict();
+
 export const accountUpdateSchema = z.object({ name: text(1, 80, "Business name") }).strict();
 
 // ---------------------------------------------------------------------------

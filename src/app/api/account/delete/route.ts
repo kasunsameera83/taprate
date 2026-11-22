@@ -8,6 +8,7 @@ import { audit } from "@/lib/audit";
 import { adminClient } from "@/lib/supabase/server";
 import { isLogoPath } from "@/lib/branding";
 import { isIconPath } from "@/lib/surveys/customIcons";
+import { wrongPasswordMessage } from "@/lib/auth/google";
 
 // Permanently delete the business and all its data. Owner only, needs the exact business name AND the
 // password (and 2FA, if on, via the wrapper). The database checks ownership again.
@@ -22,7 +23,7 @@ export const POST = secureRoute<undefined, undefined, z.infer<typeof deleteAccou
     }
     const check = await verifyPassword(user.id, user.email, body.password);
     if (check === "limited") return fail("rate_limited", undefined, undefined, requestId);
-    if (check === "wrong") return fail("validation_failed", undefined, { password: "That password is incorrect" }, requestId);
+    if (check === "wrong") return fail("validation_failed", undefined, { password: wrongPasswordMessage(user) }, requestId);
 
     const { data: logo } = await supabase.from("accounts").select("logo_path").eq("id", membership.accountId).maybeSingle();
     const { data: iconRows } = await supabase.from("surveys").select("icon_images").eq("account_id", membership.accountId);

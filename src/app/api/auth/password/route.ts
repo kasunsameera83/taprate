@@ -7,6 +7,7 @@ import { verifyPassword } from "@/lib/reauth";
 import { PW_RESET_COOKIE, PW_RESET_TTL } from "@/lib/passwordReset";
 import { env } from "@/lib/env";
 import { audit } from "@/lib/audit";
+import { wrongPasswordMessage } from "@/lib/auth/google";
 
 // Set a new password. Proof of identity is EITHER the current password (signed in normally)
 // OR a fresh reset link (signed cookie, 15 minutes). Users with 2FA must also have passed the code step.
@@ -19,7 +20,7 @@ export const POST = secureRoute<undefined, undefined, z.infer<typeof newPassword
       if (!body.currentPassword) return fail("validation_failed", undefined, { currentPassword: "Enter your current password" }, requestId);
       const check = await verifyPassword(user.id, user.email, body.currentPassword);
       if (check === "limited") return fail("rate_limited", undefined, undefined, requestId);
-      if (check === "wrong") return fail("validation_failed", undefined, { currentPassword: "That password is incorrect" }, requestId);
+      if (check === "wrong") return fail("validation_failed", undefined, { currentPassword: wrongPasswordMessage(user) }, requestId);
     }
     if (body.currentPassword && body.currentPassword === body.newPassword) {
       return fail("validation_failed", undefined, { newPassword: "Choose a password different from your current one" }, requestId);
