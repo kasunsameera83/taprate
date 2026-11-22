@@ -15,6 +15,7 @@ import { WELCOME_SKIPPED_KEY } from "@/lib/surveys/templates";
 import { useOnResponsesChanged } from "@/components/Notifications";
 import { BenchmarkCard, HighlightsButton } from "./DashboardExtras";
 import { UpgradeCard } from "./UpgradeCard";
+import { WelcomeOfferPopup } from "./WelcomeOfferPopup";
 
 type Days = 7 | 30 | 90;
 const PERIODS: ReadonlyArray<{ value: Days; label: string }> = [
@@ -135,6 +136,8 @@ export default function Dashboard() {
       {error && <LoadError message={error} onRetry={load} />}
 
       <Checklist accountId={accountId} />
+      {/* Owners only (they pay); not during the first-run welcome redirect. */}
+      {accountId && role === "owner" && surveys !== null && !noSurveys && <WelcomeOfferPopup accountId={accountId} />}
 
       {!noSurveys && !sample && (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">

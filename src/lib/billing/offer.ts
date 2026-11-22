@@ -10,3 +10,15 @@ export function offerTimeLeft(endsAt: string, now = Date.now()): string {
   const date = new Date(endsAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
   return `Ends in ${days} ${days === 1 ? "day" : "days"} (${date})`;
 }
+
+/** Dashboard pop-up: shown once when the offer appears, and once more on its last day. Never more. */
+export type OfferPopupStage = "first" | "last";
+export const offerPopupKey = (accountId: string, code: string) => `tt.welcomeOffer.${accountId}.${code}`;
+
+export function offerPopupStage(stored: string | null, endsAt: string, now = Date.now()): OfferPopupStage | null {
+  const left = Date.parse(endsAt) - now;
+  if (!Number.isFinite(left) || left <= 0) return null;
+  if (stored !== "first" && stored !== "last") return left < 86_400_000 ? "last" : "first";
+  if (stored === "first" && left < 86_400_000) return "last";
+  return null;
+}

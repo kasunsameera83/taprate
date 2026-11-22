@@ -74,3 +74,17 @@ test("'Not now' hides it for 14 days; junk in storage never hides it", () => {
   assert.equal(nudgeSnoozed("abc", NOW), false);
   assert.equal(nudgeSnoozed(String(NOW + 10 * DAY), NOW), false, "a future time can't hide it forever");
 });
+
+test("dashboard pop-up: once, then once more on the last day, never after", async () => {
+  const { offerPopupStage } = await import("../../src/lib/billing/offer.ts");
+  const in5d = new Date(NOW + 5 * DAY).toISOString();
+  const in3h = new Date(NOW + 3 * 3600_000).toISOString();
+  assert.equal(offerPopupStage(null, in5d, NOW), "first");
+  assert.equal(offerPopupStage("first", in5d, NOW), null);
+  assert.equal(offerPopupStage("first", in3h, NOW), "last");
+  assert.equal(offerPopupStage("last", in3h, NOW), null);
+  assert.equal(offerPopupStage(null, in3h, NOW), "last");
+  assert.equal(offerPopupStage("junk", in5d, NOW), "first");
+  assert.equal(offerPopupStage(null, new Date(NOW - 1000).toISOString(), NOW), null);
+  assert.equal(offerPopupStage(null, "junk", NOW), null);
+});
