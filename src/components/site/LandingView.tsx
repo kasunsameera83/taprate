@@ -3,7 +3,7 @@ import type { Catalog, Currency } from "@/lib/billing/catalog";
 import type { Landing, PublicPromotion } from "@/lib/site/content";
 import { IconShield } from "@/components/icons";
 import { PricingTable } from "./PricingTable";
-import { GreetingBar, PromoPopup } from "./Promotions";
+import { GreetingBar, PromoPopup, WelcomeOfferBar } from "./Promotions";
 import { SiteHeader } from "./SiteHeader";
 import { SiteFooter } from "./SiteFooter";
 import { HeroShowcase } from "./HeroShowcase";
@@ -129,6 +129,7 @@ export function LandingView({
   preview = false,
   currency = "LKR",
   payhereMaxLkrMinor = null,
+  welcome = null,
 }: {
   c: Landing;
   catalog: Catalog;
@@ -136,12 +137,14 @@ export function LandingView({
   preview?: boolean;
   currency?: Currency;
   payhereMaxLkrMinor?: number | null;
+  /** The running welcome offer (from the active welcome promo code), or null. */
+  welcome?: { id: string; title: string; body: string; pricing: string } | null;
 }) {
   const greeting = promotions.find((p) => p.kind === "greeting");
   const popup = promotions.find((p) => p.kind === "popup");
   return (
     <div className="min-h-screen">
-      {greeting && <GreetingBar promo={greeting} preview={preview} />}
+      {greeting ? <GreetingBar promo={greeting} preview={preview} /> : welcome && <WelcomeOfferBar offer={welcome} />}
       <SiteHeader cta={c.hero.primaryCta} showPricing={c.pricing.show} />
 
       <main id="main">
@@ -282,6 +285,14 @@ export function LandingView({
             <div className="mx-auto max-w-6xl px-5 py-20">
               <h2 className="text-[32px] font-bold leading-tight sm:text-[40px]">{c.pricing.title}</h2>
               {c.pricing.subtitle && <p className="mt-3 max-w-2xl text-[17px] text-muted">{c.pricing.subtitle}</p>}
+              {welcome && (
+                <p className="mt-4 inline-block rounded-full border border-brand/30 bg-brand-soft px-4 py-2 text-sm font-semibold text-ink">
+                  {welcome.pricing}{" "}
+                  <Link href="/signup" className="text-brand underline underline-offset-2">
+                    Start free
+                  </Link>
+                </p>
+              )}
               <div className="mt-8">
                 <PricingTable catalog={catalog} defaultCurrency={currency} maxLkrMinor={payhereMaxLkrMinor} />
               </div>

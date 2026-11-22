@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { loadLanding, loadLivePromotions } from "@/lib/site/server";
 import { loadCatalog } from "@/lib/billing/catalogServer";
+import { publicWelcomeOffer } from "@/lib/billing/server";
+import { publicOfferText } from "@/lib/billing/offer";
 import { LandingView } from "@/components/site/LandingView";
 import { preferredCurrency } from "@/lib/site/geo";
 import { billingProviders } from "@/lib/env";
@@ -22,13 +24,20 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Home() {
-  const [raw, catalog, promotions, currency] = await Promise.all([loadLanding(), loadCatalog(), loadLivePromotions(), preferredCurrency()]);
+  const [raw, catalog, promotions, currency, offer] = await Promise.all([
+    loadLanding(),
+    loadCatalog(),
+    loadLivePromotions(),
+    preferredCurrency(),
+    publicWelcomeOffer().catch(() => null),
+  ]);
+  const welcome = offer ? publicOfferText(offer) : null;
   const c = applyFree(raw, catalog.free.responses); // "{free}" in the text → the free plan's number
   const site = siteUrl();
   return (
     <>
       <JsonLd data={[organization(site), website(site), softwareApp(site, c.seo.description, catalog, currency), ...(c.faq.length ? [faqPage(c.faq)] : [])]} />
-      <LandingView c={c} catalog={catalog} promotions={promotions} currency={currency} payhereMaxLkrMinor={billingProviders().payhereMaxLkrMinor} />
+      <LandingView c={c} catalog={catalog} promotions={promotions} currency={currency} payhereMaxLkrMinor={billingProviders().payhereMaxLkrMinor} welcome={welcome} />
     </>
   );
 }

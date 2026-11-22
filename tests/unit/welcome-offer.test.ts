@@ -88,3 +88,19 @@ test("dashboard pop-up: once, then once more on the last day, never after", asyn
   assert.equal(offerPopupStage(null, new Date(NOW - 1000).toISOString(), NOW), null);
   assert.equal(offerPopupStage(null, "junk", NOW), null);
 });
+
+test("public site text: honest, no countdown, follows the active code", async () => {
+  const { publicOfferText } = await import("../../src/lib/billing/offer.ts");
+  const plans = ["small", "starter", "growth", "scale"];
+  const t = publicOfferText({ kind: "percent", percentOff: 50, bonusCredits: null, days: 7, appliesTo: plans })!;
+  assert.equal(t.title, "New here? 50% off your first plan.");
+  assert.equal(t.body, "Start free, then choose a plan within 7 days of signing up.");
+  assert.equal(t.pricing, "🎁 New businesses get 50% off their first plan if they choose it within 7 days of signing up.");
+  const all = publicOfferText({ kind: "percent", percentOff: 30, bonusCredits: null, days: 1, appliesTo: [] })!;
+  assert.match(all.title, /30% off your first payment/);
+  assert.match(all.body, /plan or top-up within 1 day of/);
+  assert.notEqual(t.id, all.id, "a changed offer gets a new id, so a closed bar comes back");
+  assert.match(publicOfferText({ kind: "credits", percentOff: null, bonusCredits: 500, days: 7, appliesTo: [] })!.title, /500 bonus responses/);
+  assert.equal(publicOfferText({ kind: "percent", percentOff: null, bonusCredits: null, days: 7, appliesTo: [] }), null);
+  assert.equal(publicOfferText({ kind: "percent", percentOff: 50, bonusCredits: null, days: 0, appliesTo: [] }), null);
+});

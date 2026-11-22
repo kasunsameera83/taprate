@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { THEMES, type PublicPromotion } from "@/lib/site/content";
+import { hasSignedInHint } from "@/lib/site/signedInHint";
 
 // Seasonal greeting bar and promotion pop-up. Text only (rendered as text, never HTML). Each visitor
 // sees a pop-up once; a closed greeting stays closed. Remembered in this browser only.
@@ -48,6 +49,44 @@ export function GreetingBar({ promo, preview = false }: { promo: PublicPromotion
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full hover:bg-white/15"
           onClick={() => {
             markSeen(promo.id);
+            setHidden(true);
+          }}
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Welcome offer for new businesses (from the active welcome promo code). Not shown to people already
+ *  signed in (it's for new sign-ups); closing it keeps it closed until the offer changes. */
+export function WelcomeOfferBar({ offer }: { offer: { id: string; title: string; body: string } }) {
+  const [hidden, setHidden] = useState(true);
+  useEffect(() => {
+    setHidden(wasSeen(offer.id) || hasSignedInHint(document.cookie));
+  }, [offer.id]);
+  if (hidden) return null;
+  const theme = THEMES.generic;
+  return (
+    <div role="region" aria-label="Welcome offer" className="text-white" style={{ backgroundImage: `linear-gradient(90deg, ${theme.from}, ${theme.to})` }}>
+      <div className="mx-auto flex max-w-6xl items-center gap-3 px-5 py-2.5 text-sm">
+        <span aria-hidden className="text-lg">
+          🎁
+        </span>
+        <p className="min-w-0 flex-1">
+          <strong className="font-semibold">{offer.title}</strong>
+          <span className="opacity-90"> {offer.body}</span>
+          <a href="/signup" className="ml-2 whitespace-nowrap font-semibold underline underline-offset-2">
+            Start free →
+          </a>
+        </p>
+        <button
+          type="button"
+          aria-label="Close offer"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full hover:bg-white/15"
+          onClick={() => {
+            markSeen(offer.id);
             setHidden(true);
           }}
         >

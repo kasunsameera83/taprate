@@ -5,6 +5,7 @@ import { majorAmount, type Provider, type Quote } from "@/lib/billing/catalog";
 import { buildPayhereCheckout } from "@/lib/billing/payhere";
 import { stripeApi } from "@/lib/billing/stripe";
 import { welcomeOfferEnds, type Promo, type PromoBusiness } from "@/lib/billing/promo";
+import type { PublicWelcomeOffer } from "@/lib/billing/offer";
 
 // Billing helpers that touch the database or the providers. The service-role client is used only after
 // the caller's own permission checks, and every query is scoped to that account.
@@ -241,4 +242,29 @@ export async function welcomeOfferFor(accountId: string, now = Date.now()): Prom
   const label =
     promo.kind === "percent" ? `${promo.percentOff}% off your first payment` : promo.kind === "credits" ? `+${(promo.bonusCredits ?? 0).toLocaleString("en")} bonus responses` : "a discount on your first payment";
   return { code: promo.code, label, endsAt: new Date(ends).toISOString() };
+}
+
+/** The current welcome offer, for the public site (no account involved). Null if none is running. */
+export async function publicWelcomeOffer(now = Date.now()): Promise<PublicWelcomeOffer | null> {
+  const { data } = await adminClient()
+    .from("promo_codes")
+    .select("id, kind, percent_off, bonus_credits, applies_to, max_uses, starts_at, ends_at, new_business_days")
+    .eq("enabled", true)
+    .not("new_business_days", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!data || Date.parse(data.starts_at as string) > now) return null;
+  if (data.ends_at && Date.parse(data.ends_at as string) <= now) return null;
+  if (data.max_uses !== null) {
+    const { count } = await adminClient().from("promo_redemptions").select("id", { count: "exact", head: true }).eq("promo_id", data.id as string);
+    if ((count ?? 0) >= Number(data.max_uses)) return null; // all used up: don't advertise it
+  }
+  return {
+    kind: data.kind as PublicWelcomeOffer["kind"],
+    percentOff: (data.percent_off as number | null) ?? null,
+    bonusCredits: (data.bonus_credits as number | null) ?? null,
+    days: Number(data.new_business_days),
+    appliesTo: (data.applies_to as string[] | null) ?? [],
+  };
 }

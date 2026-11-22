@@ -22,3 +22,27 @@ export function offerPopupStage(stored: string | null, endsAt: string, now = Dat
   if (stored === "first" && left < 86_400_000) return "last";
   return null;
 }
+
+/** What the public site says about the welcome offer (no countdown: a visitor's days start at sign-up). */
+export type PublicWelcomeOffer = { kind: "percent" | "amount" | "credits"; percentOff: number | null; bonusCredits: number | null; days: number; appliesTo: string[] };
+
+const PLAN_ITEMS = new Set(["small", "starter", "growth", "scale"]);
+
+export function publicOfferText(o: PublicWelcomeOffer): { id: string; title: string; body: string; pricing: string } | null {
+  if (!Number.isInteger(o.days) || o.days < 1 || o.days > 60) return null;
+  const plansOnly = o.appliesTo.length > 0 && o.appliesTo.every((i) => PLAN_ITEMS.has(i));
+  const what = plansOnly ? "plan" : "payment";
+  let gift: string;
+  if (o.kind === "percent" && o.percentOff && o.percentOff >= 1 && o.percentOff <= 90) gift = `${o.percentOff}% off your first ${what}`;
+  else if (o.kind === "credits" && o.bonusCredits && o.bonusCredits > 0) gift = `${o.bonusCredits.toLocaleString("en")} bonus responses with your first ${what}`;
+  else if (o.kind === "amount") gift = `money off your first ${what}`;
+  else return null;
+  const within = `within ${o.days} ${o.days === 1 ? "day" : "days"} of signing up`;
+  return {
+    // Changes when the offer changes, so a closed bar comes back for a new offer.
+    id: `welcome-${o.kind}-${o.percentOff ?? o.bonusCredits ?? 0}-${o.days}`,
+    title: `New here? ${gift.charAt(0).toUpperCase()}${gift.slice(1)}.`,
+    body: `Start free, then choose a ${plansOnly ? "plan" : "plan or top-up"} ${within}.`,
+    pricing: `🎁 New businesses get ${gift.replace("your first", "their first")} if they choose it ${within}.`,
+  };
+}
