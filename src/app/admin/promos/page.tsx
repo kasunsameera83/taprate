@@ -23,6 +23,7 @@ type PromoRow = {
   startsAt: string;
   endsAt: string | null;
   enabled: boolean;
+  newBusinessDays: number | null;
   uses: number;
   revenue: Partial<Record<Currency, number>>;
 };
@@ -64,6 +65,7 @@ type Draft = {
   startsAt: string;
   endsAt: string;
   enabled: boolean;
+  newBusinessDays: string;
 };
 
 const blank = (): Draft => ({
@@ -80,6 +82,7 @@ const blank = (): Draft => ({
   startsAt: new Date().toISOString(),
   endsAt: "",
   enabled: true,
+  newBusinessDays: "",
 });
 
 export default function PromoCodesPage() {
@@ -128,6 +131,7 @@ export default function PromoCodesPage() {
                       {Object.keys(p.revenue).length > 0 && ` · brought in ${(Object.entries(p.revenue) as Array<[Currency, number]>).map(([c, v]) => formatMoney(Number(v), c)).join(" + ")}`}
                       {" · "}
                       {p.appliesTo.length ? p.appliesTo.map((i) => ITEMS.find((x) => x.id === i)?.label ?? i).join(", ") : "everything"}
+                      {p.newBusinessDays ? ` · welcome offer, first ${p.newBusinessDays} days` : ""}
                       {p.endsAt ? ` · until ${new Date(p.endsAt).toLocaleDateString()}` : ""}
                       {p.description ? ` · ${p.description}` : ""}
                     </p>
@@ -151,6 +155,7 @@ export default function PromoCodesPage() {
                           startsAt: p.startsAt,
                           endsAt: p.endsAt ?? "",
                           enabled: p.enabled,
+                          newBusinessDays: p.newBusinessDays ? String(p.newBusinessDays) : "",
                         })
                       }
                     >
@@ -204,6 +209,7 @@ function Editor({ draft, onClose, onSaved }: { draft: Draft; onClose: () => void
       startsAt: d.startsAt,
       endsAt: d.endsAt || null,
       enabled: d.enabled,
+      newBusinessDays: int(d.newBusinessDays),
     };
     const parsed = promoCodeSchema.safeParse(raw);
     if (!parsed.success) return setErrors(fieldErrors(parsed.error));
@@ -292,6 +298,15 @@ function Editor({ draft, onClose, onSaved }: { draft: Draft; onClose: () => void
             <TextInput name="pcEnd" type="datetime-local" value={d.endsAt ? toLocal(d.endsAt) : ""} onChange={(e) => set({ endsAt: fromLocal(e.target.value) })} hasHint error={errors.endsAt} />
           </Field>
         </div>
+        <Field
+          label="Welcome offer: new businesses only, for their first … days"
+          name="pcNew"
+          optional
+          hint="E.g. 7. Shown and applied automatically on the billing page, with the real days left. Only works before their first payment. Empty = a normal code."
+          error={errors.newBusinessDays}
+        >
+          <TextInput name="pcNew" inputMode="numeric" value={d.newBusinessDays} onChange={(e) => set({ newBusinessDays: e.target.value })} maxLength={2} hasHint error={errors.newBusinessDays} />
+        </Field>
         <label className="flex min-h-11 items-center gap-2 text-sm font-semibold">
           <input type="checkbox" className="h-4 w-4 accent-[var(--color-brand)]" checked={d.enabled} onChange={(e) => set({ enabled: e.target.checked })} />
           Switched on

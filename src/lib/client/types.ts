@@ -12,6 +12,8 @@ export type StatsResponse = Stats & {
   pending: number;
   truncated: boolean;
   account: { name: string; plan: string; credits: number; role: "owner" | "admin" | "viewer" } | null;
+  /** Free plan / trial with 10+ ratings (owners and admins only): the cheapest plan to suggest. */
+  upgrade?: { ratings: number; planName: string; price: string } | null;
 };
 
 export type ResponseItem = {

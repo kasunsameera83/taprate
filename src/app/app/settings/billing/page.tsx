@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { offerTimeLeft } from "@/lib/billing/offer";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/client/api";
 import { billingProfileSchema, fieldErrors } from "@/lib/validation/schemas";
@@ -31,6 +32,8 @@ type Summary = {
   } | null;
   profile: Record<"firstName" | "lastName" | "email" | "phone" | "address" | "city" | "country" | "company" | "taxId", string> | null;
   hasStripeCustomer: boolean;
+  /** A welcome offer this new business can still use. The deadline is real: sign-up date + the offer's days. */
+  welcomeOffer: { code: string; label: string; endsAt: string } | null;
   payments: Array<{ id: string; receiptNo: string; description: string; amountMinor: number; currency: "LKR" | "USD"; status: string; paidAt: string; provider: string }>;
 };
 
@@ -364,6 +367,16 @@ function Buy({ data, onNeedDetails, resume, onResumed }: { data: Summary; onNeed
       setPromoError(r.message);
     }
   }
+  // Welcome offer: applied once, automatically. Checked again by the server at checkout.
+  const offer = data.welcomeOffer;
+  const offerApplied = useRef(false);
+  useEffect(() => {
+    if (!offer || offerApplied.current || promo) return;
+    offerApplied.current = true;
+    setCodeInput(offer.code);
+    void applyCode(offer.code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [offer]);
   const changeWay = (w: PayWay) => {
     setWay(w);
     if (promo) applyCode(promo.code, w, interval);
@@ -506,6 +519,7 @@ function Buy({ data, onNeedDetails, resume, onResumed }: { data: Summary; onNeed
             </>
           )}
         </p>
+        {offer && <WelcomeOfferBanner offer={offer} applied={promo?.code === offer.code} />}
         <form
           className="mb-4 flex flex-wrap items-start gap-2"
           onSubmit={(e) => {
@@ -752,5 +766,17 @@ function Invite() {
         {r.joined === 0 ? "Nobody has joined through your link yet." : `${r.joined} joined · ${r.rewarded} rewarded`}
       </p>
     </SettingsSection>
+  );
+}
+
+function WelcomeOfferBanner({ offer, applied }: { offer: { code: string; label: string; endsAt: string }; applied: boolean }) {
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[var(--radius-panel)] border border-brand/30 bg-brand-soft px-4 py-3 text-sm" role="note">
+      <span aria-hidden>🎁</span>
+      <span>
+        <strong>Welcome offer: {offer.label}.</strong> {offerTimeLeft(offer.endsAt)}.
+      </span>
+      <span className="text-[13px] text-muted">{applied ? "Already applied to the prices below." : `Use code ${offer.code}.`}</span>
+    </div>
   );
 }

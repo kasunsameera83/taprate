@@ -4,6 +4,10 @@ import { LIMITS } from "@/lib/security/rateLimit";
 import { statsQuerySchema } from "@/lib/validation/schemas";
 import { computeStats, type StatRow } from "@/lib/surveys/stats";
 import { isIconSetId, sentimentOf, type IconSetId } from "@/lib/surveys/iconSets";
+import { nudgeEligible, showUpgradeNudge } from "@/lib/billing/nudge";
+import { loadCatalog } from "@/lib/billing/catalogServer";
+import { formatMoney } from "@/lib/billing/catalog";
+import { preferredCurrency } from "@/lib/site/geo";
 
 type Row = { rating: number | null; created_at: string; agent: string | null; drivers: string[] | null; location_id: string | null; surveys: { icon_set: string } | null };
 
@@ -98,6 +102,18 @@ export const GET = secureRoute<undefined, z.infer<typeof statsQuerySchema>>(
       sentQ,
       answersQ,
     ]);
+    // Upgrade card (free plan / trial, owners and admins): all-time confirmed ratings + the cheapest plan.
+    let upgrade: { ratings: number; planName: string; price: string } | null = null;
+    if (account && nudgeEligible(account.plan, membership.role)) {
+      const [{ count: allTime }, catalog, currency] = await Promise.all([
+        supabase.from("responses").select("id", { count: "exact", head: true }).eq("account_id", membership.accountId).eq("status", "confirmed"),
+        loadCatalog(),
+        preferredCurrency(),
+      ]);
+      const cheapest = catalog.plans.filter((p) => p.active).sort((a, b) => a.price[currency].month - b.price[currency].month)[0];
+      if (cheapest && showUpgradeNudge({ plan: account.plan, role: membership.role, ratings: allTime ?? 0 }))
+        upgrade = { ratings: allTime ?? 0, planName: cheapest.name, price: formatMoney(cheapest.price[currency].month, currency) };
+    }
     const answered = recAnswers?.length ?? 0;
     const recovered = (recAnswers ?? []).filter((r) => r.sentiment === "positive").length;
 
@@ -108,6 +124,7 @@ export const GET = secureRoute<undefined, z.infer<typeof statsQuerySchema>>(
       pending: pending ?? 0,
       truncated: (data?.length ?? 0) >= MAX_ROWS,
       account: account ? { name: account.name, plan: account.plan, credits: account.credit_balance, role: membership.role } : null,
+      upgrade,
     });
   },
 );

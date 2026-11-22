@@ -4,7 +4,7 @@ import { env } from "@/lib/env";
 import { majorAmount, type Provider, type Quote } from "@/lib/billing/catalog";
 import { buildPayhereCheckout } from "@/lib/billing/payhere";
 import { stripeApi } from "@/lib/billing/stripe";
-import type { Promo } from "@/lib/billing/promo";
+import { welcomeOfferEnds, type Promo, type PromoBusiness } from "@/lib/billing/promo";
 
 // Billing helpers that touch the database or the providers. The service-role client is used only after
 // the caller's own permission checks, and every query is scoped to that account.
@@ -171,21 +171,33 @@ type PromoRow = {
   starts_at: string;
   ends_at: string | null;
   enabled: boolean;
+  new_business_days: number | null;
 };
 
+/** When the business signed up, and whether it has ever paid (for welcome offers). */
+async function promoBusiness(accountId: string): Promise<PromoBusiness> {
+  const db = adminClient();
+  const [{ data: a }, { count }] = await Promise.all([
+    db.from("accounts").select("created_at").eq("id", accountId).maybeSingle(),
+    db.from("billing_payments").select("id", { count: "exact", head: true }).eq("account_id", accountId),
+  ]);
+  return { createdAt: (a?.created_at as string | undefined) ?? null, hasPaid: (count ?? 0) > 0 };
+}
+
 /** A code plus how often it's been used (in total, and by this business). Service role, exact-match lookup. */
-export async function loadPromo(code: string, accountId: string): Promise<{ promo: Promo | null; usage: { total: number; usedByThisBusiness: boolean } }> {
+export async function loadPromo(code: string, accountId: string): Promise<{ promo: Promo | null; usage: { total: number; usedByThisBusiness: boolean; business?: PromoBusiness } }> {
   const db = adminClient();
   const { data } = await db
     .from("promo_codes")
-    .select("id, code, description, kind, percent_off, amount_off_lkr, amount_off_usd, bonus_credits, applies_to, max_uses, starts_at, ends_at, enabled")
+    .select("id, code, description, kind, percent_off, amount_off_lkr, amount_off_usd, bonus_credits, applies_to, max_uses, starts_at, ends_at, enabled, new_business_days")
     .eq("code", code)
     .maybeSingle();
   const r = data as PromoRow | null;
   if (!r) return { promo: null, usage: { total: 0, usedByThisBusiness: false } };
-  const [{ count: total }, { count: mine }] = await Promise.all([
+  const [{ count: total }, { count: mine }, business] = await Promise.all([
     db.from("promo_redemptions").select("id", { count: "exact", head: true }).eq("promo_id", r.id),
     db.from("promo_redemptions").select("id", { count: "exact", head: true }).eq("promo_id", r.id).eq("account_id", accountId),
+    r.new_business_days ? promoBusiness(accountId) : Promise.resolve(undefined),
   ]);
   return {
     promo: {
@@ -202,7 +214,31 @@ export async function loadPromo(code: string, accountId: string): Promise<{ prom
       startsAt: r.starts_at,
       endsAt: r.ends_at,
       enabled: r.enabled,
+      newBusinessDays: r.new_business_days,
     },
-    usage: { total: total ?? 0, usedByThisBusiness: (mine ?? 0) > 0 },
+    usage: { total: total ?? 0, usedByThisBusiness: (mine ?? 0) > 0, business },
   };
+}
+
+export type WelcomeOffer = { code: string; label: string; endsAt: string };
+
+/** The welcome offer this business can still use, if any (the newest active welcome code). */
+export async function welcomeOfferFor(accountId: string, now = Date.now()): Promise<WelcomeOffer | null> {
+  const db = adminClient();
+  const { data } = await db
+    .from("promo_codes")
+    .select("code, kind, percent_off, bonus_credits, starts_at, ends_at, enabled, new_business_days")
+    .eq("enabled", true)
+    .not("new_business_days", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!data || Date.parse(data.starts_at as string) > now) return null;
+  const { promo, usage } = await loadPromo(data.code as string, accountId);
+  if (!promo || usage.usedByThisBusiness || (promo.maxUses !== null && usage.total >= promo.maxUses) || !usage.business || usage.business.hasPaid || !usage.business.createdAt) return null;
+  const ends = welcomeOfferEnds(promo, usage.business.createdAt);
+  if (ends === null || ends <= now) return null;
+  const label =
+    promo.kind === "percent" ? `${promo.percentOff}% off your first payment` : promo.kind === "credits" ? `+${(promo.bonusCredits ?? 0).toLocaleString("en")} bonus responses` : "a discount on your first payment";
+  return { code: promo.code, label, endsAt: new Date(ends).toISOString() };
 }

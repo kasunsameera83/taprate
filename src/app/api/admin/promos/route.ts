@@ -11,7 +11,7 @@ export const GET = secureRoute<undefined, undefined, undefined, "user-any">(
     const [{ data, error }, { data: stats, error: sErr }] = await Promise.all([
       supabase
         .from("promo_codes")
-        .select("id, code, description, kind, percent_off, amount_off_lkr, amount_off_usd, bonus_credits, applies_to, max_uses, starts_at, ends_at, enabled, created_at")
+        .select("id, code, description, kind, percent_off, amount_off_lkr, amount_off_usd, bonus_credits, applies_to, max_uses, starts_at, ends_at, enabled, new_business_days, created_at")
         .order("created_at", { ascending: false })
         .limit(200),
       supabase.rpc("admin_promo_stats"),
@@ -34,6 +34,7 @@ export const GET = secureRoute<undefined, undefined, undefined, "user-any">(
         startsAt: p.starts_at,
         endsAt: p.ends_at,
         enabled: p.enabled,
+        newBusinessDays: p.new_business_days ?? null,
         uses: Number(byId.get(p.id)?.uses ?? 0),
         revenue: byId.get(p.id)?.revenue ?? {},
       })),

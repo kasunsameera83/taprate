@@ -781,6 +781,8 @@ export const promoCodeSchema = z
     startsAt: z.string().datetime({ offset: true, error: "Choose a start date" }),
     endsAt: z.union([z.string().datetime({ offset: true }), z.null()]),
     enabled: z.boolean(),
+    /** Welcome offer: only for businesses in their first N days that have never paid; offered automatically. */
+    newBusinessDays: z.number().int().min(1, "1–60 days").max(60, "1–60 days").nullable().optional(),
   })
   .strict()
   .refine((v) => v.kind !== "percent" || v.percentOff !== null, { message: "Enter the percentage", path: ["percentOff"] })

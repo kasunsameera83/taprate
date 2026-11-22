@@ -13,5 +13,6 @@ export function promoColumns(b: PromoCodeInput) {
     starts_at: b.startsAt,
     ends_at: b.endsAt,
     enabled: b.enabled,
+    new_business_days: b.newBusinessDays ?? null,
   };
 }

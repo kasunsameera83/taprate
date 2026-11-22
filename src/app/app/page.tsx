@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { WELCOME_SKIPPED_KEY } from "@/lib/surveys/templates";
 import { useOnResponsesChanged } from "@/components/Notifications";
 import { BenchmarkCard, HighlightsButton } from "./DashboardExtras";
+import { UpgradeCard } from "./UpgradeCard";
 
 type Days = 7 | 30 | 90;
 const PERIODS: ReadonlyArray<{ value: Days; label: string }> = [
@@ -162,6 +163,7 @@ export default function Dashboard() {
               Only {stats.account.credits} responses left. When they run out, your buttons show &ldquo;survey closed&rdquo; and new ratings are not saved.
             </Notice>
           )}
+          {!sample && stats?.upgrade && accountId && <UpgradeCard accountId={accountId} offer={stats.upgrade} />}
           {!sample && stats && stats.total === 0 && (
             <p className="text-sm text-muted">
               No ratings yet.{" "}

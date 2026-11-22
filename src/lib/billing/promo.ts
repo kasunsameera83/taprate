@@ -18,7 +18,22 @@ export type Promo = {
   startsAt: string;
   endsAt: string | null;
   enabled: boolean;
+  /** Welcome offer: only for businesses that signed up within this many days and have never paid. */
+  newBusinessDays?: number | null;
 };
+
+/** What the welcome-offer rule needs to know about the business. */
+export type PromoBusiness = { createdAt: string | null; hasPaid: boolean };
+
+/** When a welcome offer stops working for this business (sign-up + N days, or the code's own end, whichever is first). */
+export function welcomeOfferEnds(promo: Pick<Promo, "newBusinessDays" | "endsAt">, createdAt: string): number | null {
+  if (!promo.newBusinessDays) return null;
+  const created = Date.parse(createdAt);
+  if (!Number.isFinite(created)) return null;
+  const own = created + promo.newBusinessDays * 86_400_000;
+  const codeEnd = promo.endsAt ? Date.parse(promo.endsAt) : Infinity;
+  return Math.min(own, codeEnd);
+}
 
 /** Smallest amount we'll ask a provider to charge (Stripe's minimum is $0.50). */
 export const MIN_CHARGE: Record<Currency, number> = { LKR: 10000, USD: 50 };
@@ -39,12 +54,17 @@ export const INVALID_CODE = "That code isn't valid.";
 export function applyPromo(
   promo: Promo | null,
   q: Quote,
-  usage: { total: number; usedByThisBusiness: boolean },
+  usage: { total: number; usedByThisBusiness: boolean; business?: PromoBusiness },
   now: number = Date.now(),
 ): PromoResult {
   if (!promo || !promo.enabled || Date.parse(promo.startsAt) > now) return { ok: false, reason: INVALID_CODE };
   if (promo.endsAt && Date.parse(promo.endsAt) <= now) return { ok: false, reason: "That code has expired." };
   if (usage.usedByThisBusiness) return { ok: false, reason: "You've already used that code." };
+  if (promo.newBusinessDays) {
+    const b = usage.business;
+    const ends = b?.createdAt ? welcomeOfferEnds(promo, b.createdAt) : null;
+    if (!b || b.hasPaid || ends === null || now >= ends) return { ok: false, reason: `That offer is only for new businesses in their first ${promo.newBusinessDays} days.` };
+  }
   if (promo.maxUses !== null && usage.total >= promo.maxUses) return { ok: false, reason: "That code has been fully used." };
   if (promo.appliesTo.length > 0 && !promo.appliesTo.includes(q.item)) return { ok: false, reason: "That code doesn't apply to this plan or pack." };
 
