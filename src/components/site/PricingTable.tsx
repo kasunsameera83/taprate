@@ -53,8 +53,8 @@ export function PricingTable({ catalog, defaultCurrency = "LKR", maxLkrMinor = n
               {p.id === "growth" && <Badge tone="brand">Popular</Badge>}
             </p>
             <p className="mt-3 text-3xl font-bold">
-              {formatMoney(p.price[currency][shown], currency)}
-              <span className="text-base font-normal text-muted"> / {shown === "year" ? "year" : "month"}</span>
+              <span className="whitespace-nowrap">{formatMoney(p.price[currency][shown], currency)}</span>
+              <span className="block text-sm font-normal text-muted">{shown === "year" ? "per year" : "per month"}</span>
             </p>
             <p className="mt-2 text-sm font-semibold">{p.monthlyResponses.toLocaleString("en")} responses a month</p>
             <p className="mt-1 text-sm text-muted">{p.blurb}</p>
@@ -70,8 +70,8 @@ export function PricingTable({ catalog, defaultCurrency = "LKR", maxLkrMinor = n
               {p.id === "scale" && <li className="font-semibold text-ink">✓ Your own survey web address</li>}
               {p.id === "scale" && <li className="font-semibold text-ink">✓ Emails from your own domain</li>}
             </ul>
-            <Link href="/signup" className={`btn mt-5 ${p.id === "growth" ? "btn-primary" : "btn-secondary"}`}>
-              Choose {p.name}
+            <Link href="/signup" aria-label={`Choose ${p.name}`} className={`btn mt-5 w-full whitespace-normal ${p.id === "growth" ? "btn-primary" : "btn-secondary"}`}>
+              Choose
             </Link>
           </div>
         ))}

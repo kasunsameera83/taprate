@@ -396,8 +396,9 @@ function Buy({ data, onNeedDetails, resume, onResumed }: { data: Summary; onNeed
     return (
       <>
         {x.applied && x.amount !== x.list && <s className="mr-1.5 text-base font-normal text-muted">{formatMoney(x.list, currency)}</s>}
-        {formatMoney(x.amount, currency)}
-        {per && <span className="text-sm font-normal text-muted"> / {per}</span>}
+        <span className="whitespace-nowrap">{formatMoney(x.amount, currency)}</span>
+        {/* On its own line on purpose: plan cards are narrow, and "Rs 38,900 / 3 months" doesn't fit on one. */}
+        {per && <span className="block text-sm font-normal text-muted">{per}</span>}
         {x.bonus > 0 && <span className="ml-1.5 align-middle text-[13px] font-semibold text-pos-text">+{x.bonus.toLocaleString()} bonus</span>}
       </>
     );
@@ -575,14 +576,15 @@ function Buy({ data, onNeedDetails, resume, onResumed }: { data: Summary; onNeed
                   {p.id === "growth" && <Badge tone="brand">Popular</Badge>}
                 </p>
                 <p className="mt-2 text-2xl font-bold">
-                  <Price item={p.id} list={list} per={prepaid ? (months === 3 ? "3 months" : "month") : interval === "year" ? "year" : "month"} />
+                  <Price item={p.id} list={list} per={prepaid ? (months === 3 ? "for 3 months" : "per month") : interval === "year" ? "per year" : "per month"} />
                 </p>
                 <p className="mt-1 text-sm">{p.monthlyResponses.toLocaleString()} responses a month</p>
                 <p className="text-[13px] text-muted">We send up to {SEND_LIMITS[p.id].toLocaleString()} survey emails a day for you (unlimited from your own emails &amp; helpdesk)</p>
                 <p className="mt-1 flex-1 text-[13px] text-muted">{p.blurb}</p>
                 <button
                   type="button"
-                  className={`btn mt-4 ${p.id === "growth" ? "btn-primary" : "btn-secondary"}`}
+                  className={`btn mt-4 w-full whitespace-normal ${p.id === "growth" ? "btn-primary" : "btn-secondary"}`}
+                  aria-label={current ? undefined : `${renew ? "Renew" : livePrepaid ? "Switch to" : "Choose"} ${p.name}`}
                   disabled={busy !== null || hasLivePlan || !fits(list)}
                   title={fits(list) ? undefined : "Above the largest single payment we can take in rupees right now"}
                   onClick={async () => {
@@ -598,7 +600,7 @@ function Buy({ data, onNeedDetails, resume, onResumed }: { data: Summary; onNeed
                     checkout(p.id);
                   }}
                 >
-                  {current ? "Current plan" : busy === p.id ? <Busy>Opening…</Busy> : renew ? `Renew ${p.name}` : livePrepaid ? `Switch to ${p.name}` : `Choose ${p.name}`}
+                  {current ? "Current plan" : busy === p.id ? <Busy>Opening…</Busy> : renew ? "Renew" : livePrepaid ? "Switch" : "Choose"}
                 </button>
               </div>
             );
