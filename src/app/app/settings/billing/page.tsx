@@ -569,6 +569,9 @@ function Buy({ data, onNeedDetails, resume, onResumed }: { data: Summary; onNeed
             const current = s?.plan === p.id && hasLivePlan;
             const renew = livePrepaid && s?.plan === p.id;
             const list = planList(p);
+            // Too big for one PayHere payment for 3 months, but fine for 1: offer to switch instead of a dead button.
+            const tooBig = !fits(list);
+            const oneMonthFits = prepaid && months === 3 && fits(p.price[currency].month);
             return (
               <div key={p.id} className={`flex flex-col rounded-[12px] border p-4 ${p.id === "growth" ? "border-brand" : "border-line"}`}>
                 <p className="flex items-center justify-between font-semibold">
@@ -584,10 +587,13 @@ function Buy({ data, onNeedDetails, resume, onResumed }: { data: Summary; onNeed
                 <button
                   type="button"
                   className={`btn mt-4 w-full whitespace-normal ${p.id === "growth" ? "btn-primary" : "btn-secondary"}`}
-                  aria-label={current ? undefined : `${renew ? "Renew" : livePrepaid ? "Switch to" : "Choose"} ${p.name}`}
-                  disabled={busy !== null || hasLivePlan || !fits(list)}
-                  title={fits(list) ? undefined : "Above the largest single payment we can take in rupees right now"}
+                  aria-label={current ? undefined : tooBig && oneMonthFits ? `Pay ${p.name} 1 month at a time` : `${renew ? "Renew" : livePrepaid ? "Switch to" : "Choose"} ${p.name}`}
+                  disabled={busy !== null || hasLivePlan || (tooBig && !oneMonthFits)}
                   onClick={async () => {
+                    if (tooBig) {
+                      if (oneMonthFits) changeMonths(1);
+                      return;
+                    }
                     if (livePrepaid && !renew) {
                       const ok = await confirmDialog({
                         title: `Switch to ${p.name}?`,
@@ -600,8 +606,13 @@ function Buy({ data, onNeedDetails, resume, onResumed }: { data: Summary; onNeed
                     checkout(p.id);
                   }}
                 >
-                  {current ? "Current plan" : busy === p.id ? <Busy>Opening…</Busy> : renew ? "Renew" : livePrepaid ? "Switch" : "Choose"}
+                  {current ? "Current plan" : busy === p.id ? <Busy>Opening…</Busy> : tooBig && oneMonthFits ? "Pay 1 month" : renew ? "Renew" : livePrepaid ? "Switch" : "Choose"}
                 </button>
+                {tooBig && !current && (
+                  <p className="mt-2 text-center text-[12px] leading-snug text-muted">
+                    {oneMonthFits ? "Too large for one PayHere payment. Pay 1 month at a time." : "Above the largest single payment we can take in rupees right now."}
+                  </p>
+                )}
               </div>
             );
           })}
